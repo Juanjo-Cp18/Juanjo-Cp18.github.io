@@ -70,7 +70,6 @@
             touch-action: none; 
         }
 
-        /* Animacions de Premi */
         #capa-premi {
             position: fixed; inset: 0; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
@@ -84,7 +83,6 @@
             100% { opacity: 0; transform: translateY(-200px); }
         }
 
-        /* Cartell Nivell Superat */
         #cartell-nivell {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
             background: var(--primari); color: white; padding: 20px 40px;
@@ -168,13 +166,46 @@
 </div>
 
 <script>
+    // BASE DE DADES GEGANT (+100 paraules)
     const baseDeDades = [
-        {p: "poma", i: "🍎"}, {p: "gat", i: "🐱"}, {p: "casa", i: "🏠"}, {p: "gos", i: "🐶"},
-        {p: "sol", i: "☀️"}, {p: "pa", i: "🥖"}, {p: "mar", i: "🌊"}, {p: "peu", i: "🦶"},
-        {p: "cotxe", i: "🚗"}, {p: "taula", i: "🪑"}, {p: "llapis", i: "✏️"}, {p: "estel", i: "⭐"},
-        {p: "peix", i: "🐟"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"}
+        // Animals
+        {p: "gat", i: "🐱"}, {p: "gos", i: "🐶"}, {p: "porc", i: "🐷"}, {p: "ruc", i: "🫏"},
+        {p: "vaca", i: "🐮"}, {p: "lleó", i: "🦁"}, {p: "mico", i: "🐒"}, {p: "peix", i: "🐟"},
+        {p: "ocell", i: "🐦"}, {p: "cavall", i: "🐴"}, {p: "ratolí", i: "🐭"}, {p: "serp", i: "🐍"},
+        {p: "balena", i: "🐳"}, {p: "tauró", i: "🦈"}, {p: "pop", i: "🐙"}, {p: "cranc", i: "🦀"},
+        {p: "abella", i: "🐝"}, {p: "cuc", i: "🐛"}, {p: "granota", i: "🐸"}, {p: "tortuga", i: "🐢"},
+        {p: "elefant", i: "🐘"}, {p: "tigre", i: "🐯"}, {p: "gallina", i: "🐔"}, {p: "pollet", i: "🐥"},
+        // Menjar
+        {p: "poma", i: "🍎"}, {p: "pa", i: "🥖"}, {p: "llet", i: "🥛"}, {p: "ou", i: "🥚"},
+        {p: "formatge", i: "🧀"}, {p: "carn", i: "🥩"}, {p: "arròs", i: "🍚"}, {p: "sopa", i: "🥣"},
+        {p: "gelat", i: "🍦"}, {p: "pizza", i: "🍕"}, {p: "mel", i: "🍯"}, {p: "suc", i: "🍹"},
+        {p: "raïm", i: "🍇"}, {p: "pera", i: "🍐"}, {p: "plàtan", i: "🍌"}, {p: "cirera", i: "🍒"},
+        {p: "llimona", i: "🍋"}, {p: "taronja", i: "🍊"}, {p: "kiwi", i: "🥝"}, {p: "maduixa", i: "🍓"},
+        // Objectes
+        {p: "casa", i: "🏠"}, {p: "taula", i: "🪑"}, {p: "llit", i: "🛏️"}, {p: "cadira", i: "🪑"},
+        {p: "llapis", i: "✏️"}, {p: "goma", i: "🧼"}, {p: "llibre", i: "📖"}, {p: "clau", i: "🔑"},
+        {p: "got", i: "🥛"}, {p: "pala", i: "🧹"}, {p: "raspall", i: "🪥"}, {p: "mirall", i: "🪞"},
+        {p: "rellotge", i: "⌚"}, {p: "telèfon", i: "📱"}, {p: "motxilla", i: "🎒"}, {p: "tisores", i: "✂️"},
+        {p: "martell", i: "🔨"}, {p: "galleda", i: "🪣"}, {p: "pilota", i: "⚽"}, {p: "nina", i: "🪆"},
+        // Natura i llocs
+        {p: "sol", i: "☀️"}, {p: "lluna", i: "🌙"}, {p: "estel", i: "⭐"}, {p: "arbre", i: "🌳"},
+        {p: "flor", i: "🌻"}, {p: "cel", i: "☁️"}, {p: "mar", i: "🌊"}, {p: "riu", i: "🏞️"},
+        {p: "muntanya", i: "⛰️"}, {p: "bosc", i: "🌲"}, {p: "platja", i: "🏖️"}, {p: "pedra", i: "🪨"},
+        {p: "foc", i: "🔥"}, {p: "pluja", i: "🌧️"}, {p: "neu", i: "❄️"}, {p: "vent", i: "🌬️"},
+        // El cos
+        {p: "mà", i: "✋"}, {p: "peu", i: "🦶"}, {p: "nas", i: "👃"}, {p: "ull", i: "👁️"},
+        {p: "boca", i: "👄"}, {p: "orella", i: "👂"}, {p: "cap", i: "🙆"}, {p: "dit", i: "☝️"},
+        {p: "panxa", i: "🤰"}, {p: "dent", i: "🦷"}, {p: "coll", i: "🧣"}, {p: "braç", i: "💪"},
+        // Transport
+        {p: "cotxe", i: "🚗"}, {p: "tren", i: "🚂"}, {p: "avió", i: "✈️"}, {p: "nau", i: "🚀"},
+        {p: "vaixell", i: "🚢"}, {p: "moto", i: "🏍️"}, {p: "bici", i: "🚲"}, {p: "bus", i: "🚌"},
+        // Colors i formes
+        {p: "blau", i: "🟦"}, {p: "groc", i: "🟨"}, {p: "verd", i: "🟩"}, {p: "rosa", i: "🌸"},
+        {p: "roig", i: "🟥"}, {p: "lila", i: "💜"}, {p: "blanc", i: "⬜"}, {p: "negre", i: "⬛"},
+        {p: "punt", i: "⏺️"}, {p: "creu", i: "❌"}
     ];
 
+    let paraulesPendents = []; 
     let usuarios = JSON.parse(localStorage.getItem('joc_v6_final')) || {};
     let usuariActiu = null, nivelActual = 1, estrellesTotals = 0, paraulaActual = null;
     let traços = [], traçActual = [], dibuixant = false, intentsFallits = 0;
@@ -206,9 +237,8 @@
         o.start(); o.stop(audioCtx.currentTime + durada);
     }
 
-    // Melodia de celebració de nivell
     function sonarNivell() {
-        const notes = [261.63, 329.63, 392.00, 523.25]; // Do, Mi, Sol, Do (agut)
+        const notes = [261.63, 329.63, 392.00, 523.25];
         notes.forEach((f, i) => setTimeout(() => sonar(f, 0.4), i * 150));
     }
 
@@ -322,24 +352,26 @@
     }
 
     function següentParaula() {
-        paraulaActual = baseDeDades[Math.floor(Math.random()*baseDeDades.length)];
-        intentsFallits = 0; actualitzarVides();
+        if (paraulesPendents.length === 0) {
+            paraulesPendents = [...baseDeDades].sort(() => Math.random() - 0.5);
+        }
+        paraulaActual = paraulesPendents.pop();
+        intentsFallits = 0; 
+        actualitzarVides();
         document.getElementById('imatge-paraula').innerText = paraulaActual.i;
         document.getElementById('nom-paraula').innerText = paraulaActual.p;
         document.getElementById('num-totals').innerText = estrellesTotals;
-        renderNivells(); netejar();
+        renderNivells(); 
+        netejar();
     }
 
     function actualitzarVides() { document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(3-intentsFallits) + "🖤".repeat(intentsFallits); }
 
     function avançar() { 
         usuarios[usuariActiu].estrelles = estrellesTotals; 
-        
-        // COMPROVACIÓ DE NIVELL (CADA 5 ESTRELLES)
         if(estrellesTotals > 0 && estrellesTotals % 5 === 0) {
             nivelActual++;
             usuarios[usuariActiu].nivel = nivelActual;
-            // Acció especial de nivell
             setTimeout(() => {
                 sonarNivell();
                 const cartell = document.getElementById('cartell-nivell');
@@ -348,7 +380,6 @@
                 setTimeout(() => cartell.classList.remove('show'), 2000);
             }, 500);
         }
-
         localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
         setTimeout(següentParaula, 1000); 
     }
