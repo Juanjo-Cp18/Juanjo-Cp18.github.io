@@ -70,6 +70,7 @@
             touch-action: none; 
         }
 
+        /* Animacions de Premi */
         #capa-premi {
             position: fixed; inset: 0; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
@@ -82,6 +83,17 @@
             50% { opacity: 1; transform: scale(1); }
             100% { opacity: 0; transform: translateY(-200px); }
         }
+
+        /* Cartell Nivell Superat */
+        #cartell-nivell {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            background: var(--primari); color: white; padding: 20px 40px;
+            border-radius: 30px; font-size: 2rem; z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center; border: 5px solid white;
+        }
+        #cartell-nivell.show { transform: translate(-50%, -50%) scale(1); }
 
         .perfil-card { 
             background: white; color: var(--text); padding: 15px; border-radius: 15px; 
@@ -113,6 +125,7 @@
 <body>
 
 <div id="capa-premi">🌟</div>
+<div id="cartell-nivell">🎉 NIVELL SUPERAT! 🎉</div>
 
 <div id="pantalla-usuari">
     <h1>Lletres Màgiques ✏️</h1>
@@ -182,6 +195,7 @@
     window.addEventListener('orientationchange', () => setTimeout(ajustarCanvas, 300));
 
     function iniciarAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    
     function sonar(f, durada = 0.2) {
         if (!audioCtx) return;
         const o = audioCtx.createOscillator();
@@ -190,6 +204,12 @@
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + durada);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + durada);
+    }
+
+    // Melodia de celebració de nivell
+    function sonarNivell() {
+        const notes = [261.63, 329.63, 392.00, 523.25]; // Do, Mi, Sol, Do (agut)
+        notes.forEach((f, i) => setTimeout(() => sonar(f, 0.4), i * 150));
     }
 
     function seleccionarUsuari(nom) {
@@ -203,7 +223,7 @@
     }
 
     function eliminarUsuari(e, nom) {
-        e.stopPropagation(); // Evita que s'activi la selecció d'usuari
+        e.stopPropagation(); 
         if(confirm(`Vols esborrar l'usuari ${nom}?`)) {
             delete usuarios[nom];
             localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
@@ -239,16 +259,7 @@
         if(traços.length === 0) return;
         const btn = document.getElementById('btn-revisar');
         btn.innerText = "...";
-        
-        const dades = { 
-            "options": "enable_pre_space", 
-            "requests": [{ 
-                "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, 
-                "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), 
-                "language": "ca" 
-            }] 
-        };
-
+        const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
         try {
             const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
                 method: 'POST',
@@ -272,10 +283,7 @@
     function obtenirPos(e) {
         const r = canvas.getBoundingClientRect();
         const t = e.touches ? e.touches[0] : e;
-        return { 
-            x: (t.clientX - r.left) * (canvas.width / r.width), 
-            y: (t.clientY - r.top) * (canvas.height / r.height) 
-        };
+        return { x: (t.clientX - r.left) * (canvas.width / r.width), y: (t.clientY - r.top) * (canvas.height / r.height) };
     }
 
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
@@ -323,10 +331,24 @@
     }
 
     function actualitzarVides() { document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(3-intentsFallits) + "🖤".repeat(intentsFallits); }
+
     function avançar() { 
         usuarios[usuariActiu].estrelles = estrellesTotals; 
-        if(estrellesTotals%5===0) nivelActual++; 
-        usuarios[usuariActiu].nivel = nivelActual;
+        
+        // COMPROVACIÓ DE NIVELL (CADA 5 ESTRELLES)
+        if(estrellesTotals > 0 && estrellesTotals % 5 === 0) {
+            nivelActual++;
+            usuarios[usuariActiu].nivel = nivelActual;
+            // Acció especial de nivell
+            setTimeout(() => {
+                sonarNivell();
+                const cartell = document.getElementById('cartell-nivell');
+                cartell.innerText = `🎉 NIVELL ${nivelActual} 🎉`;
+                cartell.classList.add('show');
+                setTimeout(() => cartell.classList.remove('show'), 2000);
+            }, 500);
+        }
+
         localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
         setTimeout(següentParaula, 1000); 
     }
