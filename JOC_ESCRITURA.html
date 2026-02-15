@@ -2,136 +2,217 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Lletres Màgiques PRO</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Lletres">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#2196f3">
 
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
-
     <link rel="manifest" href='data:application/manifest+json,{"short_name":"Lletres","name":"Lletres Màgiques","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/588/588395.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}],"start_url":"index.html","display":"standalone","background_color":"#fdf6e3","theme_color":"#2196f3"}'>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
         :root { --fons: #fdf6e3; --primari: #ff6f00; --exit: #4caf50; --error: #f44336; --cel: #2196f3; }
-        body { margin: 0; background-color: var(--fons); font-family: 'Comic Sans MS', cursive, sans-serif; overflow: hidden; touch-action: none; }
         
-        #pantalla-usuari { position: fixed; inset: 0; background: var(--cel); z-index: 100; display: flex; flex-direction: column; align-items: center; padding: 20px; color: white; overflow-y: auto; text-align: center; }
-        .llista-perfils { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
-        .perfil-card { background: white; color: #333; padding: 15px; border-radius: 20px; width: 90px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body { 
+            margin: 0; 
+            background-color: var(--fons); 
+            font-family: 'Comic Sans MS', cursive, sans-serif; 
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; 
+            touch-action: none; 
+        }
+
+        /* Pantalla d'Inici */
+        #pantalla-usuari { 
+            position: fixed; inset: 0; background: var(--cel); z-index: 100; 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 20px; color: white; overflow-y: auto; text-align: center; 
+        }
+
+        /* Estructura Principal */
+        #joc-contenedor { 
+            display: none; 
+            flex-direction: row; 
+            height: 100vh; 
+            width: 100vw;
+        }
+
+        /* Panell Lateral amb Scroll */
+        #panell-lateral { 
+            width: 160px; 
+            background: white; 
+            border-right: 4px solid #eee; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* Zona de joc principal */
+        #zona-principal { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 10px;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        /* Adaptació a pantalles verticals (Mòbils de peu) */
+        @media (max-aspect-ratio: 1/1) {
+            #joc-contenedor { flex-direction: column; }
+            #panell-lateral { width: 100%; height: 80px; flex-direction: row; border-right: none; border-bottom: 4px solid #eee; }
+            #llista-nivells { display: none; }
+            #info-usuari { font-size: 0.8rem; }
+        }
+
+        canvas { 
+            background: white; 
+            border-radius: 20px; 
+            border: 4px solid var(--cel); 
+            max-width: 95%; 
+            max-height: 50vh;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+        }
+
+        .perfil-card { background: white; color: #333; padding: 10px; border-radius: 15px; width: 85px; cursor: pointer; margin: 5px; }
         
-        #joc-contenedor { display: none; flex-direction: row; height: 100vh; }
-        #panell-lateral { width: 140px; background: white; border-right: 4px solid #eee; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        #zona-principal { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 10px; }
+        #contenidor-vides { font-size: 1.5rem; margin-top: 5px; }
         
-        canvas { background: white; border-radius: 25px; border: 4px solid var(--cel); cursor: crosshair; touch-action: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
-        #contenidor-vides { font-size: 1.8rem; margin-bottom: 5px; }
-        .nivell-item { padding: 6px; margin: 2px; border-radius: 8px; font-size: 0.7rem; width: 90%; text-align: center; background: #eee; }
-        .nivell-item.actiu { background: var(--primari); color: white; }
-        .nivell-item.completat { background: var(--exit); color: white; }
-        
-        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; transition: transform 0.1s; font-family: inherit; }
+        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
         button:active { transform: scale(0.9); }
+
+        .btn-accio { padding: 12px 25px; color: white; font-size: 1rem; }
         
-        input { padding: 10px; border-radius: 10px; border: none; font-family: inherit; margin-right: 5px; }
+        /* Ocultar scrollbars però mantenir funcionalitat */
+        #panell-lateral::-webkit-scrollbar { width: 0; }
     </style>
 </head>
 <body>
 
 <div id="pantalla-usuari">
     <h1>Lletres Màgiques ✏️</h1>
-    <p>Aprenem a escriure en <b>minúscules</b>!</p>
     <div style="margin-bottom: 20px;">
-        <input type="text" id="nou-nom" placeholder="El teu nom...">
-        <button onclick="crearUsuari()" style="background: var(--primari); padding:10px 20px; color:white;">Afegir</button>
+        <input type="text" id="nou-nom" placeholder="El teu nom..." style="padding:10px; border-radius:10px; border:none;">
+        <button onclick="crearUsuari()" style="background: var(--primari); padding:10px 20px; color:white; margin-top:5px;">Afegir</button>
     </div>
-    <div class="llista-perfils" id="llista-perfils"></div>
-    <div id="ranking-container" style="margin-top:30px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 20px; width: 80%;">
-        <h3>🏆 Millors Rècords</h3>
+    <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
+    <div id="ranking-container" style="margin-top:20px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px;">
+        <h3>🏆 Top Rècords</h3>
         <div id="llista-ranking"></div>
     </div>
 </div>
 
 <div id="joc-contenedor">
     <div id="panell-lateral">
-        <div id="info-usuari" style="text-align: center;"></div>
-        <div style="font-size: 1.2rem; margin: 10px 0;">⭐ <span id="num-totals">0</span></div>
+        <div id="info-usuari"></div>
+        <div style="font-size: 1.2rem; margin: 5px 0;">⭐ <span id="num-totals">0</span></div>
         <div id="llista-nivells" style="width: 100%;"></div>
-        <button onclick="tornarAInici()" style="background:#ddd; padding:8px; margin-top:auto; width:100%; font-size:0.7rem;">Sortir</button>
+        <button onclick="tornarAInici()" style="background:#eee; padding:8px; margin-top:auto; width:100%;">Sortir</button>
     </div>
 
     <div id="zona-principal">
         <div id="contenidor-vides">❤️❤️❤️</div>
-        <div id="targeta" style="background:white; padding:15px; border-radius:20px; text-align:center; width: 220px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <div id="imatge-paraula" style="font-size:60px;"></div>
-            <div id="nom-paraula" style="font-size:35px; font-weight:bold; border-top:2px dashed #eee; color: #333;"></div>
+        <div id="targeta" style="background:white; padding:10px; border-radius:20px; text-align:center; width: 200px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <div id="imatge-paraula" style="font-size:45px;"></div>
+            <div id="nom-paraula" style="font-size:28px; font-weight:bold; border-top:2px dashed #eee;"></div>
         </div>
+        
         <canvas id="pissarra"></canvas>
-        <div style="display:flex; gap:15px;">
-            <button onclick="netejar()" style="background:var(--error); color:white; padding:15px 25px;">Esborrar</button>
-            <button id="btn-revisar" onclick="comprovar()" style="background:var(--exit); color:white; padding:15px 40px; font-size:1.2rem;">Revisar 👍</button>
+        
+        <div style="display:flex; gap:10px; margin-bottom: 10px;">
+            <button onclick="netejar()" class="btn-accio" style="background:var(--error);">Esborrar</button>
+            <button id="btn-revisar" onclick="comprovar()" class="btn-accio" style="background:var(--exit);">Revisar 👍</button>
         </div>
     </div>
 </div>
 
 <script>
+    // Configuració i variables
     const baseDeDades = [
         {p: "poma", i: "🍎"}, {p: "gat", i: "🐱"}, {p: "casa", i: "🏠"}, {p: "gos", i: "🐶"},
         {p: "sol", i: "☀️"}, {p: "pa", i: "🥖"}, {p: "mar", i: "🌊"}, {p: "peu", i: "🦶"},
         {p: "cotxe", i: "🚗"}, {p: "taula", i: "🪑"}, {p: "llapis", i: "✏️"}, {p: "estel", i: "⭐"},
-        {p: "peix", i: "🐟"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"}, {p: "llimona", i: "🍋"},
-        {p: "bicicleta", i: "🚲"}, {p: "elefant", i: "🐘"}, {p: "papallona", i: "🦋"}, 
-        {p: "ordinador", i: "💻"}, {p: "formatge", i: "🧀"}, {p: "esquirol", i: "🐿️"}
+        {p: "peix", i: "🐟"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"}
     ];
 
-    let usuarios = JSON.parse(localStorage.getItem('joc_final_v4')) || {};
+    let usuarios = JSON.parse(localStorage.getItem('joc_v5_resp')) || {};
     let usuariActiu = null, nivelActual = 1, estrellesTotals = 0, paraulaActual = null;
-    let traços = [], traçActual = [], dibuixant = false;
-    let paraulesRecents = [], intentsFallits = 0;
+    let traços = [], traçActual = [], dibuixant = false, intentsFallits = 0;
     let audioCtx = null;
 
     const canvas = document.getElementById('pissarra');
     const ctx = canvas.getContext('2d');
 
+    // Ajust dinàmic del canvas
+    function ajustarPantalla() {
+        const contenedor = document.getElementById('zona-principal');
+        const ampleContenidor = contenedor.clientWidth * 0.9;
+        const altContenidor = contenedor.clientHeight * 0.45;
+        
+        canvas.width = Math.min(ampleContenidor, 600);
+        canvas.height = Math.min(altContenidor, 300);
+        netejar();
+    }
+
+    window.addEventListener('resize', ajustarPantalla);
+
+    // Lògica de so
     function iniciarAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    function sonar(f, durada = 0.2, tipus = 'sine') {
+    function sonar(f, durada = 0.2) {
         if (!audioCtx) return;
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        o.type = tipus; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        o.frequency.setValueAtTime(f, audioCtx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + durada);
         o.connect(g); g.connect(audioCtx.destination);
         o.start(); o.stop(audioCtx.currentTime + durada);
     }
 
-    function següentParaula() {
-        let filtrades = nivelActual <= 20 ? baseDeDades.filter(w => w.p.length <= 4) : baseDeDades.filter(w => w.p.length > 4);
-        let opcions = filtrades.filter(w => !paraulesRecents.includes(w.p));
-        if (opcions.length === 0) { paraulesRecents = []; opcions = filtrades; }
-        paraulaActual = opcions[Math.floor(Math.random() * opcions.length)];
-        paraulesRecents.push(paraulaActual.p);
-        if (paraulesRecents.length > 5) paraulesRecents.shift();
-        intentsFallits = 0;
-        actualitzarVides();
-        document.getElementById('imatge-paraula').innerText = paraulaActual.i;
-        document.getElementById('nom-paraula').innerText = paraulaActual.p;
-        document.getElementById('num-totals').innerText = estrellesTotals;
-        renderNivells();
-        netejar();
+    // Joc
+    function seleccionarUsuari(nom) {
+        iniciarAudio();
+        usuariActiu = nom; nivelActual = usuarios[nom].nivel || 1; estrellesTotals = usuarios[nom].estrelles || 0;
+        document.getElementById('pantalla-usuari').style.display = 'none';
+        document.getElementById('joc-contenedor').style.display = 'flex';
+        document.getElementById('info-usuari').innerHTML = `<b>👤 ${nom}</b>`;
+        ajustarPantalla();
+        següentParaula();
+    }
+
+    function validar(llegit) {
+        if(llegit === paraulaActual.p) {
+            estrellesTotals++;
+            sonar(523, 0.5);
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
+            avançar();
+        } else {
+            intentsFallits++;
+            actualitzarVides();
+            sonar(150, 0.3);
+            if (llegit.toLowerCase() === paraulaActual.p) alert("⚠️ Usa MINÚSCULES!");
+            else alert(`He llegit "${llegit}"`);
+            netejar();
+            if (intentsFallits >= 3) { alert("Canviem de paraula!"); següentParaula(); }
+        }
     }
 
     async function comprovar() {
         if(traços.length === 0) return;
-        const btn = document.getElementById('btn-revisar');
-        btn.innerText = "...";
+        document.getElementById('btn-revisar').innerText = "...";
         const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
         try {
             const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
@@ -140,90 +221,79 @@
             const res = await r.json();
             if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
         } catch (e) { alert("Error de connexió"); }
-        btn.innerText = "Revisar 👍";
+        document.getElementById('btn-revisar').innerText = "Revisar 👍";
     }
 
-    function validar(llegit) {
-        // VALIDACIÓ ESTRICTA MINÚSCULES
-        if(llegit === paraulaActual.p) {
-            estrellesTotals++;
-            sonar(523, 0.4); // Victòria
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.7 } });
-            avançar();
-        } else {
-            intentsFallits++;
-            actualitzarVides();
-            sonar(150, 0.3, 'sawtooth'); // Error
-            if (llegit.toLowerCase() === paraulaActual.p) {
-                alert("Has escrit en MAJÚSCULA ⚠️. Prova-ho en minúscula!");
-            } else {
-                alert(`He llegit "${llegit}". Prova-ho de nou!`);
-            }
-            netejar();
-            if (intentsFallits >= 3) { alert("Paraula difícil! Provem una altra."); següentParaula(); }
-        }
+    // Dibuix
+    function netejar() {
+        ctx.clearRect(0,0,canvas.width,canvas.height); traços = [];
+        ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+        const h = canvas.height / 4;
+        for(let i=1; i<=3; i++) { ctx.beginPath(); ctx.moveTo(0, h*i); ctx.lineTo(canvas.width, h*i); ctx.stroke(); }
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 5; ctx.lineCap = 'round';
     }
 
-    function avançar() {
-        usuarios[usuariActiu].estrelles = estrellesTotals;
-        if (estrellesTotals % 5 === 0) nivelActual++;
-        usuarios[usuariActiu].nivel = nivelActual;
-        localStorage.setItem('joc_final_v4', JSON.stringify(usuarios));
-        següentParaula();
+    function obtenirPos(e) {
+        const r = canvas.getBoundingClientRect();
+        const t = e.touches ? e.touches[0] : e;
+        return { x: t.clientX - r.left, y: t.clientY - r.top };
     }
 
-    function actualitzarVides() { document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(3-intentsFallits) + "🖤".repeat(intentsFallits); }
-    function netejar() { ctx.clearRect(0,0,canvas.width,canvas.height); traços = []; ctx.strokeStyle = '#eee'; ctx.lineWidth = 2; [75,150,225].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}); ctx.strokeStyle = '#333'; ctx.lineWidth = 6; ctx.lineCap = 'round'; }
-    function ajustarCanvas() { canvas.width = Math.min(window.innerWidth * 0.8, 600); canvas.height = 300; netejar(); }
-    function obtenirPos(e) { const r = canvas.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
-    
-    canvas.addEventListener('mousedown', (e) => { dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-    canvas.addEventListener('mousemove', (e) => { if(!dibuixant) return; const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); });
-    window.addEventListener('mouseup', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); });
     canvas.addEventListener('touchend', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
+    // Support per ratolí
+    canvas.addEventListener('mousedown', (e) => { dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', (e) => { if(dibuixant) { const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); } });
+    window.addEventListener('mouseup', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
 
-    function seleccionarUsuari(nom) {
-        iniciarAudio(); sonar(440, 0.1);
-        usuariActiu = nom; nivelActual = usuarios[nom].nivel || 1; estrellesTotals = usuarios[nom].estrelles || 0;
-        document.getElementById('pantalla-usuari').style.display = 'none';
-        document.getElementById('joc-contenedor').style.display = 'flex';
-        document.getElementById('info-usuari').innerHTML = `<b>👤 ${nom}</b>`;
-        ajustarCanvas(); següentParaula();
-    }
-
+    // Gestió d'usuaris
     function crearUsuari() {
         const nom = document.getElementById('nou-nom').value.trim();
         if(nom && !usuarios[nom]) {
             usuarios[nom] = { nivel: 1, estrelles: 0, avatar: "👤" };
-            localStorage.setItem('joc_final_v4', JSON.stringify(usuarios));
+            localStorage.setItem('joc_v5_resp', JSON.stringify(usuarios));
             renderPerfils();
             document.getElementById('nou-nom').value = '';
         }
     }
 
     function renderPerfils() {
-        const cont = document.getElementById('llista-perfils'); cont.innerHTML = '';
+        const c = document.getElementById('llista-perfils'); c.innerHTML = '';
         for (let n in usuarios) {
-            const div = document.createElement('div'); div.className = 'perfil-card';
-            div.innerHTML = `<div onclick="seleccionarUsuari('${n}')"><div>👤</div>${n}</div>`;
-            cont.appendChild(div);
+            c.innerHTML += `<div class="perfil-card" onclick="seleccionarUsuari('${n}')">👤<br>${n}</div>`;
         }
         renderRanking();
     }
 
     function renderRanking() {
         const r = document.getElementById('llista-ranking'); r.innerHTML = '';
-        const l = Object.keys(usuarios).map(n=>({n, s:usuarios[n].estrelles})).sort((a,b)=>b.s-a.s).slice(0,5);
-        l.forEach((u,i)=> { r.innerHTML += `<div style="display:flex; justify-content:space-between; margin:5px 0;"><span>${i+1}. ${u.n}</span><span>${u.s} ⭐</span></div>`; });
+        Object.keys(usuarios).map(n=>({n, s:usuarios[n].estrelles})).sort((a,b)=>b.s-a.s).slice(0,5)
+        .forEach((u,i)=> r.innerHTML += `<div style="display:flex;justify-content:space-between"><span>${i+1}. ${u.n}</span><span>${u.s}⭐</span></div>`);
     }
 
+    function següentParaula() {
+        paraulaActual = baseDeDades[Math.floor(Math.random()*baseDeDades.length)];
+        intentsFallits = 0; actualitzarVides();
+        document.getElementById('imatge-paraula').innerText = paraulaActual.i;
+        document.getElementById('nom-paraula').innerText = paraulaActual.p;
+        document.getElementById('num-totals').innerText = estrellesTotals;
+        renderNivells(); netejar();
+    }
+
+    function actualitzarVides() { document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(3-intentsFallits) + "🖤".repeat(intentsFallits); }
+    function avançar() { 
+        usuarios[usuariActiu].estrelles = estrellesTotals; 
+        if(estrellesTotals%5===0) nivelActual++; 
+        usuarios[usuariActiu].nivel = nivelActual;
+        localStorage.setItem('joc_v5_resp', JSON.stringify(usuarios));
+        següentParaula(); 
+    }
+    
     function renderNivells() {
         const l = document.getElementById('llista-nivells'); l.innerHTML = '';
-        for(let i=Math.max(1, nivelActual-2); i<=Math.min(100, nivelActual+2); i++) {
-            const d = document.createElement('div'); d.className = `nivell-item ${i===nivelActual?'actiu':(i<nivelActual?'completat':'')}`;
-            d.innerText = "Nivell " + i; l.appendChild(d);
+        for(let i=Math.max(1, nivelActual-1); i<=nivelActual+1; i++) {
+            l.innerHTML += `<div class="nivell-item ${i===nivelActual?'actiu':(i<nivelActual?'completat':'')}">Nivell ${i}</div>`;
         }
     }
 
