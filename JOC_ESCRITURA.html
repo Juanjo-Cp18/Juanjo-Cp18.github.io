@@ -50,7 +50,7 @@
 
         #zona-principal { 
             flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; padding: 15px; gap: 10px; width: 100%;
+            align-items: center; padding: 10px; gap: 8px; width: 100%;
         }
 
         @media (max-width: 850px) {
@@ -113,11 +113,13 @@
 
         button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
         button:active { transform: scale(0.95); }
-        .btn-accio { padding: 15px 30px; color: var(--text); font-size: 1.1rem; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
+        .btn-accio { padding: 12px 25px; color: var(--text); font-size: 1rem; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
         
         input { padding: 12px; border-radius: 12px; border: none; width: 150px; outline: none; font-family: inherit; }
 
         .credits { font-size: 10px; opacity: 0.7; margin-top: 30px; color: #fff; }
+
+        .grup-botons { display: flex; gap: 15px; margin: 5px 0; }
     </style>
 </head>
 <body>
@@ -150,59 +152,56 @@
     </div>
 
     <div id="zona-principal">
-        <div id="contenidor-vides" style="font-size: 1.8rem;">❤️❤️❤️</div>
-        <div id="targeta" style="background:white; padding:15px; border-radius:25px; text-align:center; min-width: 200px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 3px solid #fff;">
-            <div id="imatge-paraula" style="font-size:50px;"></div>
-            <div id="nom-paraula" style="font-size:30px; font-weight:bold; border-top:2px dashed #f0f0f0; color: #444;"></div>
+        <div id="contenidor-vides" style="font-size: 1.5rem;">❤️❤️❤️</div>
+        
+        <div id="targeta" style="background:white; padding:10px; border-radius:20px; text-align:center; min-width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 3px solid #fff;">
+            <div id="imatge-paraula" style="font-size:40px;"></div>
+            <div id="nom-paraula" style="font-size:25px; font-weight:bold; border-top:2px dashed #f0f0f0; color: #444;"></div>
+        </div>
+
+        <div class="grup-botons">
+            <button onclick="netejar()" class="btn-accio" style="background:var(--error); color: #8b3a3a;">Esborrar</button>
+            <button class="btn-revisar btn-accio" onclick="comprovar()" style="background:var(--exit); color: #2d5a27;">Revisar 👍</button>
         </div>
         
         <canvas id="pissarra"></canvas>
         
-        <div style="display:flex; gap:15px; margin: 10px 0;">
+        <div class="grup-botons">
             <button onclick="netejar()" class="btn-accio" style="background:var(--error); color: #8b3a3a;">Esborrar</button>
-            <button id="btn-revisar" onclick="comprovar()" class="btn-accio" style="background:var(--exit); color: #2d5a27;">Revisar 👍</button>
+            <button class="btn-revisar btn-accio" onclick="comprovar()" style="background:var(--exit); color: #2d5a27;">Revisar 👍</button>
         </div>
     </div>
 </div>
 
 <script>
-    // BASE DE DADES GEGANT (+100 paraules)
     const baseDeDades = [
-        // Animals
         {p: "gat", i: "🐱"}, {p: "gos", i: "🐶"}, {p: "porc", i: "🐷"}, {p: "ruc", i: "🫏"},
         {p: "vaca", i: "🐮"}, {p: "lleó", i: "🦁"}, {p: "mico", i: "🐒"}, {p: "peix", i: "🐟"},
         {p: "ocell", i: "🐦"}, {p: "cavall", i: "🐴"}, {p: "ratolí", i: "🐭"}, {p: "serp", i: "🐍"},
         {p: "balena", i: "🐳"}, {p: "tauró", i: "🦈"}, {p: "pop", i: "🐙"}, {p: "cranc", i: "🦀"},
         {p: "abella", i: "🐝"}, {p: "cuc", i: "🐛"}, {p: "granota", i: "🐸"}, {p: "tortuga", i: "🐢"},
         {p: "elefant", i: "🐘"}, {p: "tigre", i: "🐯"}, {p: "gallina", i: "🐔"}, {p: "pollet", i: "🐥"},
-        // Menjar
         {p: "poma", i: "🍎"}, {p: "pa", i: "🥖"}, {p: "llet", i: "🥛"}, {p: "ou", i: "🥚"},
         {p: "formatge", i: "🧀"}, {p: "carn", i: "🥩"}, {p: "arròs", i: "🍚"}, {p: "sopa", i: "🥣"},
         {p: "gelat", i: "🍦"}, {p: "pizza", i: "🍕"}, {p: "mel", i: "🍯"}, {p: "suc", i: "🍹"},
         {p: "raïm", i: "🍇"}, {p: "pera", i: "🍐"}, {p: "plàtan", i: "🍌"}, {p: "cirera", i: "🍒"},
         {p: "llimona", i: "🍋"}, {p: "taronja", i: "🍊"}, {p: "kiwi", i: "🥝"}, {p: "maduixa", i: "🍓"},
-        // Objectes
         {p: "casa", i: "🏠"}, {p: "taula", i: "🪑"}, {p: "llit", i: "🛏️"}, {p: "cadira", i: "🪑"},
         {p: "llapis", i: "✏️"}, {p: "goma", i: "🧼"}, {p: "llibre", i: "📖"}, {p: "clau", i: "🔑"},
         {p: "got", i: "🥛"}, {p: "pala", i: "🧹"}, {p: "raspall", i: "🪥"}, {p: "mirall", i: "🪞"},
         {p: "rellotge", i: "⌚"}, {p: "telèfon", i: "📱"}, {p: "motxilla", i: "🎒"}, {p: "tisores", i: "✂️"},
         {p: "martell", i: "🔨"}, {p: "galleda", i: "🪣"}, {p: "pilota", i: "⚽"}, {p: "nina", i: "🪆"},
-        // Natura i llocs
         {p: "sol", i: "☀️"}, {p: "lluna", i: "🌙"}, {p: "estel", i: "⭐"}, {p: "arbre", i: "🌳"},
         {p: "flor", i: "🌻"}, {p: "cel", i: "☁️"}, {p: "mar", i: "🌊"}, {p: "riu", i: "🏞️"},
         {p: "muntanya", i: "⛰️"}, {p: "bosc", i: "🌲"}, {p: "platja", i: "🏖️"}, {p: "pedra", i: "🪨"},
         {p: "foc", i: "🔥"}, {p: "pluja", i: "🌧️"}, {p: "neu", i: "❄️"}, {p: "vent", i: "🌬️"},
-        // El cos
         {p: "mà", i: "✋"}, {p: "peu", i: "🦶"}, {p: "nas", i: "👃"}, {p: "ull", i: "👁️"},
         {p: "boca", i: "👄"}, {p: "orella", i: "👂"}, {p: "cap", i: "🙆"}, {p: "dit", i: "☝️"},
         {p: "panxa", i: "🤰"}, {p: "dent", i: "🦷"}, {p: "coll", i: "🧣"}, {p: "braç", i: "💪"},
-        // Transport
         {p: "cotxe", i: "🚗"}, {p: "tren", i: "🚂"}, {p: "avió", i: "✈️"}, {p: "nau", i: "🚀"},
         {p: "vaixell", i: "🚢"}, {p: "moto", i: "🏍️"}, {p: "bici", i: "🚲"}, {p: "bus", i: "🚌"},
-        // Colors i formes
         {p: "blau", i: "🟦"}, {p: "groc", i: "🟨"}, {p: "verd", i: "🟩"}, {p: "rosa", i: "🌸"},
-        {p: "roig", i: "🟥"}, {p: "lila", i: "💜"}, {p: "blanc", i: "⬜"}, {p: "negre", i: "⬛"},
-        {p: "punt", i: "⏺️"}, {p: "creu", i: "❌"}
+        {p: "roig", i: "🟥"}, {p: "lila", i: "💜"}, {p: "blanc", i: "⬜"}, {p: "negre", i: "⬛"}
     ];
 
     let paraulesPendents = []; 
@@ -216,9 +215,10 @@
 
     function ajustarCanvas() {
         const ampleMax = Math.min(window.innerWidth - 40, 600);
-        const alturaDisponible = window.innerHeight - (window.innerWidth < 850 ? 280 : 380);
+        const alturaDisponible = window.innerHeight - (window.innerWidth < 850 ? 300 : 400);
+        // Canvas més petit per adaptar millor
         canvas.width = ampleMax;
-        canvas.height = Math.max(250, Math.min(350, alturaDisponible)); 
+        canvas.height = Math.max(180, Math.min(260, alturaDisponible)); 
         netejar();
     }
 
@@ -287,8 +287,9 @@
 
     async function comprovar() {
         if(traços.length === 0) return;
-        const btn = document.getElementById('btn-revisar');
-        btn.innerText = "...";
+        const botons = document.querySelectorAll('.btn-revisar');
+        botons.forEach(b => b.innerText = "...");
+        
         const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
         try {
             const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
@@ -299,7 +300,7 @@
             const res = await r.json();
             if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
         } catch (e) { alert("Error de connexió"); }
-        btn.innerText = "Revisar 👍";
+        botons.forEach(b => b.innerText = "Revisar 👍");
     }
 
     function netejar() {
