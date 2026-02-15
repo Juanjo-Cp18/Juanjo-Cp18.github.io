@@ -4,70 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lletres Màgiques PRO</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lletres">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2196f3">
+
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
+
+    <link rel="manifest" href='data:application/manifest+json,{"short_name":"Lletres","name":"Lletres Màgiques","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/588/588395.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}],"start_url":"index.html","display":"standalone","background_color":"#fdf6e3","theme_color":"#2196f3"}'>
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
         :root { --fons: #fdf6e3; --primari: #ff6f00; --exit: #4caf50; --error: #f44336; --cel: #2196f3; }
         body { margin: 0; background-color: var(--fons); font-family: 'Comic Sans MS', cursive, sans-serif; overflow: hidden; touch-action: none; }
         
-        /* Pantalla d'Inici */
-        #pantalla-usuari { position: fixed; inset: 0; background: var(--cel); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; color: white; overflow-y: auto; padding: 20px; }
-        .llista-perfils { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
-        .perfil-card { background: white; color: #333; padding: 15px; border-radius: 20px; text-align: center; width: 100px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); position: relative; transition: transform 0.2s; }
-        .perfil-card:active { transform: scale(0.95); }
-        .perfil-avatar { font-size: 40px; }
-        .btn-eliminar { position: absolute; top: -5px; right: -5px; background: var(--error); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; }
+        #pantalla-usuari { position: fixed; inset: 0; background: var(--cel); z-index: 100; display: flex; flex-direction: column; align-items: center; padding: 20px; color: white; overflow-y: auto; text-align: center; }
+        .llista-perfils { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .perfil-card { background: white; color: #333; padding: 15px; border-radius: 20px; width: 90px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         
-        #ranking-container { margin-top: 30px; background: rgba(255,255,255,0.15); padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; border: 2px dashed rgba(255,255,255,0.5); }
-        
-        /* Joc */
         #joc-contenedor { display: none; flex-direction: row; height: 100vh; }
-        #panell-lateral { width: 150px; background: white; border-right: 4px solid #eee; display: flex; flex-direction: column; align-items: center; padding: 10px; }
+        #panell-lateral { width: 140px; background: white; border-right: 4px solid #eee; display: flex; flex-direction: column; align-items: center; padding: 10px; }
         #zona-principal { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 10px; }
-        #canvas-contenedor { background: white; border-radius: 25px; border: 4px solid var(--cel); position: relative; }
-        canvas { display: block; border-radius: 25px; cursor: crosshair; }
         
-        #contenidor-vides { font-size: 1.8rem; margin-bottom: 5px; letter-spacing: 5px; }
-        .nivell-item { padding: 8px; margin: 4px; border-radius: 10px; font-size: 0.8rem; width: 90%; text-align: center; background: #eee; color: #999; }
-        .nivell-item.actiu { background: var(--primari); color: white; font-weight: bold; }
+        canvas { background: white; border-radius: 25px; border: 4px solid var(--cel); cursor: crosshair; touch-action: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        #contenidor-vides { font-size: 1.8rem; margin-bottom: 5px; }
+        .nivell-item { padding: 6px; margin: 2px; border-radius: 8px; font-size: 0.7rem; width: 90%; text-align: center; background: #eee; }
+        .nivell-item.actiu { background: var(--primari); color: white; }
         .nivell-item.completat { background: var(--exit); color: white; }
         
-        button { cursor: pointer; border: none; transition: transform 0.1s; }
+        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; transition: transform 0.1s; font-family: inherit; }
         button:active { transform: scale(0.9); }
+        
+        input { padding: 10px; border-radius: 10px; border: none; font-family: inherit; margin-right: 5px; }
     </style>
 </head>
 <body>
 
 <div id="pantalla-usuari">
     <h1>Lletres Màgiques ✏️</h1>
+    <p>Aprenem a escriure en <b>minúscules</b>!</p>
     <div style="margin-bottom: 20px;">
-        <input type="text" id="nou-nom" placeholder="El teu nom..." style="padding: 12px; border-radius: 15px; border: none; width: 180px; font-family: inherit;">
-        <button onclick="sonar('clic'); crearUsuari()" style="background: var(--primari); padding:12px; border-radius:15px; color:white; font-weight:bold;">Afegir</button>
+        <input type="text" id="nou-nom" placeholder="El teu nom...">
+        <button onclick="crearUsuari()" style="background: var(--primari); padding:10px 20px; color:white;">Afegir</button>
     </div>
     <div class="llista-perfils" id="llista-perfils"></div>
-    <div id="ranking-container">
-        <h2 style="margin: 0 0 15px 0; text-align: center;">🏆 Top 5 Rècords</h2>
+    <div id="ranking-container" style="margin-top:30px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 20px; width: 80%;">
+        <h3>🏆 Millors Rècords</h3>
         <div id="llista-ranking"></div>
     </div>
 </div>
 
 <div id="joc-contenedor">
     <div id="panell-lateral">
-        <div id="info-usuari" style="font-weight: bold; color: var(--cel); text-align: center; margin-bottom: 10px;"></div>
-        <div style="font-size: 1.5rem;">⭐ <span id="num-totals">0</span></div>
-        <div id="llista-nivells" style="width: 100%; margin-top: 15px;"></div>
-        <button onclick="sonar('clic'); tornarAInici()" style="background:#eee; padding:10px; border-radius:10px; margin-top:auto; font-size:0.7rem; width:100%;">Sortir</button>
+        <div id="info-usuari" style="text-align: center;"></div>
+        <div style="font-size: 1.2rem; margin: 10px 0;">⭐ <span id="num-totals">0</span></div>
+        <div id="llista-nivells" style="width: 100%;"></div>
+        <button onclick="tornarAInici()" style="background:#ddd; padding:8px; margin-top:auto; width:100%; font-size:0.7rem;">Sortir</button>
     </div>
 
     <div id="zona-principal">
         <div id="contenidor-vides">❤️❤️❤️</div>
-        <div id="targeta" style="background:white; padding:20px; border-radius:25px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); width: 260px;">
-            <div id="imatge-paraula" style="font-size:70px;"></div>
-            <div id="nom-paraula" style="font-size:38px; font-weight:bold; border-top:2px dashed #eee; color: #333;"></div>
+        <div id="targeta" style="background:white; padding:15px; border-radius:20px; text-align:center; width: 220px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <div id="imatge-paraula" style="font-size:60px;"></div>
+            <div id="nom-paraula" style="font-size:35px; font-weight:bold; border-top:2px dashed #eee; color: #333;"></div>
         </div>
-        <div id="canvas-contenedor"><canvas id="pissarra"></canvas></div>
+        <canvas id="pissarra"></canvas>
         <div style="display:flex; gap:15px;">
-            <button onclick="sonar('clic'); netejar()" style="background:#f44336; color:white; padding:15px 25px; border-radius:50px; font-weight:bold;">Esborrar</button>
-            <button id="btn-revisar" onclick="sonar('clic'); comprovar()" style="background:#4caf50; color:white; padding:15px 35px; border-radius:50px; font-weight:bold; font-size:1.2rem;">Revisar 👍</button>
+            <button onclick="netejar()" style="background:var(--error); color:white; padding:15px 25px;">Esborrar</button>
+            <button id="btn-revisar" onclick="comprovar()" style="background:var(--exit); color:white; padding:15px 40px; font-size:1.2rem;">Revisar 👍</button>
         </div>
     </div>
 </div>
@@ -79,100 +88,37 @@
         {p: "cotxe", i: "🚗"}, {p: "taula", i: "🪑"}, {p: "llapis", i: "✏️"}, {p: "estel", i: "⭐"},
         {p: "peix", i: "🐟"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"}, {p: "llimona", i: "🍋"},
         {p: "bicicleta", i: "🚲"}, {p: "elefant", i: "🐘"}, {p: "papallona", i: "🦋"}, 
-        {p: "ordinador", i: "💻"}, {p: "formatge", i: "🧀"}, {p: "esquirol", i: "🐿️"},
-        {p: "caramel", i: "🍬"}, {p: "raïm", i: "🍇"}, {p: "col·legi", i: "🏫"}
+        {p: "ordinador", i: "💻"}, {p: "formatge", i: "🧀"}, {p: "esquirol", i: "🐿️"}
     ];
 
-    const animals = ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵"];
-    let usuarios = JSON.parse(localStorage.getItem('joc_vFinal_pro')) || {};
-    let usuariActiu = null, nivelActual, estrellesTotals, paraulaActual, traços = [], traçActual = [], dibuixant = false;
+    let usuarios = JSON.parse(localStorage.getItem('joc_final_v4')) || {};
+    let usuariActiu = null, nivelActual = 1, estrellesTotals = 0, paraulaActual = null;
+    let traços = [], traçActual = [], dibuixant = false;
     let paraulesRecents = [], intentsFallits = 0;
+    let audioCtx = null;
 
     const canvas = document.getElementById('pissarra');
     const ctx = canvas.getContext('2d');
 
-    // --- MOTOR DE SONS (Sintetitzats) ---
-    function sonar(tipus) {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-
-        const ara = audioCtx.currentTime;
-        if (tipus === 'clic') {
-            osc.frequency.setValueAtTime(400, ara);
-            gain.gain.setValueAtTime(0.1, ara);
-            gain.gain.exponentialRampToValueAtTime(0.01, ara + 0.1);
-            osc.start(); osc.stop(ara + 0.1);
-        } else if (tipus === 'error') {
-            osc.frequency.setValueAtTime(150, ara);
-            osc.type = 'sawtooth';
-            gain.gain.setValueAtTime(0.1, ara);
-            gain.gain.linearRampToValueAtTime(0, ara + 0.3);
-            osc.start(); osc.stop(ara + 0.3);
-        } else if (tipus === 'victoria') {
-            const notes = [261, 329, 392, 523];
-            notes.forEach((f, i) => {
-                const o = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                o.frequency.setValueAtTime(f, ara + (i * 0.1));
-                g.gain.setValueAtTime(0.1, ara + (i * 0.1));
-                g.gain.exponentialRampToValueAtTime(0.01, ara + (i * 0.1) + 0.4);
-                o.connect(g); g.connect(audioCtx.destination);
-                o.start(ara + (i * 0.1)); o.stop(ara + (i * 0.1) + 0.4);
-            });
-        } else if (tipus === 'puf') {
-            osc.frequency.exponentialRampToValueAtTime(50, ara + 0.3);
-            gain.gain.setValueAtTime(0.1, ara);
-            osc.start(); osc.stop(ara + 0.3);
-        }
+    function iniciarAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function sonar(f, durada = 0.2, tipus = 'sine') {
+        if (!audioCtx) return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = tipus; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + durada);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + durada);
     }
 
-    // --- LÒGICA VISUAL ---
-    function actualitzarVides() {
-        const v = 3 - intentsFallits;
-        document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(v) + "🖤".repeat(intentsFallits);
-    }
-
-    function actualitzarRanking() {
-        const cont = document.getElementById('llista-ranking');
-        cont.innerHTML = '';
-        const llista = Object.keys(usuarios).map(n => ({nom:n, ...usuarios[n]})).sort((a,b) => b.estrelles - a.estrelles).slice(0, 5);
-        llista.forEach((u, i) => {
-            const div = document.createElement('div');
-            div.style = "display:flex; justify-content:space-between; background:white; color:#333; padding:8px 15px; border-radius:10px; margin-bottom:5px; font-weight:bold;";
-            div.innerHTML = `<span>${i+1}. ${u.avatar} ${u.nom}</span><span>${u.estrelles} ⭐</span>`;
-            cont.appendChild(div);
-        });
-    }
-
-    function renderPerfils() {
-        const cont = document.getElementById('llista-perfils');
-        cont.innerHTML = '';
-        for (let nom in usuarios) {
-            const card = document.createElement('div');
-            card.className = 'perfil-card';
-            card.innerHTML = `<button class="btn-eliminar" onclick="event.stopPropagation(); sonar('error'); eliminarUsuari('${nom}')">×</button>
-                <div onclick="sonar('clic'); seleccionarUsuari('${nom}')"><div class="perfil-avatar">${usuarios[nom].avatar}</div><div style="font-weight:bold">${nom}</div></div>`;
-            cont.appendChild(card);
-        }
-        actualitzarRanking();
-    }
-
-    // --- LÒGICA DE JOC ---
     function següentParaula() {
-        let filtrades = [];
-        if (nivelActual <= 20) filtrades = baseDeDades.filter(w => w.p.length <= 4);
-        else if (nivelActual <= 50) filtrades = baseDeDades.filter(w => w.p.length > 4 && w.p.length <= 6);
-        else filtrades = baseDeDades.filter(w => w.p.length > 6 || w.p.includes('·'));
-
+        let filtrades = nivelActual <= 20 ? baseDeDades.filter(w => w.p.length <= 4) : baseDeDades.filter(w => w.p.length > 4);
         let opcions = filtrades.filter(w => !paraulesRecents.includes(w.p));
         if (opcions.length === 0) { paraulesRecents = []; opcions = filtrades; }
-
         paraulaActual = opcions[Math.floor(Math.random() * opcions.length)];
         paraulesRecents.push(paraulaActual.p);
-        if (paraulesRecents.length > 6) paraulesRecents.shift();
-
+        if (paraulesRecents.length > 5) paraulesRecents.shift();
         intentsFallits = 0;
         actualitzarVides();
         document.getElementById('imatge-paraula').innerText = paraulaActual.i;
@@ -182,65 +128,55 @@
         netejar();
     }
 
-    function validar(llegit) {
-        if(llegit.toLowerCase() === paraulaActual.p.toLowerCase()) {
-            estrellesTotals++;
-            sonar('victoria');
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.7 } });
-            avançar();
-        } else {
-            intentsFallits++;
-            actualitzarVides();
-            if (intentsFallits >= 3) {
-                sonar('puf');
-                alert("⚠️ No passa res! Provem una altra paraula.");
-                següentParaula();
-            } else {
-                sonar('error');
-                alert(`He llegit "${llegit}". Torna-ho a provar!`);
-                netejar();
-            }
-        }
-    }
-
     async function comprovar() {
         if(traços.length === 0) return;
         const btn = document.getElementById('btn-revisar');
         btn.innerText = "...";
         const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
         try {
-            const resp = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dades)
+            const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dades)
             });
-            const res = await resp.json();
+            const res = await r.json();
             if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
-        } catch (e) { alert("Error de connexió."); }
+        } catch (e) { alert("Error de connexió"); }
         btn.innerText = "Revisar 👍";
+    }
+
+    function validar(llegit) {
+        // VALIDACIÓ ESTRICTA MINÚSCULES
+        if(llegit === paraulaActual.p) {
+            estrellesTotals++;
+            sonar(523, 0.4); // Victòria
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.7 } });
+            avançar();
+        } else {
+            intentsFallits++;
+            actualitzarVides();
+            sonar(150, 0.3, 'sawtooth'); // Error
+            if (llegit.toLowerCase() === paraulaActual.p) {
+                alert("Has escrit en MAJÚSCULA ⚠️. Prova-ho en minúscula!");
+            } else {
+                alert(`He llegit "${llegit}". Prova-ho de nou!`);
+            }
+            netejar();
+            if (intentsFallits >= 3) { alert("Paraula difícil! Provem una altra."); següentParaula(); }
+        }
     }
 
     function avançar() {
         usuarios[usuariActiu].estrelles = estrellesTotals;
-        if (estrellesTotals % 5 === 0) { nivelActual++; usuarios[usuariActiu].nivel = nivelActual; }
-        guardar();
-        if (nivelActual > 100) { alert("🏆 Increïble! Ets un mestre!"); tornarAInici(); }
-        else següentParaula();
+        if (estrellesTotals % 5 === 0) nivelActual++;
+        usuarios[usuariActiu].nivel = nivelActual;
+        localStorage.setItem('joc_final_v4', JSON.stringify(usuarios));
+        següentParaula();
     }
 
-    // --- CANVAS I INTERFÍCIE ---
-    function netejar() {
-        ctx.clearRect(0,0,canvas.width,canvas.height); traços = [];
-        ctx.strokeStyle = '#eee'; ctx.lineWidth = 2;
-        [75, 150, 225].forEach(y => { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); });
-        ctx.strokeStyle = '#333'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    }
-
-    function obtenirPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches ? e.touches[0] : e;
-        return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-    }
-
+    function actualitzarVides() { document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(3-intentsFallits) + "🖤".repeat(intentsFallits); }
+    function netejar() { ctx.clearRect(0,0,canvas.width,canvas.height); traços = []; ctx.strokeStyle = '#eee'; ctx.lineWidth = 2; [75,150,225].forEach(y=>{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke();}); ctx.strokeStyle = '#333'; ctx.lineWidth = 6; ctx.lineCap = 'round'; }
+    function ajustarCanvas() { canvas.width = Math.min(window.innerWidth * 0.8, 600); canvas.height = 300; netejar(); }
+    function obtenirPos(e) { const r = canvas.getBoundingClientRect(); const t = e.touches ? e.touches[0] : e; return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+    
     canvas.addEventListener('mousedown', (e) => { dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     canvas.addEventListener('mousemove', (e) => { if(!dibuixant) return; const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); });
     window.addEventListener('mouseup', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
@@ -249,37 +185,49 @@
     canvas.addEventListener('touchend', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
 
     function seleccionarUsuari(nom) {
+        iniciarAudio(); sonar(440, 0.1);
         usuariActiu = nom; nivelActual = usuarios[nom].nivel || 1; estrellesTotals = usuarios[nom].estrelles || 0;
         document.getElementById('pantalla-usuari').style.display = 'none';
         document.getElementById('joc-contenedor').style.display = 'flex';
-        document.getElementById('info-usuari').innerHTML = `${usuarios[nom].avatar}<br>${nom}`;
+        document.getElementById('info-usuari').innerHTML = `<b>👤 ${nom}</b>`;
         ajustarCanvas(); següentParaula();
     }
 
     function crearUsuari() {
         const nom = document.getElementById('nou-nom').value.trim();
         if(nom && !usuarios[nom]) {
-            usuarios[nom] = { nivel: 1, estrelles: 0, avatar: animals[Math.floor(Math.random()*animals.length)] };
-            guardar(); renderPerfils(); document.getElementById('nou-nom').value = '';
+            usuarios[nom] = { nivel: 1, estrelles: 0, avatar: "👤" };
+            localStorage.setItem('joc_final_v4', JSON.stringify(usuarios));
+            renderPerfils();
+            document.getElementById('nou-nom').value = '';
         }
     }
 
-    function eliminarUsuari(n) { if(confirm(`Eliminar ${n}?`)) { delete usuarios[n]; guardar(); renderPerfils(); } }
-    function guardar() { localStorage.setItem('joc_vFinal_pro', JSON.stringify(usuarios)); }
-    function tornarAInici() { location.reload(); }
-    function ajustarCanvas() { canvas.width = Math.min(window.innerWidth * 0.7, 700); canvas.height = 300; netejar(); }
+    function renderPerfils() {
+        const cont = document.getElementById('llista-perfils'); cont.innerHTML = '';
+        for (let n in usuarios) {
+            const div = document.createElement('div'); div.className = 'perfil-card';
+            div.innerHTML = `<div onclick="seleccionarUsuari('${n}')"><div>👤</div>${n}</div>`;
+            cont.appendChild(div);
+        }
+        renderRanking();
+    }
+
+    function renderRanking() {
+        const r = document.getElementById('llista-ranking'); r.innerHTML = '';
+        const l = Object.keys(usuarios).map(n=>({n, s:usuarios[n].estrelles})).sort((a,b)=>b.s-a.s).slice(0,5);
+        l.forEach((u,i)=> { r.innerHTML += `<div style="display:flex; justify-content:space-between; margin:5px 0;"><span>${i+1}. ${u.n}</span><span>${u.s} ⭐</span></div>`; });
+    }
 
     function renderNivells() {
-        const llista = document.getElementById('llista-nivells'); llista.innerHTML = '';
-        let inici = Math.max(1, nivelActual - 4);
-        for(let i=inici; i<=nivelActual + 4; i++) {
-            if(i > 100) break;
-            const div = document.createElement('div');
-            div.className = `nivell-item ${i < nivelActual ? 'completat' : (i === nivelActual ? 'actiu' : '')}`;
-            div.innerText = "Nivell " + i; llista.appendChild(div);
+        const l = document.getElementById('llista-nivells'); l.innerHTML = '';
+        for(let i=Math.max(1, nivelActual-2); i<=Math.min(100, nivelActual+2); i++) {
+            const d = document.createElement('div'); d.className = `nivell-item ${i===nivelActual?'actiu':(i<nivelActual?'completat':'')}`;
+            d.innerText = "Nivell " + i; l.appendChild(d);
         }
     }
 
+    function tornarAInici() { location.reload(); }
     window.onload = renderPerfils;
 </script>
 </body>
