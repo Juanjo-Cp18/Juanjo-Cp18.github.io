@@ -7,262 +7,232 @@
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#a2d2ff">
+
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
-    <link rel="manifest" href='data:application/manifest+json,{"short_name":"Lletres","name":"Lletres Màgiques","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/588/588395.png","sizes":"512x512","type":"image/png"}],"start_url":"index.html","display":"standalone","background_color":"#F8F9FA","theme_color":"#A2D2FF"}'>
+    <link rel="manifest" href='data:application/manifest+json,{"short_name":"Lletres","name":"Lletres Màgiques","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/588/588395.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}],"start_url":"index.html","display":"standalone","background_color":"#fefaf0","theme_color":"#a2d2ff"}'>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
+        /* NOVA PALETA DE COLORS PASTEL (AMIGABLE PER A LA VISTA) */
         :root { 
-            --fons: #F8F9FA; 
-            --text: #495057;
-            --primari: #A2D2FF; /* Blau pastís */
-            --accent: #FFAFCC;  /* Rosa pastís */
-            --exit: #B9FBC0;    /* Verd menta */
-            --error: #FFCFD2;   /* Vermell suau */
-            --blanc: #ffffff;
+            --fons: #fefaf0;    /* Crema molt suau */
+            --primari: #ffb07c; /* Préssec/Taronja pastís */
+            --exit: #b9fbc0;    /* Verd menta */
+            --error: #ffcfd2;   /* Rosa/Vermell suau */
+            --cel: #a2d2ff;     /* Blau cel pastís */
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        body { 
+        html, body { 
             margin: 0; 
+            padding: 0;
             background-color: var(--fons); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            color: var(--text);
-            overflow-x: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif; 
+            min-height: 100%;
+            overflow-y: auto; 
             -webkit-overflow-scrolling: touch;
         }
 
         /* Pantalla d'Inici */
         #pantalla-usuari { 
             display: flex; flex-direction: column; align-items: center; 
-            padding: 40px 20px; background: var(--primari);
-            min-height: 100vh; text-align: center; color: white;
+            padding: 30px 20px; color: white; background: var(--cel);
+            min-height: 100vh;
         }
 
-        .llista-perfils { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 20px 0; }
-        
-        .perfil-card { 
-            background: var(--blanc); color: var(--text); padding: 15px; 
-            border-radius: 20px; width: 110px; cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: transform 0.2s;
+        /* Estructura Principal */
+        #joc-contenedor { 
+            display: none; 
+            flex-direction: row; 
+            min-height: 100vh;
         }
-        .perfil-card:active { transform: scale(0.95); }
 
-        /* Contenidor de Joc */
-        #joc-contenedor { display: none; flex-direction: column; min-height: 100vh; }
-
-        #barra-superior { 
-            background: var(--blanc); padding: 15px; 
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid #eee; position: sticky; top: 0; z-index: 10;
+        #panell-lateral { 
+            width: 180px; 
+            background: white; 
+            border-right: 4px solid #f0f0f0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px 10px;
+            flex-shrink: 0;
         }
 
         #zona-principal { 
-            flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; padding: 20px; gap: 20px;
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px;
+            gap: 15px;
         }
 
-        /* Targeta de Paraula */
-        #targeta { 
-            background: var(--blanc); padding: 20px; border-radius: 30px; 
-            text-align: center; width: 250px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            border: 4px solid var(--accent);
+        @media (max-width: 768px) {
+            #joc-contenedor { flex-direction: column; }
+            #panell-lateral { 
+                width: 100%; 
+                flex-direction: row; 
+                justify-content: space-around; 
+                border-right: none; 
+                border-bottom: 4px solid #f0f0f0;
+                padding: 10px;
+                position: sticky; top: 0; z-index: 10;
+            }
+            #llista-nivells { display: none; }
         }
 
-        /* Canvas */
-        #canvas-wrap { position: relative; width: 100%; max-width: 600px; display: flex; justify-content: center; }
         canvas { 
-            background: var(--blanc); border-radius: 25px; 
-            border: 5px solid var(--primari); width: 100%; height: auto;
-            touch-action: none; cursor: crosshair;
+            background: white; 
+            border-radius: 20px; 
+            border: 4px solid var(--cel); 
+            max-width: 100%; 
+            height: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+            touch-action: none; 
         }
 
-        /* Missatges de Feedback (Substitueixen l'alert) */
-        #feedback-msg { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            padding: 20px 40px; border-radius: 20px; font-weight: bold; font-size: 1.2rem;
-            display: none; z-index: 1000; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        /* Botons */
-        .controls { display: flex; gap: 15px; }
-        button { 
-            border: none; border-radius: 50px; font-weight: bold; 
-            padding: 15px 30px; font-size: 1rem; cursor: pointer;
-            transition: all 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-        }
-        button:active { transform: translateY(3px); box-shadow: none; }
+        .perfil-card { background: white; color: #555; padding: 15px; border-radius: 15px; width: 100px; cursor: pointer; margin: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
-        .btn-exit { background-color: var(--exit); color: #2d5a27; }
-        .btn-error { background-color: var(--error); color: #8b3a3a; }
-        .btn-neutre { background-color: #eee; color: #666; }
+        .nivell-item { padding: 8px; margin: 4px; border-radius: 10px; font-size: 0.8rem; width: 90%; text-align: center; background: #f9f9f9; color: #888; }
+        .nivell-item.actiu { background: var(--primari); color: white; }
+        .nivell-item.completat { background: var(--exit); color: #2d5a27; }
 
-        input { padding: 12px; border-radius: 15px; border: none; margin-bottom: 10px; width: 200px; }
+        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
+        button:active { transform: scale(0.95); }
+        .btn-accio { padding: 15px 30px; color: #555; font-size: 1.1rem; }
+        /* El botó de revisar el posem amb text fosc per a millor contrast sobre menta */
+        #btn-revisar { color: #2d5a27; }
+
+        #ranking-container { width: 100%; max-width: 400px; margin-top: 20px; background: rgba(255,255,255,0.3); padding: 15px; border-radius: 20px; color: #555; }
     </style>
 </head>
 <body>
 
-<div id="feedback-msg"></div>
-
 <div id="pantalla-usuari">
-    <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Lletres Màgiques ✏️</h1>
-    <p>Escriu en minúscules per guanyar estrelles!</p>
-    
-    <div style="margin: 20px 0;">
-        <input type="text" id="nou-nom" placeholder="Com et dius?">
-        <button onclick="crearUsuari()" style="background: var(--accent); color: white;">Començar</button>
+    <h1 style="text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">Lletres Màgiques ✏️</h1>
+    <div style="margin-bottom: 25px;">
+        <input type="text" id="nou-nom" placeholder="El teu nom..." style="padding:12px; border-radius:12px; border:none; width: 150px; outline: none;">
+        <button onclick="crearUsuari()" style="background: var(--primari); padding:12px 20px; color:white; box-shadow: 0 4px 0px #e69a65;">Afegir</button>
     </div>
-
-    <div class="llista-perfils" id="llista-perfils"></div>
-    
-    <div id="ranking-container" style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 25px; width: 100%; max-width: 400px;">
-        <h3>🏆 Millors Rècords</h3>
+    <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center; width: 100%;"></div>
+    <div id="ranking-container">
+        <h3 style="margin-top:0">🏆 Millors Rècords</h3>
         <div id="llista-ranking"></div>
     </div>
 </div>
 
 <div id="joc-contenedor">
-    <div id="barra-superior">
-        <div id="usuari-info" style="font-weight: bold;"></div>
-        <div style="font-size: 1.2rem;">⭐ <span id="estrelles-comptador">0</span></div>
-        <button onclick="tornarAInici()" class="btn-neutre" style="padding: 8px 15px; font-size: 0.8rem;">Sortir</button>
+    <div id="panell-lateral">
+        <div id="info-usuari" style="color: #555;"></div>
+        <div style="font-size: 1.5rem; margin: 15px 0;">⭐ <span id="num-totals">0</span></div>
+        <div id="llista-nivells" style="width: 100%; overflow-y: auto;"></div>
+        <button onclick="tornarAInici()" style="background:#f0f0f0; color:#888; padding:10px; margin-top:20px; width:100%; border-radius: 10px;">Sortir</button>
     </div>
 
     <div id="zona-principal">
-        <div id="vides-display" style="font-size: 1.8rem; letter-spacing: 5px;"></div>
+        <div id="contenidor-vides" style="font-size: 2rem;">❤️❤️❤️</div>
+        <div id="targeta" style="background:white; padding:20px; border-radius:25px; text-align:center; min-width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <div id="imatge-paraula" style="font-size:60px;"></div>
+            <div id="nom-paraula" style="font-size:35px; font-weight:bold; border-top:2px dashed #f0f0f0; color: #444;"></div>
+        </div>
         
-        <div id="targeta">
-            <div id="paraula-imatge" style="font-size: 80px; margin-bottom: 10px;"></div>
-            <div id="paraula-text" style="font-size: 35px; font-weight: bold; color: var(--text); letter-spacing: 2px;"></div>
-        </div>
-
-        <div id="canvas-wrap">
-            <canvas id="pissarra"></canvas>
-        </div>
-
-        <div class="controls">
-            <button onclick="netejar()" class="btn-error">Esborrar</button>
-            <button id="btn-revisar" onclick="comprovar()" class="btn-exit">Revisar 👍</button>
+        <canvas id="pissarra"></canvas>
+        
+        <div style="display:flex; gap:15px; margin-top: 10px;">
+            <button onclick="netejar()" class="btn-accio" style="background:var(--error); color: #8b3a3a;">Esborrar</button>
+            <button id="btn-revisar" onclick="comprovar()" class="btn-accio" style="background:var(--exit);">Revisar 👍</button>
         </div>
     </div>
 </div>
 
 <script>
-    const baseDades = [
+    const baseDeDades = [
         {p: "poma", i: "🍎"}, {p: "gat", i: "🐱"}, {p: "casa", i: "🏠"}, {p: "gos", i: "🐶"},
-        {p: "sol", i: "☀️"}, {p: "mar", i: "🌊"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"},
-        {p: "peix", i: "🐟"}, {p: "flor", i: "🌸"}, {p: "peu", i: "🦶"}, {p: "ma", i: "✋"}
+        {p: "sol", i: "☀️"}, {p: "pa", i: "🥖"}, {p: "mar", i: "🌊"}, {p: "peu", i: "🦶"},
+        {p: "cotxe", i: "🚗"}, {p: "taula", i: "🪑"}, {p: "llapis", i: "✏️"}, {p: "estel", i: "⭐"},
+        {p: "peix", i: "🐟"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"}
     ];
 
-    let usuarios = JSON.parse(localStorage.getItem('lletres_magic_v7')) || {};
-    let usuariActiu = null, nivelActual = 1, estrelles = 0, paraulaActual = null;
-    let traços = [], traçActual = [], dibuixant = false, errors = 0;
+    let usuarios = JSON.parse(localStorage.getItem('joc_v6_final')) || {};
+    let usuariActiu = null, nivelActual = 1, estrellesTotals = 0, paraulaActual = null;
+    let traços = [], traçActual = [], dibuixant = false, intentsFallits = 0;
     let audioCtx = null;
 
     const canvas = document.getElementById('pissarra');
     const ctx = canvas.getContext('2d');
 
-    function ajustarMida() {
-        const wrap = document.getElementById('canvas-wrap');
-        canvas.width = wrap.clientWidth;
-        canvas.height = 300;
+    function ajustarCanvas() {
+        const ampleMax = Math.min(window.innerWidth - 40, 600);
+        canvas.width = ampleMax;
+        canvas.height = 300; 
         netejar();
     }
 
-    window.addEventListener('resize', ajustarMida);
+    window.addEventListener('resize', ajustarCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(ajustarCanvas, 200));
 
-    function mostrarFeedback(text, color) {
-        const el = document.getElementById('feedback-msg');
-        el.innerText = text;
-        el.style.backgroundColor = color;
-        el.style.display = 'block';
-        setTimeout(() => { el.style.display = 'none'; }, 2000);
-    }
-
-    function iniciarAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    function sonar(f, dur = 0.2) {
-        if(!audioCtx) return;
+    function iniciarAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function sonar(f, durada = 0.2) {
+        if (!audioCtx) return;
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         o.frequency.setValueAtTime(f, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + durada);
         o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + dur);
+        o.start(); o.stop(audioCtx.currentTime + durada);
     }
 
     function seleccionarUsuari(nom) {
         iniciarAudio();
-        usuariActiu = nom; 
-        estrelles = usuarios[nom].estrelles || 0;
+        usuariActiu = nom; nivelActual = usuarios[nom].nivel || 1; estrellesTotals = usuarios[nom].estrelles || 0;
         document.getElementById('pantalla-usuari').style.display = 'none';
         document.getElementById('joc-contenedor').style.display = 'flex';
-        document.getElementById('usuari-info').innerText = "👤 " + nom;
-        ajustarMida();
-        novaParaula();
-    }
-
-    function novaParaula() {
-        paraulaActual = baseDades[Math.floor(Math.random()*baseDades.length)];
-        errors = 0;
-        dibuixarVides();
-        document.getElementById('paraula-imatge').innerText = paraulaActual.i;
-        document.getElementById('paraula-text').innerText = paraulaActual.p;
-        document.getElementById('estrelles-comptador').innerText = estrelles;
-        netejar();
-    }
-
-    async function comprovar() {
-        if(traços.length === 0) return;
-        const btn = document.getElementById('btn-revisar');
-        btn.innerText = "...";
-        
-        const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
-        
-        try {
-            const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
-                method: 'POST', body: JSON.stringify(dades)
-            });
-            const res = await r.json();
-            if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
-        } catch (e) { mostrarFeedback("Sense connexió", "white"); }
-        btn.innerText = "Revisar 👍";
+        document.getElementById('info-usuari').innerHTML = `<b>👤 ${nom}</b>`;
+        ajustarCanvas();
+        següentParaula();
     }
 
     function validar(llegit) {
         if(llegit === paraulaActual.p) {
-            estrelles++;
-            sonar(523, 0.4);
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#A2D2FF', '#FFAFCC', '#B9FBC0'] });
-            mostrarFeedback("Molt bé! ✨", "#B9FBC0");
-            guardarDades();
-            setTimeout(novaParaula, 2000);
+            estrellesTotals++;
+            sonar(523, 0.5);
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
+            avançar();
         } else {
-            errors++;
+            intentsFallits++;
+            actualitzarVides();
             sonar(150, 0.3);
-            if(llegit.toLowerCase() === paraulaActual.p) {
-                mostrarFeedback("Usa minúscules! ⚠️", "#FFCFD2");
-            } else {
-                mostrarFeedback("Torna-ho a provar! ✏️", "#FFCFD2");
-            }
+            if (llegit.toLowerCase() === paraulaActual.p) alert("⚠️ Recorda fer-ho en MINÚSCULES!");
+            else alert(`He llegit "${llegit}"`);
             netejar();
-            dibuixarVides();
-            if(errors >= 3) { setTimeout(novaParaula, 1500); }
+            if (intentsFallits >= 3) { alert("Canviem de paraula!"); següentParaula(); }
         }
     }
 
+    async function comprovar() {
+        if(traços.length === 0) return;
+        document.getElementById('btn-revisar').innerText = "...";
+        const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
+        try {
+            const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dades)
+            });
+            const res = await r.json();
+            if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
+        } catch (e) { alert("Error de connexió"); }
+        document.getElementById('btn-revisar').innerText = "Revisar 👍";
+    }
+
     function netejar() {
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        traços = [];
-        ctx.strokeStyle = '#f0f0f0';
-        ctx.lineWidth = 2;
+        ctx.clearRect(0,0,canvas.width,canvas.height); traços = [];
+        ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
         [75, 150, 225].forEach(y => { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); });
-        ctx.strokeStyle = '#495057';
-        ctx.lineWidth = 6;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     }
 
     function obtenirPos(e) {
@@ -271,17 +241,9 @@
         return { x: t.clientX - r.left, y: t.clientY - r.top };
     }
 
-    canvas.addEventListener('touchstart', (e) => { 
-        e.preventDefault(); dibuixant = true; traçActual = []; 
-        const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); 
-    });
-    canvas.addEventListener('touchmove', (e) => { 
-        if(!dibuixant) return; const p = obtenirPos(e); 
-        ctx.lineTo(p.x, p.y); ctx.stroke(); 
-        traçActual.push([Math.round(p.x), Math.round(p.y)]); 
-    });
-    window.addEventListener('touchend', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
-    // Ratolí per proves en PC
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); });
+    canvas.addEventListener('touchend', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
     canvas.addEventListener('mousedown', (e) => { dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     canvas.addEventListener('mousemove', (e) => { if(dibuixant) { const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); } });
     window.addEventListener('mouseup', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
@@ -289,8 +251,8 @@
     function crearUsuari() {
         const nom = document.getElementById('nou-nom').value.trim();
         if(nom && !usuarios[nom]) {
-            usuarios[nom] = { estrelles: 0 };
-            guardarDades();
+            usuarios[nom] = { nivel: 1, estrelles: 0, avatar: "👤" };
+            localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
             renderPerfils();
             document.getElementById('nou-nom').value = '';
         }
@@ -299,23 +261,42 @@
     function renderPerfils() {
         const c = document.getElementById('llista-perfils'); c.innerHTML = '';
         for (let n in usuarios) {
-            c.innerHTML += `<div class="perfil-card" onclick="seleccionarUsuari('${n}')">👤<br><b>${n}</b></div>`;
+            c.innerHTML += `<div class="perfil-card" onclick="seleccionarUsuari('${n}')">👤<br>${n}</div>`;
         }
         renderRanking();
     }
 
     function renderRanking() {
         const r = document.getElementById('llista-ranking'); r.innerHTML = '';
-        Object.keys(usuarios).sort((a,b) => usuarios[b].estrelles - usuarios[a].estrelles).slice(0,5).forEach((n,i) => {
-            r.innerHTML += `<div style="display:flex; justify-content:space-between; margin:5px 0"><span>${i+1}. ${n}</span><span>${usuarios[n].estrelles} ⭐</span></div>`;
-        });
+        Object.keys(usuarios).map(n=>({n, s:usuarios[n].estrelles})).sort((a,b)=>b.s-a.s).slice(0,5)
+        .forEach((u,i)=> r.innerHTML += `<div style="display:flex;justify-content:space-between; margin-bottom:5px"><span>${i+1}. ${u.n}</span><span>${u.s}⭐</span></div>`);
     }
 
-    function dibuixarVides() { document.getElementById('vides-display').innerHTML = "❤️".repeat(3-errors) + "🖤".repeat(errors); }
-    function guardarDades() { 
-        if(usuariActiu) usuarios[usuariActiu].estrelles = estrelles;
-        localStorage.setItem('lletres_magic_v7', JSON.stringify(usuarios)); 
+    function següentParaula() {
+        paraulaActual = baseDeDades[Math.floor(Math.random()*baseDeDades.length)];
+        intentsFallits = 0; actualitzarVides();
+        document.getElementById('imatge-paraula').innerText = paraulaActual.i;
+        document.getElementById('nom-paraula').innerText = paraulaActual.p;
+        document.getElementById('num-totals').innerText = estrellesTotals;
+        renderNivells(); netejar();
     }
+
+    function actualitzarVides() { document.getElementById('contenidor-vides').innerHTML = "❤️".repeat(3-intentsFallits) + "🖤".repeat(intentsFallits); }
+    function avançar() { 
+        usuarios[usuariActiu].estrelles = estrellesTotals; 
+        if(estrellesTotals%5===0) nivelActual++; 
+        usuarios[usuariActiu].nivel = nivelActual;
+        localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
+        següentParaula(); 
+    }
+    
+    function renderNivells() {
+        const l = document.getElementById('llista-nivells'); l.innerHTML = '';
+        for(let i=Math.max(1, nivelActual-2); i<=nivelActual+2; i++) {
+            l.innerHTML += `<div class="nivell-item ${i===nivelActual?'actiu':(i<nivelActual?'completat':'')}">Nivell ${i}</div>`;
+        }
+    }
+
     function tornarAInici() { location.reload(); }
     window.onload = renderPerfils;
 </script>
