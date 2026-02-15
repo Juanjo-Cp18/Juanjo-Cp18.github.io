@@ -2,7 +2,7 @@
 <html lang="ca">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Lletres Màgiques PRO</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,41 +21,40 @@
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        body { 
+        html, body { 
             margin: 0; 
+            padding: 0;
             background-color: var(--fons); 
             font-family: 'Comic Sans MS', cursive, sans-serif; 
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden; 
-            touch-action: none; 
+            min-height: 100%;
+            /* Permitim scroll global si el contingut sobrepassa la pantalla */
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Pantalla d'Inici */
         #pantalla-usuari { 
-            position: fixed; inset: 0; background: var(--cel); z-index: 100; 
             display: flex; flex-direction: column; align-items: center; 
-            padding: 20px; color: white; overflow-y: auto; text-align: center; 
+            padding: 30px 20px; color: white; background: var(--cel);
+            min-height: 100vh;
         }
 
-        /* Estructura Principal */
+        /* Estructura Principal: Flex per defecte (Desktop/Tablet) */
         #joc-contenedor { 
             display: none; 
             flex-direction: row; 
-            height: 100vh; 
-            width: 100vw;
+            min-height: 100vh;
         }
 
-        /* Panell Lateral amb Scroll */
+        /* Panell Lateral */
         #panell-lateral { 
-            width: 160px; 
+            width: 180px; 
             background: white; 
             border-right: 4px solid #eee; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            padding: 10px;
-            overflow-y: auto;
+            padding: 20px 10px;
             flex-shrink: 0;
         }
 
@@ -65,53 +64,59 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: center; 
-            padding: 10px;
-            gap: 10px;
-            overflow: hidden;
+            padding: 20px;
+            gap: 15px;
         }
 
-        /* Adaptació a pantalles verticals (Mòbils de peu) */
-        @media (max-aspect-ratio: 1/1) {
+        /* Responsive per a Mòbils (Vertical) */
+        @media (max-width: 768px) {
             #joc-contenedor { flex-direction: column; }
-            #panell-lateral { width: 100%; height: 80px; flex-direction: row; border-right: none; border-bottom: 4px solid #eee; }
+            #panell-lateral { 
+                width: 100%; 
+                flex-direction: row; 
+                justify-content: space-around; 
+                border-right: none; 
+                border-bottom: 4px solid #eee;
+                padding: 10px;
+                position: sticky; top: 0; z-index: 10;
+            }
             #llista-nivells { display: none; }
-            #info-usuari { font-size: 0.8rem; }
         }
 
         canvas { 
             background: white; 
             border-radius: 20px; 
             border: 4px solid var(--cel); 
-            max-width: 95%; 
-            max-height: 50vh;
+            max-width: 100%; 
+            height: auto;
             box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
+            touch-action: none; /* Crucial: Dibuix sense moure la pantalla */
         }
 
-        .perfil-card { background: white; color: #333; padding: 10px; border-radius: 15px; width: 85px; cursor: pointer; margin: 5px; }
+        .perfil-card { background: white; color: #333; padding: 15px; border-radius: 15px; width: 100px; cursor: pointer; margin: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        #contenidor-vides { font-size: 1.5rem; margin-top: 5px; }
-        
-        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
-        button:active { transform: scale(0.9); }
+        .nivell-item { padding: 8px; margin: 4px; border-radius: 10px; font-size: 0.8rem; width: 90%; text-align: center; background: #eee; }
+        .nivell-item.actiu { background: var(--primari); color: white; }
+        .nivell-item.completat { background: var(--exit); color: white; }
 
-        .btn-accio { padding: 12px 25px; color: white; font-size: 1rem; }
-        
-        /* Ocultar scrollbars però mantenir funcionalitat */
-        #panell-lateral::-webkit-scrollbar { width: 0; }
+        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
+        button:active { transform: scale(0.95); }
+        .btn-accio { padding: 15px 30px; color: white; font-size: 1.1rem; }
+
+        #ranking-container { width: 100%; max-width: 400px; margin-top: 20px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
 <div id="pantalla-usuari">
     <h1>Lletres Màgiques ✏️</h1>
-    <div style="margin-bottom: 20px;">
-        <input type="text" id="nou-nom" placeholder="El teu nom..." style="padding:10px; border-radius:10px; border:none;">
-        <button onclick="crearUsuari()" style="background: var(--primari); padding:10px 20px; color:white; margin-top:5px;">Afegir</button>
+    <div style="margin-bottom: 25px;">
+        <input type="text" id="nou-nom" placeholder="El teu nom..." style="padding:12px; border-radius:12px; border:none; width: 150px;">
+        <button onclick="crearUsuari()" style="background: var(--primari); padding:12px 20px; color:white;">Afegir</button>
     </div>
-    <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
-    <div id="ranking-container" style="margin-top:20px; background: rgba(255,255,255,0.2); padding: 15px; border-radius: 20px; width: 90%; max-width: 400px;">
-        <h3>🏆 Top Rècords</h3>
+    <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center; width: 100%;"></div>
+    <div id="ranking-container">
+        <h3>🏆 Millors Rècords</h3>
         <div id="llista-ranking"></div>
     </div>
 </div>
@@ -119,21 +124,21 @@
 <div id="joc-contenedor">
     <div id="panell-lateral">
         <div id="info-usuari"></div>
-        <div style="font-size: 1.2rem; margin: 5px 0;">⭐ <span id="num-totals">0</span></div>
-        <div id="llista-nivells" style="width: 100%;"></div>
-        <button onclick="tornarAInici()" style="background:#eee; padding:8px; margin-top:auto; width:100%;">Sortir</button>
+        <div style="font-size: 1.5rem; margin: 15px 0;">⭐ <span id="num-totals">0</span></div>
+        <div id="llista-nivells" style="width: 100%; overflow-y: auto;"></div>
+        <button onclick="tornarAInici()" style="background:#eee; padding:10px; margin-top:20px; width:100%; border-radius: 10px;">Sortir</button>
     </div>
 
     <div id="zona-principal">
-        <div id="contenidor-vides">❤️❤️❤️</div>
-        <div id="targeta" style="background:white; padding:10px; border-radius:20px; text-align:center; width: 200px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-            <div id="imatge-paraula" style="font-size:45px;"></div>
-            <div id="nom-paraula" style="font-size:28px; font-weight:bold; border-top:2px dashed #eee;"></div>
+        <div id="contenidor-vides" style="font-size: 2rem;">❤️❤️❤️</div>
+        <div id="targeta" style="background:white; padding:20px; border-radius:25px; text-align:center; min-width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div id="imatge-paraula" style="font-size:60px;"></div>
+            <div id="nom-paraula" style="font-size:35px; font-weight:bold; border-top:2px dashed #eee; color: #333;"></div>
         </div>
         
         <canvas id="pissarra"></canvas>
         
-        <div style="display:flex; gap:10px; margin-bottom: 10px;">
+        <div style="display:flex; gap:15px; margin-top: 10px;">
             <button onclick="netejar()" class="btn-accio" style="background:var(--error);">Esborrar</button>
             <button id="btn-revisar" onclick="comprovar()" class="btn-accio" style="background:var(--exit);">Revisar 👍</button>
         </div>
@@ -141,7 +146,6 @@
 </div>
 
 <script>
-    // Configuració i variables
     const baseDeDades = [
         {p: "poma", i: "🍎"}, {p: "gat", i: "🐱"}, {p: "casa", i: "🏠"}, {p: "gos", i: "🐶"},
         {p: "sol", i: "☀️"}, {p: "pa", i: "🥖"}, {p: "mar", i: "🌊"}, {p: "peu", i: "🦶"},
@@ -149,7 +153,7 @@
         {p: "peix", i: "🐟"}, {p: "lluna", i: "🌙"}, {p: "arbre", i: "🌳"}
     ];
 
-    let usuarios = JSON.parse(localStorage.getItem('joc_v5_resp')) || {};
+    let usuarios = JSON.parse(localStorage.getItem('joc_v6_final')) || {};
     let usuariActiu = null, nivelActual = 1, estrellesTotals = 0, paraulaActual = null;
     let traços = [], traçActual = [], dibuixant = false, intentsFallits = 0;
     let audioCtx = null;
@@ -157,20 +161,17 @@
     const canvas = document.getElementById('pissarra');
     const ctx = canvas.getContext('2d');
 
-    // Ajust dinàmic del canvas
-    function ajustarPantalla() {
-        const contenedor = document.getElementById('zona-principal');
-        const ampleContenidor = contenedor.clientWidth * 0.9;
-        const altContenidor = contenedor.clientHeight * 0.45;
-        
-        canvas.width = Math.min(ampleContenidor, 600);
-        canvas.height = Math.min(altContenidor, 300);
+    function ajustarCanvas() {
+        // En mòbils fem que el canvas ocupi el màxim d'amplada possible
+        const ampleMax = Math.min(window.innerWidth - 40, 600);
+        canvas.width = ampleMax;
+        canvas.height = 300; 
         netejar();
     }
 
-    window.addEventListener('resize', ajustarPantalla);
+    window.addEventListener('resize', ajustarCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(ajustarCanvas, 200));
 
-    // Lògica de so
     function iniciarAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function sonar(f, durada = 0.2) {
         if (!audioCtx) return;
@@ -182,14 +183,13 @@
         o.start(); o.stop(audioCtx.currentTime + durada);
     }
 
-    // Joc
     function seleccionarUsuari(nom) {
         iniciarAudio();
         usuariActiu = nom; nivelActual = usuarios[nom].nivel || 1; estrellesTotals = usuarios[nom].estrelles || 0;
         document.getElementById('pantalla-usuari').style.display = 'none';
         document.getElementById('joc-contenedor').style.display = 'flex';
         document.getElementById('info-usuari').innerHTML = `<b>👤 ${nom}</b>`;
-        ajustarPantalla();
+        ajustarCanvas();
         següentParaula();
     }
 
@@ -203,7 +203,7 @@
             intentsFallits++;
             actualitzarVides();
             sonar(150, 0.3);
-            if (llegit.toLowerCase() === paraulaActual.p) alert("⚠️ Usa MINÚSCULES!");
+            if (llegit.toLowerCase() === paraulaActual.p) alert("⚠️ Recorda fer-ho en MINÚSCULES!");
             else alert(`He llegit "${llegit}"`);
             netejar();
             if (intentsFallits >= 3) { alert("Canviem de paraula!"); següentParaula(); }
@@ -224,13 +224,11 @@
         document.getElementById('btn-revisar').innerText = "Revisar 👍";
     }
 
-    // Dibuix
     function netejar() {
         ctx.clearRect(0,0,canvas.width,canvas.height); traços = [];
         ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
-        const h = canvas.height / 4;
-        for(let i=1; i<=3; i++) { ctx.beginPath(); ctx.moveTo(0, h*i); ctx.lineTo(canvas.width, h*i); ctx.stroke(); }
-        ctx.strokeStyle = '#333'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        [75, 150, 225].forEach(y => { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); });
+        ctx.strokeStyle = '#333'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     }
 
     function obtenirPos(e) {
@@ -242,17 +240,15 @@
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); });
     canvas.addEventListener('touchend', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
-    // Support per ratolí
     canvas.addEventListener('mousedown', (e) => { dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
     canvas.addEventListener('mousemove', (e) => { if(dibuixant) { const p = obtenirPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); traçActual.push([Math.round(p.x), Math.round(p.y)]); } });
     window.addEventListener('mouseup', () => { if(dibuixant) traços.push(traçActual); dibuixant = false; });
 
-    // Gestió d'usuaris
     function crearUsuari() {
         const nom = document.getElementById('nou-nom').value.trim();
         if(nom && !usuarios[nom]) {
             usuarios[nom] = { nivel: 1, estrelles: 0, avatar: "👤" };
-            localStorage.setItem('joc_v5_resp', JSON.stringify(usuarios));
+            localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
             renderPerfils();
             document.getElementById('nou-nom').value = '';
         }
@@ -269,7 +265,7 @@
     function renderRanking() {
         const r = document.getElementById('llista-ranking'); r.innerHTML = '';
         Object.keys(usuarios).map(n=>({n, s:usuarios[n].estrelles})).sort((a,b)=>b.s-a.s).slice(0,5)
-        .forEach((u,i)=> r.innerHTML += `<div style="display:flex;justify-content:space-between"><span>${i+1}. ${u.n}</span><span>${u.s}⭐</span></div>`);
+        .forEach((u,i)=> r.innerHTML += `<div style="display:flex;justify-content:space-between; margin-bottom:5px"><span>${i+1}. ${u.n}</span><span>${u.s}⭐</span></div>`);
     }
 
     function següentParaula() {
@@ -286,13 +282,13 @@
         usuarios[usuariActiu].estrelles = estrellesTotals; 
         if(estrellesTotals%5===0) nivelActual++; 
         usuarios[usuariActiu].nivel = nivelActual;
-        localStorage.setItem('joc_v5_resp', JSON.stringify(usuarios));
+        localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
         següentParaula(); 
     }
     
     function renderNivells() {
         const l = document.getElementById('llista-nivells'); l.innerHTML = '';
-        for(let i=Math.max(1, nivelActual-1); i<=nivelActual+1; i++) {
+        for(let i=Math.max(1, nivelActual-2); i<=nivelActual+2; i++) {
             l.innerHTML += `<div class="nivell-item ${i===nivelActual?'actiu':(i<nivelActual?'completat':'')}">Nivell ${i}</div>`;
         }
     }
