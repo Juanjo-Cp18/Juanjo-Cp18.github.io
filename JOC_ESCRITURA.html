@@ -15,11 +15,11 @@
 
     <style>
         :root { 
-            --fons: #fefaf0;    /* Crema suau */
-            --primari: #ffb07c; /* Préssec */
-            --exit: #b9fbc0;    /* Verd menta */
-            --error: #ffcfd2;   /* Rosa suau */
-            --cel: #a2d2ff;     /* Blau cel pastís */
+            --fons: #fefaf0; 
+            --primari: #ffb07c; 
+            --exit: #b9fbc0; 
+            --error: #ffcfd2; 
+            --cel: #a2d2ff; 
             --text: #555;
         }
         
@@ -83,7 +83,20 @@
             100% { opacity: 0; transform: translateY(-200px); }
         }
 
-        .perfil-card { background: white; color: var(--text); padding: 15px; border-radius: 15px; width: 100px; cursor: pointer; margin: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .perfil-card { 
+            background: white; color: var(--text); padding: 15px; border-radius: 15px; 
+            width: 110px; cursor: pointer; margin: 10px; text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative;
+        }
+        
+        .btn-eliminar {
+            position: absolute; top: -5px; right: -5px;
+            background: var(--error); color: #8b3a3a; border-radius: 50%;
+            width: 25px; height: 25px; display: flex; align-items: center;
+            justify-content: center; font-size: 12px; font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         .nivell-item { padding: 8px; margin: 4px; border-radius: 10px; font-size: 0.8rem; width: 90%; text-align: center; background: #f9f9f9; color: #888; }
         .nivell-item.actiu { background: var(--primari); color: white; }
         .nivell-item.completat { background: var(--exit); color: #2d5a27; }
@@ -93,6 +106,8 @@
         .btn-accio { padding: 15px 30px; color: var(--text); font-size: 1.1rem; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
         
         input { padding: 12px; border-radius: 12px; border: none; width: 150px; outline: none; font-family: inherit; }
+
+        .credits { font-size: 10px; opacity: 0.7; margin-top: 30px; color: #fff; }
     </style>
 </head>
 <body>
@@ -106,10 +121,13 @@
         <button onclick="crearUsuari()" style="background: var(--primari); padding:12px 20px; color:white;">Afegir</button>
     </div>
     <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center; width: 100%;"></div>
+    
     <div id="ranking-container" style="width: 100%; max-width: 400px; margin-top: 20px; background: rgba(255,255,255,0.3); padding: 15px; border-radius: 20px; color: #555;">
         <h3 style="margin:0">🏆 Millors Rècords</h3>
         <div id="llista-ranking"></div>
     </div>
+
+    <div class="credits">Ha estat ideat per Juanjo</div>
 </div>
 
 <div id="joc-contenedor">
@@ -184,6 +202,15 @@
         següentParaula();
     }
 
+    function eliminarUsuari(e, nom) {
+        e.stopPropagation(); // Evita que s'activi la selecció d'usuari
+        if(confirm(`Vols esborrar l'usuari ${nom}?`)) {
+            delete usuarios[nom];
+            localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
+            renderPerfils();
+        }
+    }
+
     function animarPremi() {
         const capa = document.getElementById('capa-premi');
         capa.classList.remove('animar-premi');
@@ -225,14 +252,12 @@
         try {
             const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }, // LÍNIA RECUPERADA (CRÍTICA)
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dades)
             });
             const res = await r.json();
             if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
-        } catch (e) { 
-            alert("Error de connexió"); 
-        }
+        } catch (e) { alert("Error de connexió"); }
         btn.innerText = "Revisar 👍";
     }
 
@@ -273,7 +298,11 @@
     function renderPerfils() {
         const c = document.getElementById('llista-perfils'); c.innerHTML = '';
         for (let n in usuarios) {
-            c.innerHTML += `<div class="perfil-card" onclick="seleccionarUsuari('${n}')">👤<br>${n}</div>`;
+            c.innerHTML += `
+                <div class="perfil-card" onclick="seleccionarUsuari('${n}')">
+                    <div class="btn-eliminar" onclick="eliminarUsuari(event, '${n}')">✕</div>
+                    👤<br>${n}
+                </div>`;
         }
         renderRanking();
     }
