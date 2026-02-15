@@ -12,140 +12,126 @@
 
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/588/588395.png">
-    <link rel="manifest" href='data:application/manifest+json,{"short_name":"Lletres","name":"Lletres Màgiques","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/588/588395.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}],"start_url":"index.html","display":"standalone","background_color":"#fefaf0","theme_color":"#a2d2ff"}'>
 
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
     <style>
-        /* NOVA PALETA DE COLORS PASTEL (AMIGABLE PER A LA VISTA) */
         :root { 
-            --fons: #fefaf0;    /* Crema molt suau */
-            --primari: #ffb07c; /* Préssec/Taronja pastís */
+            --fons: #fefaf0;    /* Crema suau */
+            --primari: #ffb07c; /* Préssec */
             --exit: #b9fbc0;    /* Verd menta */
-            --error: #ffcfd2;   /* Rosa/Vermell suau */
+            --error: #ffcfd2;   /* Rosa suau */
             --cel: #a2d2ff;     /* Blau cel pastís */
+            --text: #555;
         }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         html, body { 
-            margin: 0; 
-            padding: 0;
+            margin: 0; padding: 0;
             background-color: var(--fons); 
             font-family: 'Comic Sans MS', cursive, sans-serif; 
             min-height: 100%;
-            overflow-y: auto; 
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
         }
 
-        /* Pantalla d'Inici */
         #pantalla-usuari { 
             display: flex; flex-direction: column; align-items: center; 
             padding: 30px 20px; color: white; background: var(--cel);
-            min-height: 100vh;
+            min-height: 100vh; text-align: center;
         }
 
-        /* Estructura Principal */
-        #joc-contenedor { 
-            display: none; 
-            flex-direction: row; 
-            min-height: 100vh;
-        }
+        #joc-contenedor { display: none; flex-direction: row; min-height: 100vh; }
 
         #panell-lateral { 
-            width: 180px; 
-            background: white; 
-            border-right: 4px solid #f0f0f0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px 10px;
-            flex-shrink: 0;
+            width: 180px; background: white; border-right: 4px solid #f0f0f0; 
+            display: flex; flex-direction: column; align-items: center; 
+            padding: 20px 10px; flex-shrink: 0;
         }
 
         #zona-principal { 
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            padding: 20px;
-            gap: 15px;
+            flex-grow: 1; display: flex; flex-direction: column; 
+            align-items: center; padding: 15px; gap: 10px; width: 100%;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 850px) {
             #joc-contenedor { flex-direction: column; }
             #panell-lateral { 
-                width: 100%; 
-                flex-direction: row; 
-                justify-content: space-around; 
-                border-right: none; 
-                border-bottom: 4px solid #f0f0f0;
-                padding: 10px;
-                position: sticky; top: 0; z-index: 10;
+                width: 100%; flex-direction: row; justify-content: space-around; 
+                border-right: none; border-bottom: 4px solid #f0f0f0;
+                padding: 10px; position: sticky; top: 0; z-index: 10;
             }
             #llista-nivells { display: none; }
         }
 
         canvas { 
-            background: white; 
-            border-radius: 20px; 
-            border: 4px solid var(--cel); 
-            max-width: 100%; 
-            height: auto;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+            background: white; border-radius: 20px; border: 4px solid var(--cel); 
+            max-width: 95vw; height: auto;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.05); 
             touch-action: none; 
         }
 
-        .perfil-card { background: white; color: #555; padding: 15px; border-radius: 15px; width: 100px; cursor: pointer; margin: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
+        #capa-premi {
+            position: fixed; inset: 0; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; font-size: 6rem;
+        }
+        .animar-premi { animation: popEstrella 1.2s ease-out forwards; }
+        @keyframes popEstrella {
+            0% { transform: scale(0.2); opacity: 0; }
+            20% { opacity: 1; transform: scale(1.5); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: translateY(-200px); }
+        }
+
+        .perfil-card { background: white; color: var(--text); padding: 15px; border-radius: 15px; width: 100px; cursor: pointer; margin: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .nivell-item { padding: 8px; margin: 4px; border-radius: 10px; font-size: 0.8rem; width: 90%; text-align: center; background: #f9f9f9; color: #888; }
         .nivell-item.actiu { background: var(--primari); color: white; }
         .nivell-item.completat { background: var(--exit); color: #2d5a27; }
 
         button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
         button:active { transform: scale(0.95); }
-        .btn-accio { padding: 15px 30px; color: #555; font-size: 1.1rem; }
-        /* El botó de revisar el posem amb text fosc per a millor contrast sobre menta */
-        #btn-revisar { color: #2d5a27; }
-
-        #ranking-container { width: 100%; max-width: 400px; margin-top: 20px; background: rgba(255,255,255,0.3); padding: 15px; border-radius: 20px; color: #555; }
+        .btn-accio { padding: 15px 30px; color: var(--text); font-size: 1.1rem; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
+        
+        input { padding: 12px; border-radius: 12px; border: none; width: 150px; outline: none; font-family: inherit; }
     </style>
 </head>
 <body>
 
+<div id="capa-premi">🌟</div>
+
 <div id="pantalla-usuari">
-    <h1 style="text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">Lletres Màgiques ✏️</h1>
+    <h1>Lletres Màgiques ✏️</h1>
     <div style="margin-bottom: 25px;">
-        <input type="text" id="nou-nom" placeholder="El teu nom..." style="padding:12px; border-radius:12px; border:none; width: 150px; outline: none;">
-        <button onclick="crearUsuari()" style="background: var(--primari); padding:12px 20px; color:white; box-shadow: 0 4px 0px #e69a65;">Afegir</button>
+        <input type="text" id="nou-nom" placeholder="El teu nom...">
+        <button onclick="crearUsuari()" style="background: var(--primari); padding:12px 20px; color:white;">Afegir</button>
     </div>
     <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center; width: 100%;"></div>
-    <div id="ranking-container">
-        <h3 style="margin-top:0">🏆 Millors Rècords</h3>
+    <div id="ranking-container" style="width: 100%; max-width: 400px; margin-top: 20px; background: rgba(255,255,255,0.3); padding: 15px; border-radius: 20px; color: #555;">
+        <h3 style="margin:0">🏆 Millors Rècords</h3>
         <div id="llista-ranking"></div>
     </div>
 </div>
 
 <div id="joc-contenedor">
     <div id="panell-lateral">
-        <div id="info-usuari" style="color: #555;"></div>
-        <div style="font-size: 1.5rem; margin: 15px 0;">⭐ <span id="num-totals">0</span></div>
-        <div id="llista-nivells" style="width: 100%; overflow-y: auto;"></div>
-        <button onclick="tornarAInici()" style="background:#f0f0f0; color:#888; padding:10px; margin-top:20px; width:100%; border-radius: 10px;">Sortir</button>
+        <div id="info-usuari" style="color: var(--text);"></div>
+        <div style="font-size: 1.5rem; margin: 10px 0;">⭐ <span id="num-totals">0</span></div>
+        <div id="llista-nivells" style="width: 100%;"></div>
+        <button onclick="tornarAInici()" style="background:#f0f0f0; color:#888; padding:8px; margin-top:auto; width:100%; border-radius: 10px;">Sortir</button>
     </div>
 
     <div id="zona-principal">
-        <div id="contenidor-vides" style="font-size: 2rem;">❤️❤️❤️</div>
-        <div id="targeta" style="background:white; padding:20px; border-radius:25px; text-align:center; min-width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <div id="imatge-paraula" style="font-size:60px;"></div>
-            <div id="nom-paraula" style="font-size:35px; font-weight:bold; border-top:2px dashed #f0f0f0; color: #444;"></div>
+        <div id="contenidor-vides" style="font-size: 1.8rem;">❤️❤️❤️</div>
+        <div id="targeta" style="background:white; padding:15px; border-radius:25px; text-align:center; min-width: 200px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 3px solid #fff;">
+            <div id="imatge-paraula" style="font-size:50px;"></div>
+            <div id="nom-paraula" style="font-size:30px; font-weight:bold; border-top:2px dashed #f0f0f0; color: #444;"></div>
         </div>
         
         <canvas id="pissarra"></canvas>
         
-        <div style="display:flex; gap:15px; margin-top: 10px;">
+        <div style="display:flex; gap:15px; margin: 10px 0;">
             <button onclick="netejar()" class="btn-accio" style="background:var(--error); color: #8b3a3a;">Esborrar</button>
-            <button id="btn-revisar" onclick="comprovar()" class="btn-accio" style="background:var(--exit);">Revisar 👍</button>
+            <button id="btn-revisar" onclick="comprovar()" class="btn-accio" style="background:var(--exit); color: #2d5a27;">Revisar 👍</button>
         </div>
     </div>
 </div>
@@ -168,13 +154,14 @@
 
     function ajustarCanvas() {
         const ampleMax = Math.min(window.innerWidth - 40, 600);
+        const alturaDisponible = window.innerHeight - (window.innerWidth < 850 ? 280 : 380);
         canvas.width = ampleMax;
-        canvas.height = 300; 
+        canvas.height = Math.max(250, Math.min(350, alturaDisponible)); 
         netejar();
     }
 
     window.addEventListener('resize', ajustarCanvas);
-    window.addEventListener('orientationchange', () => setTimeout(ajustarCanvas, 200));
+    window.addEventListener('orientationchange', () => setTimeout(ajustarCanvas, 300));
 
     function iniciarAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
     function sonar(f, durada = 0.2) {
@@ -197,11 +184,18 @@
         següentParaula();
     }
 
+    function animarPremi() {
+        const capa = document.getElementById('capa-premi');
+        capa.classList.remove('animar-premi');
+        void capa.offsetWidth; 
+        capa.classList.add('animar-premi');
+    }
+
     function validar(llegit) {
         if(llegit === paraulaActual.p) {
             estrellesTotals++;
             sonar(523, 0.5);
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
+            animarPremi(); 
             avançar();
         } else {
             intentsFallits++;
@@ -216,29 +210,47 @@
 
     async function comprovar() {
         if(traços.length === 0) return;
-        document.getElementById('btn-revisar').innerText = "...";
-        const dades = { "options": "enable_pre_space", "requests": [{ "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), "language": "ca" }] };
+        const btn = document.getElementById('btn-revisar');
+        btn.innerText = "...";
+        
+        const dades = { 
+            "options": "enable_pre_space", 
+            "requests": [{ 
+                "writing_guide": { "writing_area_width": canvas.width, "writing_area_height": canvas.height }, 
+                "ink": traços.map(t => [t.map(p => p[0]), t.map(p => p[1])]), 
+                "language": "ca" 
+            }] 
+        };
+
         try {
             const r = await fetch('https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dades)
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }, // LÍNIA RECUPERADA (CRÍTICA)
+                body: JSON.stringify(dades)
             });
             const res = await r.json();
             if(res[0] === "SUCCESS") validar(res[1][0][1][0]);
-        } catch (e) { alert("Error de connexió"); }
-        document.getElementById('btn-revisar').innerText = "Revisar 👍";
+        } catch (e) { 
+            alert("Error de connexió"); 
+        }
+        btn.innerText = "Revisar 👍";
     }
 
     function netejar() {
         ctx.clearRect(0,0,canvas.width,canvas.height); traços = [];
-        ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
-        [75, 150, 225].forEach(y => { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); });
+        ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 2;
+        const espai = canvas.height / 4;
+        [1, 2, 3].forEach(i => { ctx.beginPath(); ctx.moveTo(0, espai*i); ctx.lineTo(canvas.width, espai*i); ctx.stroke(); });
         ctx.strokeStyle = '#555'; ctx.lineWidth = 6; ctx.lineCap = 'round';
     }
 
     function obtenirPos(e) {
         const r = canvas.getBoundingClientRect();
         const t = e.touches ? e.touches[0] : e;
-        return { x: t.clientX - r.left, y: t.clientY - r.top };
+        return { 
+            x: (t.clientX - r.left) * (canvas.width / r.width), 
+            y: (t.clientY - r.top) * (canvas.height / r.height) 
+        };
     }
 
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); dibuixant = true; traçActual = []; const p = obtenirPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
@@ -251,7 +263,7 @@
     function crearUsuari() {
         const nom = document.getElementById('nou-nom').value.trim();
         if(nom && !usuarios[nom]) {
-            usuarios[nom] = { nivel: 1, estrelles: 0, avatar: "👤" };
+            usuarios[nom] = { nivel: 1, estrelles: 0 };
             localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
             renderPerfils();
             document.getElementById('nou-nom').value = '';
@@ -287,7 +299,7 @@
         if(estrellesTotals%5===0) nivelActual++; 
         usuarios[usuariActiu].nivel = nivelActual;
         localStorage.setItem('joc_v6_final', JSON.stringify(usuarios));
-        següentParaula(); 
+        setTimeout(següentParaula, 1000); 
     }
     
     function renderNivells() {
