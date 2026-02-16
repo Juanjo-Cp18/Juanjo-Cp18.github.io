@@ -34,23 +34,25 @@
             -webkit-overflow-scrolling: touch;
         }
 
+        /* Pantalla d'inici amb lletres més grans */
         #pantalla-usuari { 
             display: flex; flex-direction: column; align-items: center; 
             padding: 30px 20px; color: white; background: var(--cel);
             min-height: 100vh; text-align: center;
         }
+        #pantalla-usuari h1 { font-size: 3.5rem; margin-bottom: 40px; }
 
         #joc-contenedor { display: none; flex-direction: row; min-height: 100vh; }
 
         #panell-lateral { 
-            width: 180px; background: white; border-right: 4px solid #f0f0f0; 
+            width: 220px; background: white; border-right: 4px solid #f0f0f0; 
             display: flex; flex-direction: column; align-items: center; 
             padding: 20px 10px; flex-shrink: 0;
         }
 
         #zona-principal { 
             flex-grow: 1; display: flex; flex-direction: column; 
-            align-items: center; padding: 10px; gap: 8px; width: 100%;
+            align-items: center; padding: 10px; gap: 15px; width: 100%;
         }
 
         @media (max-width: 850px) {
@@ -73,7 +75,7 @@
         #capa-premi {
             position: fixed; inset: 0; pointer-events: none;
             display: flex; align-items: center; justify-content: center;
-            z-index: 1000; opacity: 0; font-size: 6rem;
+            z-index: 1000; opacity: 0; font-size: 10rem;
         }
         .animar-premi { animation: popEstrella 1.2s ease-out forwards; }
         @keyframes popEstrella {
@@ -85,41 +87,44 @@
 
         #cartell-nivell {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            background: var(--primari); color: white; padding: 20px 40px;
-            border-radius: 30px; font-size: 2rem; z-index: 2000;
+            background: var(--primari); color: white; padding: 40px 60px;
+            border-radius: 40px; font-size: 3.5rem; z-index: 2000;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); pointer-events: none;
             transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-align: center; border: 5px solid white;
+            text-align: center; border: 8px solid white;
         }
         #cartell-nivell.show { transform: translate(-50%, -50%) scale(1); }
 
         .perfil-card { 
-            background: white; color: var(--text); padding: 15px; border-radius: 15px; 
-            width: 110px; cursor: pointer; margin: 10px; text-align: center; 
+            background: white; color: var(--text); padding: 20px; border-radius: 20px; 
+            width: 150px; cursor: pointer; margin: 15px; text-align: center; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative;
+            font-size: 1.5rem;
         }
         
         .btn-eliminar {
-            position: absolute; top: -5px; right: -5px;
+            position: absolute; top: -10px; right: -10px;
             background: var(--error); color: #8b3a3a; border-radius: 50%;
-            width: 25px; height: 25px; display: flex; align-items: center;
-            justify-content: center; font-size: 12px; font-weight: bold;
+            width: 35px; height: 35px; display: flex; align-items: center;
+            justify-content: center; font-size: 18px; font-weight: bold;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .nivell-item { padding: 8px; margin: 4px; border-radius: 10px; font-size: 0.8rem; width: 90%; text-align: center; background: #f9f9f9; color: #888; }
-        .nivell-item.actiu { background: var(--primari); color: white; }
+        .nivell-item { padding: 12px; margin: 6px; border-radius: 12px; font-size: 1.2rem; width: 90%; text-align: center; background: #f9f9f9; color: #888; }
+        .nivell-item.actiu { background: var(--primari); color: white; font-weight: bold; }
         .nivell-item.completat { background: var(--exit); color: #2d5a27; }
 
-        button { cursor: pointer; border: none; border-radius: 50px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
+        button { cursor: pointer; border: none; border-radius: 60px; font-weight: bold; font-family: inherit; transition: transform 0.1s; }
         button:active { transform: scale(0.95); }
-        .btn-accio { padding: 12px 25px; color: var(--text); font-size: 1rem; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
         
-        input { padding: 12px; border-radius: 12px; border: none; width: 150px; outline: none; font-family: inherit; }
+        /* Botons el doble de grans */
+        .btn-accio { padding: 20px 40px; color: var(--text); font-size: 1.8rem; box-shadow: 0 6px 0 rgba(0,0,0,0.05); }
+        
+        input { padding: 18px; border-radius: 15px; border: none; width: 250px; outline: none; font-family: inherit; font-size: 1.5rem; }
 
-        .credits { font-size: 10px; opacity: 0.7; margin-top: 30px; color: #fff; }
+        .credits { font-size: 14px; opacity: 0.8; margin-top: 40px; color: #fff; }
 
-        .grup-botons { display: flex; gap: 15px; margin: 5px 0; }
+        .grup-botons { display: flex; gap: 20px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -129,15 +134,15 @@
 
 <div id="pantalla-usuari">
     <h1>Lletres Màgiques ✏️</h1>
-    <div style="margin-bottom: 25px;">
+    <div style="margin-bottom: 35px;">
         <input type="text" id="nou-nom" placeholder="El teu nom...">
-        <button onclick="crearUsuari()" style="background: var(--primari); padding:12px 20px; color:white;">Afegir</button>
+        <button onclick="crearUsuari()" style="background: var(--primari); padding:18px 30px; color:white; font-size:1.5rem;">Afegir</button>
     </div>
     <div class="llista-perfils" id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center; width: 100%;"></div>
     
-    <div id="ranking-container" style="width: 100%; max-width: 400px; margin-top: 20px; background: rgba(255,255,255,0.3); padding: 15px; border-radius: 20px; color: #555;">
-        <h3 style="margin:0">🏆 Millors Rècords</h3>
-        <div id="llista-ranking"></div>
+    <div id="ranking-container" style="width: 100%; max-width: 500px; margin-top: 30px; background: rgba(255,255,255,0.3); padding: 25px; border-radius: 30px; color: #555;">
+        <h2 style="margin:0; font-size: 2rem;">🏆 Millors Rècords</h2>
+        <div id="llista-ranking" style="font-size: 1.5rem; margin-top: 15px;"></div>
     </div>
 
     <div class="credits">Ha estat ideat per Juanjo</div>
@@ -145,18 +150,18 @@
 
 <div id="joc-contenedor">
     <div id="panell-lateral">
-        <div id="info-usuari" style="color: var(--text);"></div>
-        <div style="font-size: 1.5rem; margin: 10px 0;">⭐ <span id="num-totals">0</span></div>
+        <div id="info-usuari" style="color: var(--text); font-size: 1.8rem;"></div>
+        <div style="font-size: 2.5rem; margin: 15px 0;">⭐ <span id="num-totals">0</span></div>
         <div id="llista-nivells" style="width: 100%;"></div>
-        <button onclick="tornarAInici()" style="background:#f0f0f0; color:#888; padding:8px; margin-top:auto; width:100%; border-radius: 10px;">Sortir</button>
+        <button onclick="tornarAInici()" style="background:#f0f0f0; color:#888; padding:15px; margin-top:auto; width:100%; border-radius: 15px; font-size: 1.2rem;">Sortir</button>
     </div>
 
     <div id="zona-principal">
-        <div id="contenidor-vides" style="font-size: 1.5rem;">❤️❤️❤️</div>
+        <div id="contenidor-vides" style="font-size: 3.5rem;">❤️❤️❤️</div>
         
-        <div id="targeta" style="background:white; padding:10px; border-radius:20px; text-align:center; min-width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 3px solid #fff;">
-            <div id="imatge-paraula" style="font-size:40px;"></div>
-            <div id="nom-paraula" style="font-size:25px; font-weight:bold; border-top:2px dashed #f0f0f0; color: #444;"></div>
+        <div id="targeta" style="background:white; padding:20px; border-radius:30px; text-align:center; min-width: 300px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 5px solid #fff;">
+            <div id="imatge-paraula" style="font-size:100px; line-height: 1.2;"></div>
+            <div id="nom-paraula" style="font-size:60px; font-weight:bold; border-top:4px dashed #f0f0f0; color: #444; margin-top: 10px; padding-top: 10px;"></div>
         </div>
 
         <div class="grup-botons">
@@ -174,6 +179,7 @@
 </div>
 
 <script>
+    // La base de dades es manté igual per no afectar el funcionament
     const baseDeDades = [
         {p: "gat", i: "🐱"}, {p: "gos", i: "🐶"}, {p: "porc", i: "🐷"}, {p: "ruc", i: "🫏"},
         {p: "vaca", i: "🐮"}, {p: "lleó", i: "🦁"}, {p: "mico", i: "🐒"}, {p: "peix", i: "🐟"},
@@ -214,9 +220,8 @@
     const ctx = canvas.getContext('2d');
 
     function ajustarCanvas() {
-        const ampleMax = Math.min(window.innerWidth - 40, 600);
-        const alturaDisponible = window.innerHeight - (window.innerWidth < 850 ? 300 : 400);
-        // Canvas més petit per adaptar millor
+        const ampleMax = Math.min(window.innerWidth - 40, 650);
+        const alturaDisponible = window.innerHeight - (window.innerWidth < 850 ? 350 : 450);
         canvas.width = ampleMax;
         canvas.height = Math.max(180, Math.min(260, alturaDisponible)); 
         netejar();
@@ -349,7 +354,7 @@
     function renderRanking() {
         const r = document.getElementById('llista-ranking'); r.innerHTML = '';
         Object.keys(usuarios).map(n=>({n, s:usuarios[n].estrelles})).sort((a,b)=>b.s-a.s).slice(0,5)
-        .forEach((u,i)=> r.innerHTML += `<div style="display:flex;justify-content:space-between; margin-bottom:5px"><span>${i+1}. ${u.n}</span><span>${u.s}⭐</span></div>`);
+        .forEach((u,i)=> r.innerHTML += `<div style="display:flex;justify-content:space-between; margin-bottom:10px"><span>${i+1}. ${u.n}</span><span>${u.s}⭐</span></div>`);
     }
 
     function següentParaula() {
