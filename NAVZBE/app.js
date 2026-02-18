@@ -25,6 +25,8 @@ let wakeLock = null; // Screen Wake Lock instance
 let noSleepVideo = null; // Video fallback
 let noSleepAudio = null; // Audio fallback (Web Audio API)
 let db = null; // Firebase Database instance
+let gpsHeartbeat = Date.now();
+let gpsRetryCount = 0;
 
 // --- Initialization ---
 async function init() {
@@ -160,6 +162,7 @@ async function startGPSTracking() {
                     const heading = position.coords.heading || 0;
 
                     // Update UI
+                    gpsHeartbeat = Date.now();
                     onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
                 }
             });
@@ -174,6 +177,8 @@ async function startGPSTracking() {
 
         // Stage 1: Coarse hit to wake up the sensor chip
         navigator.geolocation.getCurrentPosition((pos) => {
+            gpsHeartbeat = Date.now();
+            gpsRetryCount = 0;
             console.log("GPS Despertado (Coarse Fix). Activando Watch Alta Precisión...");
 
             // Stage 2: Immediate Watch with High Accuracy
@@ -181,8 +186,10 @@ async function startGPSTracking() {
                 const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
                 const heading = position.coords.heading || 0;
                 onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
+                gpsHeartbeat = Date.now();
             }, (err) => {
                 console.error("Error persistente en GPS (Watch):", err);
+                gpsHeartbeat = Date.now(); // Error also counts as heartbeat (at least it's talking)
                 onLocationError(err);
                 if (err.code === 3) setTimeout(startGPSTracking, 3000);
             }, {
@@ -227,6 +234,16 @@ async function startGPSTracking() {
                 maximumAge: 0
             });
         }, 5000);
+
+        // Heartbeat Watchdog (v1.15)
+        if (window.heartbeatTimer) clearInterval(window.heartbeatTimer);
+        window.heartbeatTimer = setInterval(() => {
+            if (Date.now() - gpsHeartbeat > 15000) {
+                console.warn("Heartbeat failure. Restarting GPS...");
+                gpsHeartbeat = Date.now();
+                startGPSTracking();
+            }
+        }, 10000);
 
     } else if (!window.Capacitor) {
         console.warn("Plugins de Capacitor no inicializados aún...");
@@ -815,17 +832,29 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
 }
 
 function onLocationError(e) {
-    console.warn("GPS Error:", e);
-    let errorMsg = "Sin señal GPS.";
+    console.warn("GPS Error Raw:", e);
+    gpsHeartbeat = Date.now();
 
-    // Detailed error feedback for user
+    let errorMsg = `Error GPS [C:${e.code}]: `;
+
+    // Add raw message if available
+    if (e.message) errorMsg += e.message;
+    else if (e.code === 1) errorMsg += "Permiso denegado.";
+    else if (e.code === 2) errorMsg += "Posición no disponible.";
+    else if (e.code === 3) errorMsg += "Tiempo agotado.";
+
+    // Action plan logic
+    if (e.code === 3) {
+        gpsRetryCount++;
+        if (gpsRetryCount > 2) {
+            console.warn("Too many HighAccuracy timeouts. Relaxing requirements...");
+            document.getElementById('status-pill').innerText = "⚠️ Relajando precisión por falta de respuesta...";
+            // We don't stop, the polling loop/watchers will eventually hit something
+        }
+    }
+
     if (!window.isSecureContext && window.location.hostname !== 'localhost') {
         errorMsg = "❌ Falta HTTPS. Chrome bloquea GPS en sitios no seguros.";
-    } else if (e.code === 1) {
-        errorMsg += " Permiso denegado.";
-    } else if (e.code === 3) {
-        errorMsg += " Tiempo agotado. Reintentando...";
-        setTimeout(startGPSTracking, 3000);
     }
 
     document.getElementById('status-pill').innerText = errorMsg;
