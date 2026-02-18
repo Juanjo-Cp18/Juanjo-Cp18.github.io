@@ -77,8 +77,8 @@ async function init() {
             try {
                 position = await fetchAttempt(10000); // 10s first try
             } catch (e) {
-                console.warn("Primer intento GPS fallido, reintentando con 20s...");
-                position = await fetchAttempt(20000); // 20s second try
+                console.warn("Primer intento GPS fallido, reintentando con 60s (v1.14)...");
+                position = await fetchAttempt(60000); // 60s second try for cold start
             }
 
             if (position && position.coords) {
@@ -146,9 +146,8 @@ async function startGPSTracking() {
 
             console.log("Iniciando seguimiento GPS nativo con ajustes robustos...");
             watchId = await Geolocation.watchPosition({
-                enableHighAccuracy: true,
-                timeout: 15000,     // Aumentado a 15 segundos
-                maximumAge: 1000    // Datos frescos (1 segundo)
+                timeout: 30000,     // Aumentado a 30 segundos para v1.14
+                maximumAge: 5000    // Permitir datos ligeramente antiguos para acelerar lock
             }, (position, err) => {
                 if (err) {
                     console.warn("GPS Watch Error:", err);
@@ -188,8 +187,8 @@ async function startGPSTracking() {
                 if (err.code === 3) setTimeout(startGPSTracking, 3000);
             }, {
                 enableHighAccuracy: true,
-                timeout: 30000,
-                maximumAge: 0
+                timeout: 35000, // Extendido a 35s
+                maximumAge: 5000
             });
 
         }, (err) => {
@@ -224,7 +223,7 @@ async function startGPSTracking() {
                 console.warn("Poll GPS Error:", err.message);
             }, {
                 enableHighAccuracy: true,
-                timeout: 8000,
+                timeout: 25000, // V1.14: Timeout largo para no forzar coarse
                 maximumAge: 0
             });
         }, 5000);
@@ -727,12 +726,17 @@ function onLocationFound(e) {
 
     const accuracy = e.accuracy || 0;
 
-    // v1.13 Accuracy Lockdown
+    // v1.13/v1.14 Accuracy Lockdown
     // If we get a very poor accuracy (>200m) and we already have a previous reasonable position, ignore it.
-    // This prevents the "flecha" from jumping back to a cellphone tower (2000m) while the real GPS is warming up.
     if (accuracy > 200 && userMarker) {
         console.log(`Rechazando ubicación poco precisa (${Math.round(accuracy)}m)`);
         document.getElementById('status-pill').innerHTML = `📡 Baja precisión (${Math.round(accuracy)}m). Buscando satélites...`;
+        return;
+    }
+
+    // v1.14 Initial Filter: If accuracy is 2000m (tower), don't show the marker yet
+    if (accuracy >= 1500 && !userMarker) {
+        document.getElementById('status-pill').innerHTML = `🛰️ Esperando señal satélite segura (Precisión: ${Math.round(accuracy)}m)...`;
         return;
     }
 
