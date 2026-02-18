@@ -1,0 +1,24 @@
+GUÍA DE INSTALACIÓN - PLANO PARA CROQUIS
+========================================
+
+PARA INSTALAR EN UN NUEVO ORDENADOR:
+------------------------------------
+
+1.  Copia esta carpeta completa (con todos los archivos) al nuevo PC.
+    (Puede ser en el Escritorio, Documentos o un USB).
+
+2.  Busca el archivo:
+    >> INSTALAR_PROGRAMA.bat
+
+3.  IMPORTANTE: Haz clic derecho sobre él y elige:
+    >> "Ejecutar como administrador"
+
+4.  Sigue las instrucciones en pantalla.
+    - El programa te preguntará si tienes Inkscape instalado.
+    - Se instalará automáticamente en el disco C:\.
+    - Se creará un icono "Plano Croquis" en tu escritorio.
+
+Una vez termine, ya puedes borrar la carpeta de instalación si quieres, el programa ya estará guardado en el sistema.
+
+-------------------------------------------------
+Oficial A500015 - Policia Local Sóller

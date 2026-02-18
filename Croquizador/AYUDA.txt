@@ -1,0 +1,37 @@
+MANUAL DE USO - CROQUIZADOR
+===========================
+
+1. INICIAR EL PROGRAMA
+----------------------
+Haz doble clic en el icono "Mapa Inkscape" del Escritorio (o en `run.bat` dentro de la carpeta).
+Se abrirá una ventana de navegador con el mapa.
+
+2. BUSCAR UBICACIÓN
+-------------------
+- Escribe el Municipio (por defecto Sóller).
+- Escribe la Calle.
+- Escribe el Número (Opcional).
+- Pulsa "Buscar".
+
+**CORRECCIÓN MANUAL**
+Si el marcador no cae exactamente en el punto del accidente o en la casa correcta:
+1. Haz clic sobre el marcador azul.
+2. Sin soltar el botón, arrástralo hasta el punto exacto.
+3. Suéltalo.
+
+3. EXPORTAR A INKSCAPE
+----------------------
+1. Pulsa el botón gris "Seleccionar Archivo SVG".
+2. Elige tu plantilla o croquis de Inkscape donde quieres insertar el mapa.
+3. Ajusta el Zoom del mapa para ver el área que te interesa.
+4. Pulsa el botón verde "CAPTURAR E INSERTAR".
+
+El programa insertará el mapa limpio (sin textos ni botones) en tu archivo y abrirá Inkscape automáticamente.
+
+4. SOLUCIÓN DE PROBLEMAS
+------------------------
+- Si el mapa sale negro o con error: Asegúrate de tener conexión a Internet.
+- Si quieres cerrar el programa totalmente: Busca el archivo `stop.bat` en la carpeta y ejecútalo.
+
+-------------------------------------------------
+Oficial A500015
