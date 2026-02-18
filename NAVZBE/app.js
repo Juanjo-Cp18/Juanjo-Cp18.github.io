@@ -805,48 +805,56 @@ function playSiren() {
     osc.stop(audioCtx.currentTime + 1);
 }
 
-// --- Wake Lock Logic (Triple-Layer for Maximum Compatibility) ---
+// --- Wake Lock Logic (Triple-Layer "Ultra" for iOS 18) ---
 
 async function requestWakeLock() {
+    console.log("🔄 Iniciando cadena de Keep-Awake...");
     let layers = [];
 
     // 1. Layer: Native Wake Lock (Android/Desktop/iOS 17+)
     if ('wakeLock' in navigator) {
         try {
+            // If already locked, we release first to ensure a clean re-request
+            if (wakeLock) {
+                try { await wakeLock.release(); } catch (e) { }
+                wakeLock = null;
+            }
             wakeLock = await navigator.wakeLock.request('screen');
-            console.log("✅ Layer 1: Native Wake Lock activo");
+            console.log("✅ Capa 1: Native Wake Lock activo");
             layers.push('N');
 
             wakeLock.addEventListener('release', () => {
-                console.log("ℹ️ Layer 1 liberado");
+                console.log("ℹ️ Capa 1 liberado");
                 wakeLock = null;
                 updateAwakeStatus();
             });
         } catch (err) {
-            console.warn(`❌ Layer 1 Falló: ${err.message}`);
+            console.warn(`❌ Capa 1 Falló: ${err.message}`);
         }
     }
 
-    // 2. Layer: Silent Video Loop (Classic iOS Hack)
+    // 2. Layer: Silent Video Loop
+    // Improved for iOS 18: Slightly higher opacity and ensuring it's in the DOM
     try {
         if (!noSleepVideo) {
             noSleepVideo = document.createElement('video');
             noSleepVideo.setAttribute('playsinline', '');
             noSleepVideo.setAttribute('muted', '');
             noSleepVideo.setAttribute('loop', '');
-            noSleepVideo.style.cssText = 'position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.01; pointer-events:none; z-index:-1;';
+            noSleepVideo.style.cssText = 'position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.02; pointer-events:none; z-index:-1;';
             noSleepVideo.src = 'data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDJpc29tYXZjMQAAAZptb292AAAAbG12aGQAAAAA36Y+Sd+mPkkAAAPoAAAAKAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACUHRyYWsAAABcdGtoZAAAAAPfpt5J36beSQAAAAEAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAGdlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAA8AAAAAAAEAAAAAAZhtZGlhAAAAIG1kaGQAAAAA36Y+Sd+mPkkAAGmQAABpYABVxAAAAAAAbWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAF1bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcYmxyZfAAAAAAAAAAbmFtZSAAAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAHN0YmwaAAAAfHN0c2QAAAAAAAAAAQAAAGZ2cGMxAAAAAAABAAEAAAAAAAgAEAAAAAAAAAAAAAAAAAAAABYAAABCHGNscnAAAAAYAAAVAAAAAAAFAAkAAAVAAAAAAAUACQAAABZhcHBsAAAAEWNvbHIAbmNscAAAAAAKAAhjb2xyAAAAHGNjbHIAAAAYYXBwbAAAAAsAbmNscAAAAAAKAAhzdHRzAAAAAAAAAAEAAAABAAABAAAAABpzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzelAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAFG1kYXQAAAAAAAAAbWRhdAAAAA==';
             document.body.appendChild(noSleepVideo);
         }
-        await noSleepVideo.play();
-        console.log("✅ Layer 2: Video Fallback activo");
+        if (noSleepVideo.paused) {
+            await noSleepVideo.play();
+            console.log("✅ Capa 2: Video Fallback activo");
+        }
         layers.push('V');
     } catch (err) {
-        console.warn("⚠️ Layer 2 Falló:", err);
+        console.warn("⚠️ Capa 2 Falló:", err);
     }
 
     // 3. Layer: Silent Audio (Web Audio API Loop)
-    // Helps keep the process alive in background/low-power modes on iOS
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
@@ -855,7 +863,6 @@ async function requestWakeLock() {
             try { noSleepAudio.stop(); } catch (e) { }
         }
 
-        // Create a 1s silent buffer
         const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
         const source = audioCtx.createBufferSource();
         source.buffer = buffer;
@@ -863,14 +870,22 @@ async function requestWakeLock() {
         source.connect(audioCtx.destination);
         source.start();
         noSleepAudio = source;
-        console.log("✅ Layer 3: Audio Fallback activo");
+        console.log("✅ Capa 3: Audio Fallback activo");
         layers.push('A');
     } catch (err) {
-        console.warn("⚠️ Layer 3 Falló:", err);
+        console.warn("⚠️ Capa 3 Falló:", err);
     }
 
     updateAwakeStatus(layers);
 }
+
+// Aggressive Re-request loop (every 30 seconds)
+setInterval(async () => {
+    if (document.visibilityState === 'visible') {
+        console.log("⏱️ Re-solicitando Keep-Awake (Loop 30s)...");
+        await requestWakeLock();
+    }
+}, 30000);
 
 function updateAwakeStatus(layersArg) {
     const indicator = document.getElementById('aw-status');
@@ -892,19 +907,17 @@ function updateAwakeStatus(layersArg) {
     }
 }
 
-// Re-request wake lock when page becomes visible again (Essential for iOS)
+// Re-request wake lock when page becomes visible again
 document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible') {
-        console.log("Page visible, re-requesting Keep-Awake...");
         await requestWakeLock();
     }
 });
 
-// Also try to request on ANY interaction (iOS requires user gesture for media)
+// Triple-Layer trigger on ANY touch (Safari requires user gesture)
 document.addEventListener('touchstart', async () => {
-    // Only if not already fully active
-    const active = !!wakeLock || (noSleepVideo && !noSleepVideo.paused);
-    if (!active) await requestWakeLock();
+    // We trigger it regardless of status on every touch to satisfy media policies
+    await requestWakeLock();
 }, { passive: true });
 
 // --- PWA Installation Logic ---
