@@ -39,16 +39,21 @@
         </div>
     </div>
 
-    <!-- UI Toggle Button -->
-    <button id="ui-toggle-btn" onclick="toggleUI()"
-        style="position: absolute; top: 10px; right: 10px; z-index: 2000; width: auto; padding: 8px 12px; font-size: 20px; background: white; color: #333; border: 2px solid #ccc; border-radius: 8px;">👁️</button>
+    <!-- Top Right Actions Wrapper -->
+    <div id="top-right-controls">
+        <!-- UI Toggle Button -->
+        <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos">👁️</button>
 
-    <!-- UI Driver Sidebar -->
+        <!-- Center Map Button -->
+        <button id="center-btn" title="Centrar Mapa" onclick="centerMap()">🎯</button>
+    </div>
+
+    <!-- GPS Status (Top Center) -->
+    <div id="status-pill">...</div>
+
+    <!-- UI Driver Sidebar (Right Center) -->
     <div class="controls" id="main-controls">
-        <button id="center-btn" title="Centrar Mapa" onclick="centerMap()"
-            style="background-color: #2196F3;">🎯</button>
-
-        <div id="status-pill">...</div>
+        <!-- Other controls could go here if needed -->
     </div>
 
     <!-- Wrong Way Alert Overlay -->

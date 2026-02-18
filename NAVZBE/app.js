@@ -238,16 +238,19 @@ let isUIVisible = true;
 function toggleUI() {
     isUIVisible = !isUIVisible;
     const controls = document.getElementById('main-controls');
-    const btn = document.getElementById('ui-toggle-btn');
+    const centerBtn = document.getElementById('center-btn');
+    const toggleBtn = document.getElementById('ui-toggle-btn');
 
     if (isUIVisible) {
-        controls.style.display = 'block';
-        btn.innerText = '👁️';
-        btn.style.opacity = '1';
+        if (controls) controls.style.display = 'block';
+        if (centerBtn) centerBtn.style.display = 'flex';
+        toggleBtn.innerText = '👁️';
+        if (toggleBtn.style) toggleBtn.style.opacity = '1';
     } else {
-        controls.style.display = 'none';
-        btn.innerText = '👁️‍🗨️'; // Closed eye or similar
-        btn.style.opacity = '0.5'; // Make it less intrusive
+        if (controls) controls.style.display = 'none';
+        if (centerBtn) centerBtn.style.display = 'none';
+        toggleBtn.innerText = '👁️‍🗨️';
+        if (toggleBtn.style) toggleBtn.style.opacity = '0.5';
     }
 }
 // (Replaced alert with simplified toggle logic to avoid annoying popups)
@@ -799,22 +802,52 @@ function playSiren() {
     osc.stop(audioCtx.currentTime + 1);
 }
 
-// --- Wake Lock Logic ---
+// --- Wake Lock Logic (Robust for iOS/Android) ---
+let noSleepVideo = null;
+
 async function requestWakeLock() {
+    // 1. Try Native Wake Lock API (Chrome/Android/Desktop)
     if ('wakeLock' in navigator) {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
-            console.log("✅ Wake Lock activo");
+            console.log("✅ Native Wake Lock activo");
 
             wakeLock.addEventListener('release', () => {
-                console.log("ℹ️ Wake Lock liberado");
+                console.log("ℹ️ Native Wake Lock liberado");
                 wakeLock = null;
             });
+            return;
         } catch (err) {
-            console.warn(`❌ Error Wake Lock: ${err.name}, ${err.message}`);
+            console.warn(`❌ Error Native Wake Lock: ${err.name}, ${err.message}`);
         }
-    } else {
-        console.warn("⚠️ Wake Lock API no soportada en este navegador");
+    }
+
+    // 2. Fallback for iOS (Silent Video Hack)
+    // Mobile Safari currently doesn't support the Screen Wake Lock API fully.
+    // This technique creates a tiny, silent, looping video to keep the screen on.
+    if (!noSleepVideo) {
+        noSleepVideo = document.createElement('video');
+        noSleepVideo.setAttribute('playsinline', '');
+        noSleepVideo.setAttribute('muted', '');
+        noSleepVideo.setAttribute('loop', '');
+        noSleepVideo.style.position = 'absolute';
+        noSleepVideo.style.top = '-999px';
+        noSleepVideo.style.left = '-999px';
+        noSleepVideo.style.width = '1px';
+        noSleepVideo.style.height = '1px';
+        noSleepVideo.style.opacity = '0';
+
+        // This is a minimal silent MP4 video (base64)
+        noSleepVideo.src = 'data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDJpc29tYXZjMQAAAZptb292AAAAbG12aGQAAAAA36Y+Sd+mPkkAAAPoAAAAKAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACUHRyYWsAAABcdGtoZAAAAAPfpt5J36beSQAAAAEAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAGdlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAA8AAAAAAAEAAAAAAZhtZGlhAAAAIG1kaGQAAAAA36Y+Sd+mPkkAAGmQAABpYABVxAAAAAAAbWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAF1bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcYmxyZfAAAAAAAAAAbmFtZSAAAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAHN0YmwaAAAAfHN0c2QAAAAAAAAAAQAAAGZ2cGMxAAAAAAABAAEAAAAAAAgAEAAAAAAAAAAAAAAAAAAAABYAAABCHGNscnAAAAAYAAAVAAAAAAAFAAkAAAVAAAAAAAUACQAAABZhcHBsAAAAEWNvbHIAbmNscAAAAAAKAAhjb2xyAAAAHGNjbHIAAAAYYXBwbAAAAAsAbmNscAAAAAAKAAhzdHRzAAAAAAAAAAEAAAABAAABAAAAABpzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzelAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAFG1kYXQAAAAAAAAAbWRhdAAAAA==';
+
+        document.body.appendChild(noSleepVideo);
+    }
+
+    try {
+        await noSleepVideo.play();
+        console.log("✅ iOS Wake Lock Fallback activo (Video Loop)");
+    } catch (err) {
+        console.warn("⚠️ No se pudo iniciar el fallback de Wake Lock:", err);
     }
 }
 
