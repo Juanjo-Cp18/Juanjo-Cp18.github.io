@@ -404,7 +404,7 @@ async function importOSMRules() {
     const bounds = map.getBounds();
     const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
 
-    document.getElementById('status').innerText = "⏳ Consultando OpenStreetMap...";
+    document.getElementById('status-pill').innerText = "⏳ Consultando OpenStreetMap...";
 
     // Overpass API Query: "oneway=yes" streets
     const query = `
@@ -429,7 +429,7 @@ async function importOSMRules() {
 
     } catch (error) {
         console.error(error);
-        document.getElementById('status').innerText = "❌ Error al importar: " + error.message;
+        document.getElementById('status-pill').innerText = "❌ Error al importar: " + error.message;
     }
 }
 
@@ -478,7 +478,7 @@ function processOSMData(data) {
 
     saveRulesToStorage();
     renderRules();
-    document.getElementById('status').innerText = `✅ Importación completada. ${newRulesCount} nuevas señales.`;
+    document.getElementById('status-pill').innerText = `✅ Importación completada. ${newRulesCount} nuevas señales.`;
 }
 
 function calculateBearing(startLat, startLng, destLat, destLng) {
@@ -598,7 +598,7 @@ function resetRulesFromFile() {
             trafficRules = [...PRELOADED_RULES];
             saveRulesToStorage();
             renderRules();
-            document.getElementById('status').innerText = "🔄 Reglas recargadas desde archivo.";
+            document.getElementById('status-pill').innerText = "🔄 Reglas recargadas desde archivo.";
         } else {
             alert("Error: No se encontró PRELOADED_RULES en rules.js");
         }
@@ -671,7 +671,7 @@ function clearAllRules() {
         trafficRules = [];
         saveRulesToStorage();
         renderRules();
-        document.getElementById('status').innerText = "🗑️ Todas las señales han sido eliminadas.";
+        document.getElementById('status-pill').innerText = "🗑️ Todas las señales han sido eliminadas.";
     }
 }
 
@@ -772,7 +772,7 @@ function checkProximityToRules(userLatLng, userHeading) {
 
                 if (normalizedDiff < 45) {
                     triggeringType = 'forbidden';
-                    document.getElementById('status').innerText = `⚠️ DIRECCIÓN PROHIBIDA DETECTADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
+                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓN PROHIBIDA DETECTADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
                 }
             }
             else if (rule.type === 'mandatory') {
@@ -783,7 +783,7 @@ function checkProximityToRules(userLatLng, userHeading) {
                 // If deviation is greater than 45 degrees, you are going wrong way
                 if (normalizedDiff > 45) {
                     triggeringType = 'mandatory';
-                    document.getElementById('status').innerText = `⚠️ DIRECCIÓN OBLIGATORIA IGNORADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
+                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓN OBLIGATORIA IGNORADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
                 }
             }
         }
