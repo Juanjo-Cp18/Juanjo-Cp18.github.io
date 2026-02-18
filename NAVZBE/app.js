@@ -67,7 +67,10 @@ async function init() {
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Load rules (Now from Firebase if available)
+    // Load rules immediately (from LocalStorage or rules.js fallback)
+    loadRulesFromStorage();
+
+    // Start Firebase Sync (will update rules if cloud data exists)
     initFirebaseSync();
 
     // Map Click Listener (Only active in Admin Mode)
@@ -457,8 +460,11 @@ function getDistance(lat1, lon1, lat2, lon2) {
 // --- Firebase Sync Logic ---
 function initFirebaseSync() {
     if (!window.FirebaseSDK) {
-        console.warn("⚠️ Firebase SDK no detectado. Usando almacenamiento local.");
-        loadRulesFromStorage();
+        console.warn("⚠️ Firebase SDK no detectado aún. Esperando...");
+        window.onFirebaseSDKLoaded = () => {
+            console.log("🔥 Firebase SDK cargado, iniciando sincronización...");
+            initFirebaseSync();
+        };
         return;
     }
 
@@ -510,15 +516,22 @@ function saveRulesToStorage() {
 }
 
 function loadRulesFromStorage() {
-    const data = localStorage.getItem('traffic_rules');
-    if (data) {
-        trafficRules = JSON.parse(data);
-        console.log("Reglas cargadas desde LocalStorage");
-    } else if (typeof PRELOADED_RULES !== 'undefined' && PRELOADED_RULES.length > 0) {
-        trafficRules = [...PRELOADED_RULES];
-        console.log("Reglas cargadas desde rules.js");
-        saveRulesToStorage();
+    const localData = localStorage.getItem('traffic_rules');
+    let loadedRules = [];
+
+    if (localData) {
+        loadedRules = JSON.parse(localData);
+        console.log("Reglas intentadas cargar desde LocalStorage:", loadedRules.length);
     }
+
+    // Fallback or Merge: If local storage is empty, use PRELOADED_RULES from rules.js
+    if (loadedRules.length === 0 && typeof PRELOADED_RULES !== 'undefined' && PRELOADED_RULES.length > 0) {
+        loadedRules = [...PRELOADED_RULES];
+        console.log("Reglas cargadas desde rules.js (fallback/inicial)");
+        // Don't save yet, wait for user action or sync
+    }
+
+    trafficRules = loadedRules;
     renderRules();
 }
 
@@ -739,18 +752,20 @@ function checkProximityToRules(userLatLng, userHeading) {
 // --- Audio & Visual Alert ---
 function startAlert() {
     const alertDiv = document.getElementById('wrong-way-alert');
-    if (alertDiv.classList.contains('hidden')) {
+    if (alertDiv && alertDiv.classList.contains('hidden')) {
         alertDiv.classList.remove('hidden');
+        playSiren();
+    } else if (!alertDiv) {
+        // Fallback for pages without the alert div (like Admin)
         playSiren();
     }
 }
 
 function stopAlert() {
     const alertDiv = document.getElementById('wrong-way-alert');
-    if (!alertDiv.classList.contains('hidden')) {
+    if (alertDiv && !alertDiv.classList.contains('hidden')) {
         alertDiv.classList.add('hidden');
     }
-    // Stop sound logic could go here
 }
 
 function toggleWrongWayAlert() {
@@ -793,21 +808,31 @@ async function requestWakeLock() {
 
             wakeLock.addEventListener('release', () => {
                 console.log("ℹ️ Wake Lock liberado");
+                wakeLock = null;
             });
         } catch (err) {
-            console.error(`❌ Error Wake Lock: ${err.name}, ${err.message}`);
+            console.warn(`❌ Error Wake Lock: ${err.name}, ${err.message}`);
         }
     } else {
         console.warn("⚠️ Wake Lock API no soportada en este navegador");
     }
 }
 
-// Re-request lock when returning to app
+// Re-request wake lock when page becomes visible again (Essential for iOS)
 document.addEventListener('visibilitychange', async () => {
-    if (wakeLock !== null && document.visibilityState === 'visible') {
+    if (wakeLock === null && document.visibilityState === 'visible') {
         await requestWakeLock();
     }
 });
+
+// Also try to request on first user interaction (Many mobile browsers require a gesture)
+const handleFirstInteraction = async () => {
+    if (!wakeLock) await requestWakeLock();
+    document.removeEventListener('click', handleFirstInteraction);
+    document.removeEventListener('touchstart', handleFirstInteraction);
+};
+document.addEventListener('click', handleFirstInteraction, { once: true });
+document.addEventListener('touchstart', handleFirstInteraction, { once: true });
 
 // --- PWA Installation Logic ---
 function checkAndShowInstallPrompt() {
