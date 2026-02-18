@@ -805,28 +805,40 @@ function playSiren() {
     osc.stop(audioCtx.currentTime + 1);
 }
 
-// --- Wake Lock Logic (Hyper-Robust for iOS 16-26) ---
+// --- Wake Lock Logic (Hyper-Robust for Chrome & iOS 16-26) ---
+
+let heartbeatCanvas = null;
+let heartbeatCtx = null;
 
 async function requestWakeLock() {
-    console.log("🔄 Ejecutando pulso de Keep-Awake...");
+    console.log("🔄 Ejecutando pulso de Keep-Awake v1.4...");
+
+    // Safety check for Chrome (requires HTTPS)
+    if (!window.isSecureContext) {
+        console.warn("⚠️ Advertencia: El entorno no es seguro (HTTP). WakeLock de Chrome/Android fallará.");
+        const pill = document.getElementById('status-pill');
+        if (pill && !pill.innerText.includes("⚠️")) {
+            pill.innerHTML += ' <span title="Entorno no seguro (HTTP). Usa HTTPS para modo Keep-Awake en Chrome.">⚠️</span>';
+        }
+    }
+
     let layers = [];
 
-    // 1. Capa: Native Wake Lock (Zero-Release Logic)
+    // 1. Capa: Native Wake Lock
     if ('wakeLock' in navigator) {
         try {
-            // Only request if not active to avoid flickering/interruption
             if (!wakeLock) {
                 wakeLock = await navigator.wakeLock.request('screen');
-                console.log("✅ Capa 1: Native Wake Lock activada");
+                console.log("✅ Capa 1: Native Wake Lock activa");
                 wakeLock.addEventListener('release', () => {
-                    console.log("ℹ️ Capa 1 liberada por el sistema");
+                    console.log("ℹ️ Capa 1 liberada");
                     wakeLock = null;
                     updateAwakeStatus();
                 });
             }
             layers.push('N');
         } catch (err) {
-            console.warn(`❌ Capa 1 Falló: ${err.message}`);
+            console.warn(`❌ Capa 1 falló: ${err.message}`);
         }
     }
 
@@ -837,50 +849,78 @@ async function requestWakeLock() {
             noSleepVideo.setAttribute('playsinline', '');
             noSleepVideo.setAttribute('muted', '');
             noSleepVideo.setAttribute('loop', '');
-            // opacity 0.02 is enough for Safari to consider it "visible" but user won't notice
             noSleepVideo.style.cssText = 'position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.02; pointer-events:none; z-index:2147483647;';
             noSleepVideo.src = 'data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDJpc29tYXZjMQAAAZptb292AAAAbG12aGQAAAAA36Y+Sd+mPkkAAAPoAAAAKAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACUHRyYWsAAABcdGtoZAAAAAPfpt5J36beSQAAAAEAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAGdlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAA8AAAAAAAEAAAAAAZhtZGlhAAAAIG1kaGQAAAAA36Y+Sd+mPkkAAGmQAABpYABVxAAAAAAAbWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAF1bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcYmxyZfAAAAAAAAAAbmFtZSAAAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAHN0YmwaAAAAfHN0c2QAAAAAAAAAAQAAAGZ2cGMxAAAAAAABAAEAAAAAAAgAEAAAAAAAAAAAAAAAAAAAABYAAABCHGNscnAAAAAYAAAVAAAAAAAFAAkAAAVAAAAAAAUACQAAABZhcHBsAAAAEWNvbHIAbmNscAAAAAAKAAhjb2xyAAAAHGNjbHIAAAAYYXBwbAAAAAsAbmNscAAAAAAKAAhzdHRzAAAAAAAAAAEAAAABAAABAAAAABpzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzelAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAFG1kYXQAAAAAAAAAbWRhdAAAAA==';
             document.body.appendChild(noSleepVideo);
         }
         if (noSleepVideo.paused) {
-            await noSleepVideo.play();
-            console.log("✅ Capa 2: Video activado");
+            noSleepVideo.play().catch(e => console.warn("Video play failed:", e));
         }
         layers.push('V');
     } catch (err) {
-        console.warn("⚠️ Capa 2 Falló:", err);
+        console.warn("⚠️ Capa 2 falló:", err);
     }
 
-    // 3. Capa: Persistent Audio Pulse (Oscillator)
+    // 3. Capa: Audio Pulse (Chrome Optimization)
     try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-        // Create a constant almost-inaudible pulse to keep OS process high priority
         if (!noSleepAudio) {
             const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
             const source = audioCtx.createBufferSource();
             source.buffer = buffer;
             source.loop = true;
-            source.connect(audioCtx.destination);
+
+            // Chrome sometimes ignores true zero-gain pulses.
+            // Using a tiny gain sibling instead.
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.001; // Inaudible but "real" signal
+
+            source.connect(gain);
+            gain.connect(audioCtx.destination);
+
             source.start();
             noSleepAudio = source;
-            console.log("✅ Capa 3: Audio (Persistence) activada");
+            console.log("✅ Capa 3: Audio (Chrome optimized) activa");
         }
         layers.push('A');
     } catch (err) {
-        console.warn("⚠️ Capa 3 Falló:", err);
+        console.warn("⚠️ Capa 3 falló:", err);
+    }
+
+    // 4. Capa: Canvas Heartbeat (Blink/Chrome Optimization)
+    // Animating a single pixel helps keep the tab active in some browser engines.
+    try {
+        if (!heartbeatCanvas) {
+            heartbeatCanvas = document.createElement('canvas');
+            heartbeatCanvas.width = 1;
+            heartbeatCanvas.height = 1;
+            heartbeatCanvas.style.cssText = 'position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.001; pointer-events:none; z-index:-1;';
+            document.body.appendChild(heartbeatCanvas);
+            heartbeatCtx = heartbeatCanvas.getContext('2d');
+
+            const animate = () => {
+                if (heartbeatCtx) {
+                    heartbeatCtx.fillStyle = `rgb(${Math.random() * 255},0,0)`;
+                    heartbeatCtx.fillRect(0, 0, 1, 1);
+                }
+                requestAnimationFrame(animate);
+            };
+            animate();
+            console.log("✅ Capa 4: Canvas Heartbeat activa");
+        }
+    } catch (e) {
+        console.warn("Canvas heartbeat failed:", e);
     }
 
     updateAwakeStatus(layers);
 }
 
-// Aggressive heartbeat (every 20 seconds)
-setInterval(async () => {
-    if (document.visibilityState === 'visible') {
-        await requestWakeLock();
-    }
-}, 20000);
+// Global Re-request
+setInterval(() => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+}, 15000); // More frequent for Chrome (every 15s)
 
 function updateAwakeStatus(layersArg) {
     const indicator = document.getElementById('aw-status');
@@ -902,18 +942,13 @@ function updateAwakeStatus(layersArg) {
     }
 }
 
-// Re-request on visibility
-document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible') {
-        await requestWakeLock();
-    }
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
 });
 
-// Reactivate on EVERYTHING (Safari is very strict)
+// Reactivate on EVERYTHING
 ['touchstart', 'click', 'scroll', 'keydown'].forEach(evt => {
-    document.addEventListener(evt, async () => {
-        await requestWakeLock();
-    }, { passive: true });
+    document.addEventListener(evt, () => requestWakeLock(), { passive: true });
 });
 
 // --- PWA Installation Logic ---
