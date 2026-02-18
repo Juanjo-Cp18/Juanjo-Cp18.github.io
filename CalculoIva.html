@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora IVA 21%</title>
+
+<style>
+:root {
+    --primary: #0A2540;
+    --secondary: #425466;
+    --accent: #3B82F6;
+    --background: #F6F9FC;
+    --card: #FFFFFF;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--background);
+    color: var(--primary);
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+header p {
+    color: var(--secondary);
+    font-size: 14px;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+.card h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #D1D5DB;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.95;
+}
+
+.result {
+    margin-top: 15px;
+    background: #F1F5F9;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.result span {
+    display: block;
+    margin-top: 5px;
+}
+
+footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--secondary);
+    margin-top: 30px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>Calculadora IVA 21%</h1>
+    <p>Cálculos rápidos y precisos</p>
+</header>
+
+<div class="card">
+    <h2>Precio sin IVA</h2>
+    <input type="number" id="sinIva" placeholder="Introduce el importe">
+    <button onclick="calcularDesdeSinIva()">Calcular</button>
+    <div class="result" id="resultadoSinIva"></div>
+</div>
+
+<div class="card">
+    <h2>Precio con IVA incluido</h2>
+    <input type="number" id="conIva" placeholder="Introduce el total">
+    <button onclick="extraerIva()">Extraer IVA</button>
+    <div class="result" id="resultadoConIva"></div>
+</div>
+
+<footer>
+    IVA España · 21%
+</footer>
+
+</div>
+
+<script>
+function calcularDesdeSinIva() {
+    const precio = parseFloat(document.getElementById("sinIva").value);
+    if (isNaN(precio)) return;
+
+    const iva = precio * 0.21;
+    const total = precio * 1.21;
+
+    document.getElementById("resultadoSinIva").innerHTML = `
+        <span>IVA (21%): <strong>€${iva.toFixed(2)}</strong></span>
+        <span>Total: <strong>€${total.toFixed(2)}</strong></span>
+    `;
+}
+
+function extraerIva() {
+    const total = parseFloat(document.getElementById("conIva").value);
+    if (isNaN(total)) return;
+
+    const base = total / 1.21;
+    const iva = total - base;
+
+    document.getElementById("resultadoConIva").innerHTML = `
+        <span>Base imponible: <strong>€${base.toFixed(2)}</strong></span>
+        <span>IVA incluido: <strong>€${iva.toFixed(2)}</strong></span>
+    `;
+}
+</script>
+
+</body>
+</html>
