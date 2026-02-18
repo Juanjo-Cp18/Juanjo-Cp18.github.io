@@ -210,11 +210,12 @@ async function startGPSTracking() {
             maximumAge: 0
         });
 
-        // High-Frequency Polling (v1.11) - To bypass Chrome energy-saving stalls
+        // Aggressive Locking Polling (v1.13)
         if (window.pollingTimer) clearInterval(window.pollingTimer);
         window.pollingTimer = setInterval(() => {
             if (isAdminMode && isAdminGPSPaused) return;
 
+            // If accuracy is still poor (>100m), we poll more aggressively
             navigator.geolocation.getCurrentPosition((position) => {
                 const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
                 const heading = position.coords.heading || 0;
@@ -223,7 +224,7 @@ async function startGPSTracking() {
                 console.warn("Poll GPS Error:", err.message);
             }, {
                 enableHighAccuracy: true,
-                timeout: 4000,
+                timeout: 8000,
                 maximumAge: 0
             });
         }, 5000);
@@ -724,12 +725,22 @@ function onLocationFound(e) {
     // If Admin paused GPS, ignore everything
     if (isAdminMode && isAdminGPSPaused) return;
 
-    // Update user marker
     const accuracy = e.accuracy || 0;
-    updateUserPosition(e.latlng, e.heading || 0, accuracy);
+
+    // v1.13 Accuracy Lockdown
+    // If we get a very poor accuracy (>200m) and we already have a previous reasonable position, ignore it.
+    // This prevents the "flecha" from jumping back to a cellphone tower (2000m) while the real GPS is warming up.
+    if (accuracy > 200 && userMarker) {
+        console.log(`Rechazando ubicación poco precisa (${Math.round(accuracy)}m)`);
+        document.getElementById('status-pill').innerHTML = `📡 Baja precisión (${Math.round(accuracy)}m). Buscando satélites...`;
+        return;
+    }
+
+    // Update user marker
+    updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
 
     if (isMapCentered) {
-        map.setView(e.latlng, 15);
+        map.setView(userMarker.getLatLng(), 15);
     }
 
     const accuracyText = accuracy > 0 ? ` (${Math.round(accuracy)}m)` : "";
