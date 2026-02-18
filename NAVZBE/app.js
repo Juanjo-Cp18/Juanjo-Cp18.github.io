@@ -21,6 +21,8 @@ let audioCtx = null; // Web Audio API context
 let isMapCentered = true; // Tracking if the map should follow the user
 let isAdminGPSPaused = false; // Admin can pause GPS to edit map
 let wakeLock = null; // Screen Wake Lock instance
+let noSleepVideo = null; // Video fallback
+let noSleepAudio = null; // Audio fallback (Web Audio API)
 let db = null; // Firebase Database instance
 
 // --- Initialization ---
@@ -638,7 +640,8 @@ function onLocationFound(e) {
         map.setView(e.latlng, 15); // Force navigation zoom level
     }
 
-    document.getElementById('status-pill').innerText = "✅ GPS Activo (Seguimiento)";
+    document.getElementById('status-pill').innerHTML = `✅ GPS Activo <span id="aw-status" title="Keep-Awake Layers"></span>`;
+    updateAwakeStatus();
 }
 
 function centerMap() {
@@ -802,70 +805,107 @@ function playSiren() {
     osc.stop(audioCtx.currentTime + 1);
 }
 
-// --- Wake Lock Logic (Robust for iOS/Android) ---
-let noSleepVideo = null;
+// --- Wake Lock Logic (Triple-Layer for Maximum Compatibility) ---
 
 async function requestWakeLock() {
-    // 1. Try Native Wake Lock API (Chrome/Android/Desktop)
+    let layers = [];
+
+    // 1. Layer: Native Wake Lock (Android/Desktop/iOS 17+)
     if ('wakeLock' in navigator) {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
-            console.log("✅ Native Wake Lock activo");
+            console.log("✅ Layer 1: Native Wake Lock activo");
+            layers.push('N');
 
             wakeLock.addEventListener('release', () => {
-                console.log("ℹ️ Native Wake Lock liberado");
+                console.log("ℹ️ Layer 1 liberado");
                 wakeLock = null;
+                updateAwakeStatus();
             });
-            return;
         } catch (err) {
-            console.warn(`❌ Error Native Wake Lock: ${err.name}, ${err.message}`);
+            console.warn(`❌ Layer 1 Falló: ${err.message}`);
         }
     }
 
-    // 2. Fallback for iOS (Silent Video Hack)
-    // Mobile Safari currently doesn't support the Screen Wake Lock API fully.
-    // This technique creates a tiny, silent, looping video to keep the screen on.
-    if (!noSleepVideo) {
-        noSleepVideo = document.createElement('video');
-        noSleepVideo.setAttribute('playsinline', '');
-        noSleepVideo.setAttribute('muted', '');
-        noSleepVideo.setAttribute('loop', '');
-        noSleepVideo.style.position = 'absolute';
-        noSleepVideo.style.top = '-999px';
-        noSleepVideo.style.left = '-999px';
-        noSleepVideo.style.width = '1px';
-        noSleepVideo.style.height = '1px';
-        noSleepVideo.style.opacity = '0';
-
-        // This is a minimal silent MP4 video (base64)
-        noSleepVideo.src = 'data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDJpc29tYXZjMQAAAZptb292AAAAbG12aGQAAAAA36Y+Sd+mPkkAAAPoAAAAKAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACUHRyYWsAAABcdGtoZAAAAAPfpt5J36beSQAAAAEAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAGdlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAA8AAAAAAAEAAAAAAZhtZGlhAAAAIG1kaGQAAAAA36Y+Sd+mPkkAAGmQAABpYABVxAAAAAAAbWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAF1bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcYmxyZfAAAAAAAAAAbmFtZSAAAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAHN0YmwaAAAAfHN0c2QAAAAAAAAAAQAAAGZ2cGMxAAAAAAABAAEAAAAAAAgAEAAAAAAAAAAAAAAAAAAAABYAAABCHGNscnAAAAAYAAAVAAAAAAAFAAkAAAVAAAAAAAUACQAAABZhcHBsAAAAEWNvbHIAbmNscAAAAAAKAAhjb2xyAAAAHGNjbHIAAAAYYXBwbAAAAAsAbmNscAAAAAAKAAhzdHRzAAAAAAAAAAEAAAABAAABAAAAABpzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzelAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAFG1kYXQAAAAAAAAAbWRhdAAAAA==';
-
-        document.body.appendChild(noSleepVideo);
+    // 2. Layer: Silent Video Loop (Classic iOS Hack)
+    try {
+        if (!noSleepVideo) {
+            noSleepVideo = document.createElement('video');
+            noSleepVideo.setAttribute('playsinline', '');
+            noSleepVideo.setAttribute('muted', '');
+            noSleepVideo.setAttribute('loop', '');
+            noSleepVideo.style.cssText = 'position:fixed; top:0; left:0; width:1px; height:1px; opacity:0.01; pointer-events:none; z-index:-1;';
+            noSleepVideo.src = 'data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDJpc29tYXZjMQAAAZptb292AAAAbG12aGQAAAAA36Y+Sd+mPkkAAAPoAAAAKAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACUHRyYWsAAABcdGtoZAAAAAPfpt5J36beSQAAAAEAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAGdlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAA8AAAAAAAEAAAAAAZhtZGlhAAAAIG1kaGQAAAAA36Y+Sd+mPkkAAGmQAABpYABVxAAAAAAAbWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAF1bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcYmxyZfAAAAAAAAAAbmFtZSAAAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAG9mcm0AAAAAAAAAAHN0YmwaAAAAfHN0c2QAAAAAAAAAAQAAAGZ2cGMxAAAAAAABAAEAAAAAAAgAEAAAAAAAAAAAAAAAAAAAABYAAABCHGNscnAAAAAYAAAVAAAAAAAFAAkAAAVAAAAAAAUACQAAABZhcHBsAAAAEWNvbHIAbmNscAAAAAAKAAhjb2xyAAAAHGNjbHIAAAAYYXBwbAAAAAsAbmNscAAAAAAKAAhzdHRzAAAAAAAAAAEAAAABAAABAAAAABpzdHNjAAAAAAAAAAEAAAABAAAAAQAAAAEAAAAUc3RzelAAAAAAAAAAAAAAAQAAABRzdGNvAAAAAAAAAAEAAAA4AAAAFG1kYXQAAAAAAAAAbWRhdAAAAA==';
+            document.body.appendChild(noSleepVideo);
+        }
+        await noSleepVideo.play();
+        console.log("✅ Layer 2: Video Fallback activo");
+        layers.push('V');
+    } catch (err) {
+        console.warn("⚠️ Layer 2 Falló:", err);
     }
 
+    // 3. Layer: Silent Audio (Web Audio API Loop)
+    // Helps keep the process alive in background/low-power modes on iOS
     try {
-        await noSleepVideo.play();
-        console.log("✅ iOS Wake Lock Fallback activo (Video Loop)");
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+        if (noSleepAudio) {
+            try { noSleepAudio.stop(); } catch (e) { }
+        }
+
+        // Create a 1s silent buffer
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(audioCtx.destination);
+        source.start();
+        noSleepAudio = source;
+        console.log("✅ Layer 3: Audio Fallback activo");
+        layers.push('A');
     } catch (err) {
-        console.warn("⚠️ No se pudo iniciar el fallback de Wake Lock:", err);
+        console.warn("⚠️ Layer 3 Falló:", err);
+    }
+
+    updateAwakeStatus(layers);
+}
+
+function updateAwakeStatus(layersArg) {
+    const indicator = document.getElementById('aw-status');
+    if (!indicator) return;
+
+    let layers = layersArg || [];
+    if (layers.length === 0) {
+        if (wakeLock) layers.push('N');
+        if (noSleepVideo && !noSleepVideo.paused) layers.push('V');
+        if (noSleepAudio) layers.push('A');
+    }
+
+    if (layers.length > 0) {
+        indicator.innerText = ` [${layers.join('')}]`;
+        indicator.style.color = "#4CAF50";
+    } else {
+        indicator.innerText = " [!]";
+        indicator.style.color = "#F44336";
     }
 }
 
 // Re-request wake lock when page becomes visible again (Essential for iOS)
 document.addEventListener('visibilitychange', async () => {
-    if (wakeLock === null && document.visibilityState === 'visible') {
+    if (document.visibilityState === 'visible') {
+        console.log("Page visible, re-requesting Keep-Awake...");
         await requestWakeLock();
     }
 });
 
-// Also try to request on first user interaction (Many mobile browsers require a gesture)
-const handleFirstInteraction = async () => {
-    if (!wakeLock) await requestWakeLock();
-    document.removeEventListener('click', handleFirstInteraction);
-    document.removeEventListener('touchstart', handleFirstInteraction);
-};
-document.addEventListener('click', handleFirstInteraction, { once: true });
-document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+// Also try to request on ANY interaction (iOS requires user gesture for media)
+document.addEventListener('touchstart', async () => {
+    // Only if not already fully active
+    const active = !!wakeLock || (noSleepVideo && !noSleepVideo.paused);
+    if (!active) await requestWakeLock();
+}, { passive: true });
 
 // --- PWA Installation Logic ---
 function checkAndShowInstallPrompt() {

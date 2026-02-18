@@ -107,6 +107,28 @@ button:active {
     -webkit-backdrop-filter: blur(4px);
 }
 
+#aw-status {
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 11px;
+    margin-left: 5px;
+}
+
+#version-label {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.7);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+}
+
 .admin-toggle-label {
     width: 36px;
     height: 36px;
