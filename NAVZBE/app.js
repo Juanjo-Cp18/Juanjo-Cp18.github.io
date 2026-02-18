@@ -16,6 +16,7 @@ let userMarker = null;
 let isAdminMode = window.isAplicationAdmin || false;
 let trafficRules = []; // Array of objects: {id, lat, lng, type, angle}
 let ruleMarkers = [];
+let accuracyCircle = null; // Visual circle for GPS precision
 let tempClickLocation = null;
 let audioCtx = null; // Web Audio API context
 let isMapCentered = true; // Tracking if the map should follow the user
@@ -97,7 +98,7 @@ async function init() {
 
     // Show car immediately if we have the location
     if (initialPosition) {
-        updateUserPosition(L.latLng(initialPosition.latitude, initialPosition.longitude), initialPosition.heading || 0);
+        updateUserPosition(L.latLng(initialPosition.latitude, initialPosition.longitude), initialPosition.heading || 0, initialPosition.accuracy || 0);
         document.getElementById('status-pill').innerText = "✅ GPS Iniciado";
     }
 
@@ -160,7 +161,7 @@ async function startGPSTracking() {
                     const heading = position.coords.heading || 0;
 
                     // Update UI
-                    onLocationFound({ latlng: latlng, heading: heading });
+                    onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
                 }
             });
 
@@ -180,7 +181,7 @@ async function startGPSTracking() {
             navigator.geolocation.watchPosition((position) => {
                 const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
                 const heading = position.coords.heading || 0;
-                onLocationFound({ latlng: latlng, heading: heading });
+                onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
             }, (err) => {
                 console.error("Error persistente en GPS (Watch):", err);
                 onLocationError(err);
@@ -197,7 +198,7 @@ async function startGPSTracking() {
             navigator.geolocation.watchPosition((position) => {
                 const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
                 const heading = position.coords.heading || 0;
-                onLocationFound({ latlng: latlng, heading: heading });
+                onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
             }, onLocationError, {
                 enableHighAccuracy: true,
                 timeout: 30000,
@@ -217,7 +218,7 @@ async function startGPSTracking() {
             navigator.geolocation.getCurrentPosition((position) => {
                 const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
                 const heading = position.coords.heading || 0;
-                onLocationFound({ latlng: latlng, heading: heading });
+                onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
             }, (err) => {
                 console.warn("Poll GPS Error:", err.message);
             }, {
@@ -724,13 +725,15 @@ function onLocationFound(e) {
     if (isAdminMode && isAdminGPSPaused) return;
 
     // Update user marker
-    updateUserPosition(e.latlng, e.heading || 0); // Use GPS heading if available, else 0
+    const accuracy = e.accuracy || 0;
+    updateUserPosition(e.latlng, e.heading || 0, accuracy);
 
     if (isMapCentered) {
-        map.setView(e.latlng, 15); // Force navigation zoom level
+        map.setView(e.latlng, 15);
     }
 
-    document.getElementById('status-pill').innerHTML = `✅ GPS Activo <span id="aw-status" title="Keep-Awake Layers"></span>`;
+    const accuracyText = accuracy > 0 ? ` (${Math.round(accuracy)}m)` : "";
+    document.getElementById('status-pill').innerHTML = `✅ GPS Activo${accuracyText} <span id="aw-status" title="Keep-Awake Layers"></span>`;
     updateAwakeStatus();
 }
 
@@ -749,10 +752,10 @@ function handleMapDrag() {
     }
 }
 
-function updateUserPosition(latlng, heading) {
+function updateUserPosition(latlng, heading, accuracy = 0) {
     currentHeading = heading;
 
-    // Rotate arrow icon
+    // 1. Rotate arrow icon
     const rotatedIcon = L.divIcon({
         className: 'car-marker',
         html: `
@@ -771,6 +774,26 @@ function updateUserPosition(latlng, heading) {
         userMarker.setIcon(rotatedIcon);
     } else {
         userMarker = L.marker(latlng, { icon: rotatedIcon }).addTo(map);
+    }
+
+    // 2. Update Accuracy Circle
+    if (accuracy > 0) {
+        if (accuracyCircle) {
+            accuracyCircle.setLatLng(latlng);
+            accuracyCircle.setRadius(accuracy);
+        } else {
+            accuracyCircle = L.circle(latlng, {
+                radius: accuracy,
+                color: '#2196F3',
+                fillColor: '#2196F3',
+                fillOpacity: 0.15,
+                weight: 1,
+                pointerEvents: 'none'
+            }).addTo(map);
+        }
+    } else if (accuracyCircle) {
+        map.removeLayer(accuracyCircle);
+        accuracyCircle = null;
     }
 
     checkProximityToRules(latlng, heading);
