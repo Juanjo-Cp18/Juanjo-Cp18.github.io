@@ -150,13 +150,23 @@ async function startGPSTracking() {
             console.error("Error starting GPS Watcher:", e);
             document.getElementById('status-pill').innerText = "❌ Error iniciando GPS Nativo: " + e.message;
         }
+    } else if (!window.ByPassWebGPS && navigator.geolocation) {
+        // High Reliability Fallback for Android Chrome / Browsers
+        console.log("Iniciando seguimiento GPS vía Navegador (Manual Watch)...");
+
+        navigator.geolocation.watchPosition((position) => {
+            const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+            const heading = position.coords.heading || 0;
+            onLocationFound({ latlng: latlng, heading: heading });
+        }, (err) => {
+            console.warn("Error en GPS de Navegador:", err);
+            onLocationError(err);
+        }, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        });
     } else if (!window.Capacitor) {
-        // Fallback ONLY for browser testing
-        console.log("Capacitor no detectado, usando Leaflet locate");
-        map.locate({ setView: true, maxZoom: 17, watch: true, enableHighAccuracy: true });
-        map.on('locationfound', onLocationFound);
-        map.on('locationerror', onLocationError);
-    } else {
         console.warn("Plugins de Capacitor no inicializados aún...");
         // Intentar de nuevo en 2 segundos si estamos en móvil
         setTimeout(startGPSTracking, 2000);
