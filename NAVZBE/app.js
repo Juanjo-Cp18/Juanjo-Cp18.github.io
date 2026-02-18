@@ -27,6 +27,8 @@ let noSleepAudio = null; // Audio fallback (Web Audio API)
 let db = null; // Firebase Database instance
 let gpsHeartbeat = Date.now();
 let gpsRetryCount = 0;
+let gpsStartTime = Date.now();
+let informedAboutPrecision = false;
 
 // --- Initialization ---
 async function init() {
@@ -176,9 +178,11 @@ async function startGPSTracking() {
         console.log("Iniciando secuencia de despertar GPS (v1.10)...");
 
         // Stage 1: Coarse hit to wake up the sensor chip
+        // v1.16: Use a fresh request to try and clear position cache
         navigator.geolocation.getCurrentPosition((pos) => {
             gpsHeartbeat = Date.now();
             gpsRetryCount = 0;
+            gpsStartTime = Date.now();
             console.log("GPS Despertado (Coarse Fix). Activando Watch Alta Precisión...");
 
             // Stage 2: Immediate Watch with High Accuracy
@@ -235,13 +239,21 @@ async function startGPSTracking() {
             });
         }, 5000);
 
-        // Heartbeat Watchdog (v1.15)
+        // Heartbeat Watchdog (v1.15) + Precision Check (v1.16)
         if (window.heartbeatTimer) clearInterval(window.heartbeatTimer);
         window.heartbeatTimer = setInterval(() => {
-            if (Date.now() - gpsHeartbeat > 15000) {
+            const now = Date.now();
+            if (now - gpsHeartbeat > 15000) {
                 console.warn("Heartbeat failure. Restarting GPS...");
-                gpsHeartbeat = Date.now();
+                gpsHeartbeat = now;
                 startGPSTracking();
+            }
+
+            // v1.16: Check for persistent poor accuracy (Approximate Location trap)
+            if (!informedAboutPrecision && !userMarker && (now - gpsStartTime > 40000)) {
+                console.warn("Persistent poor accuracy detected. Likely Android 'Approximate Location' limit.");
+                document.getElementById('status-pill').innerHTML = `⚠️ <span style="color:#FFF">Modo Aproximado activado.</span><br><small>Ve a Ajustes -> Aplicaciones -> Chrome -> Permisos -> Ubicación -> Activar 'Ubicación Precisa'.</small>`;
+                informedAboutPrecision = true;
             }
         }, 10000);
 
@@ -753,7 +765,14 @@ function onLocationFound(e) {
 
     // v1.14 Initial Filter: If accuracy is 2000m (tower), don't show the marker yet
     if (accuracy >= 1500 && !userMarker) {
-        document.getElementById('status-pill').innerHTML = `🛰️ Esperando señal satélite segura (Precisión: ${Math.round(accuracy)}m)...`;
+        let waitMsg = `🛰️ Esperando señal satélite segura (${Math.round(accuracy)}m)...`;
+
+        // v1.16 Hint if stuck
+        if (Date.now() - gpsStartTime > 25000) {
+            waitMsg = `🛰️ Calentando GPS (${Math.round(accuracy)}m)...<br><small>Si no baja, activa 'Ubicación Precisa' en Android.</small>`;
+        }
+
+        document.getElementById('status-pill').innerHTML = waitMsg;
         return;
     }
 
