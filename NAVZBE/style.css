@@ -205,37 +205,62 @@ button:active {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 0, 0, 0.95);
+    background-color: rgba(220, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    animation: flash 0.5s infinite;
+    animation: flash-bg 1s infinite;
 }
 
-.alert-content h1 {
-    font-size: 80px;
-    margin: 0;
+.alert-content {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 40px;
+    border-radius: 30px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+#alert-icon {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
 }
 
 .alert-content h2 {
     color: white;
-    font-size: 32px;
+    font-size: 28px;
+    font-weight: 800;
     margin: 10px 0;
-    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 1px;
 }
 
 .alert-content p {
-    color: white;
+    color: rgba(255, 255, 255, 0.9);
     font-size: 18px;
+    font-weight: 500;
     margin-bottom: 30px;
 }
 
 .alert-content button {
     background-color: white;
-    color: red;
-    border: 2px solid white;
+    color: #C00;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 50px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
 }
 
 /* PWA Install Prompt */
@@ -314,7 +339,7 @@ button:active {
     display: none !important;
 }
 
-@keyframes flash {
+@keyframes flash-bg {
     0% {
         background-color: rgba(255, 0, 0, 0.95);
     }

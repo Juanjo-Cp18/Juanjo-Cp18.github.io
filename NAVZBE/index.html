@@ -59,15 +59,15 @@
     <!-- Wrong Way Alert Overlay -->
     <div id="wrong-way-alert" class="hidden">
         <div class="alert-content">
-            <h1>🚫</h1>
-            <h2>¡DIRECCIÓN CONTRARIA!</h2>
-            <p>DETÉNGASE INMEDIATAMENTE</p>
-            <button onclick="toggleWrongWayAlert()">Detener Alarma</button>
+            <div id="alert-icon"></div>
+            <h2 id="alert-title">¡DIRECCIÓN CONTRARIA!</h2>
+            <p id="alert-message">DETÉNGASE INMEDIATAMENTE</p>
+            <button onclick="stopAlert()">Detener Alarma</button>
         </div>
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versión: 1.4</div>
+    <div id="version-label">Versión: 1.5</div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

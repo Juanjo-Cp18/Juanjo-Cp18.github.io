@@ -31,7 +31,7 @@ async function init() {
     let startZoom = 13; // Starting wider
     let initialPosition = null;
 
-    // Check GPS Permissions (Native)
+    // Check GPS Permissions (Native or Browser)
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
         try {
             const { Geolocation } = window.Capacitor.Plugins;
@@ -42,17 +42,36 @@ async function init() {
             }
 
             if (status.location === 'granted') {
-                const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 5000 });
+                const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
                 if (position && position.coords) {
                     startView = [position.coords.latitude, position.coords.longitude];
                     startZoom = 15;
                     initialPosition = position.coords;
                 }
             } else {
-                document.getElementById('status').innerText = "⚠️ Permisos de ubicación necesarios para navegar.";
+                document.getElementById('status-pill').innerText = "⚠️ Permisos de ubicación necesarios.";
             }
         } catch (e) {
-            console.error("Error en GPS Check:", e);
+            console.error("Error en GPS Check Nativo:", e);
+        }
+    } else if (!window.Capacitor && navigator.geolocation) {
+        // Fallback for Android Chrome / Browsers
+        try {
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            });
+            if (position && position.coords) {
+                startView = [position.coords.latitude, position.coords.longitude];
+                startZoom = 15;
+                initialPosition = position.coords;
+                console.log("Posición inicial obtenida vía Navegador:", startView);
+            }
+        } catch (e) {
+            console.warn("No se pudo obtener posición inicial rápida:", e.message);
         }
     }
     // Initialize map with determined start location
@@ -707,7 +726,7 @@ function onLocationError(e) {
 function checkProximityToRules(userLatLng, userHeading) {
     if (isAdminMode) return;
 
-    let triggeringAlert = false;
+    let triggeringType = null;
 
     trafficRules.forEach(rule => {
         const ruleLatLng = L.latLng(rule.lat, rule.lng);
@@ -718,36 +737,30 @@ function checkProximityToRules(userLatLng, userHeading) {
 
             if (rule.type === 'forbidden') {
                 // 2. Heading Check for FORBIDDEN
-                // If I am driving North (0) and Rule forbids North (0) -> ALERT
-                // Tolerance: +/- 45 degrees
                 const angleDiff = Math.abs(userHeading - rule.angle);
                 const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
 
                 if (normalizedDiff < 45) {
-                    triggeringAlert = true;
+                    triggeringType = 'forbidden';
                     document.getElementById('status').innerText = `⚠️ DIRECCIÓN PROHIBIDA DETECTADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
                 }
             }
             else if (rule.type === 'mandatory') {
                 // 2. Heading Check for MANDATORY
-                // If I am driving North (0) and Rule says East (90) -> ALERT
-                // Logic: Alert if my heading is NOT within tolerance of the mandatory heading.
-                // Tolerance: +/- 45 degrees implies valid range is [angle-45, angle+45]
-
                 const angleDiff = Math.abs(userHeading - rule.angle);
                 const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
 
                 // If deviation is greater than 45 degrees, you are going wrong way
                 if (normalizedDiff > 45) {
-                    triggeringAlert = true;
+                    triggeringType = 'mandatory';
                     document.getElementById('status').innerText = `⚠️ DIRECCIÓN OBLIGATORIA IGNORADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
                 }
             }
         }
     });
 
-    if (triggeringAlert) {
-        startAlert();
+    if (triggeringType) {
+        startAlert(triggeringType);
     } else {
         stopAlert();
     }
@@ -756,13 +769,40 @@ function checkProximityToRules(userLatLng, userHeading) {
 
 
 // --- Audio & Visual Alert ---
-function startAlert() {
+function startAlert(type = 'forbidden') {
     const alertDiv = document.getElementById('wrong-way-alert');
-    if (alertDiv && alertDiv.classList.contains('hidden')) {
-        alertDiv.classList.remove('hidden');
+    if (!alertDiv) {
         playSiren();
-    } else if (!alertDiv) {
-        // Fallback for pages without the alert div (like Admin)
+        return;
+    }
+
+    // Update Icon and Message
+    const iconDiv = document.getElementById('alert-icon');
+    const titleH2 = document.getElementById('alert-title');
+    const messageP = document.getElementById('alert-message');
+
+    if (type === 'forbidden') {
+        iconDiv.innerHTML = `
+            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                <circle cx="50" cy="50" r="48" fill="#C00" stroke="white" stroke-width="4"/>
+                <rect x="20" y="42" width="60" height="16" fill="white"/>
+            </svg>
+        `;
+        titleH2.innerText = "¡DIRECCIÓN PROHIBIDA!";
+        messageP.innerText = "NO ENTRE EN ESTA CALLE";
+    } else {
+        iconDiv.innerHTML = `
+            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                <circle cx="50" cy="50" r="48" fill="#0055A4" stroke="white" stroke-width="4"/>
+                <path d="M50 15 L20 55 L40 55 L40 85 L60 85 L60 55 L80 55 Z" fill="white"/>
+            </svg>
+        `;
+        titleH2.innerText = "¡DIRECCIÓN OBLIGATORIA!";
+        messageP.innerText = "SIGA LA SEÑALIZACIÓN";
+    }
+
+    if (alertDiv.classList.contains('hidden')) {
+        alertDiv.classList.remove('hidden');
         playSiren();
     }
 }
@@ -778,7 +818,7 @@ function toggleWrongWayAlert() {
     // Manual trigger for testing
     const alertDiv = document.getElementById('wrong-way-alert');
     if (alertDiv.classList.contains('hidden')) {
-        startAlert();
+        startAlert('forbidden');
     } else {
         stopAlert();
     }
