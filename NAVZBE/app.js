@@ -169,22 +169,44 @@ async function startGPSTracking() {
             document.getElementById('status-pill').innerText = "❌ Error iniciando GPS Nativo: " + e.message;
         }
     } else if (!window.ByPassWebGPS && navigator.geolocation) {
-        // Hyper-Robust Continuous Tracking for Android Chrome v1.7
-        console.log("Activando sensor GPS (Manual Continuous Watch v1.7)...");
+        // Multi-Stage GPS Wake-up Sequence (v1.10)
+        console.log("Iniciando secuencia de despertar GPS (v1.10)...");
 
-        navigator.geolocation.watchPosition((position) => {
-            const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
-            const heading = position.coords.heading || 0;
-            onLocationFound({ latlng: latlng, heading: heading });
+        // Stage 1: Coarse hit to wake up the sensor chip
+        navigator.geolocation.getCurrentPosition((pos) => {
+            console.log("GPS Despertado (Coarse Fix). Activando Watch Alta Precisión...");
+
+            // Stage 2: Immediate Watch with High Accuracy
+            navigator.geolocation.watchPosition((position) => {
+                const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+                const heading = position.coords.heading || 0;
+                onLocationFound({ latlng: latlng, heading: heading });
+            }, (err) => {
+                console.error("Error persistente en GPS (Watch):", err);
+                onLocationError(err);
+                if (err.code === 3) setTimeout(startGPSTracking, 3000);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            });
+
         }, (err) => {
-            console.error("Error persistente en GPS de Navegador:", err);
-            onLocationError(err);
-            // Auto-restart if it's a timeout error (code 3)
-            if (err.code === 3) setTimeout(startGPSTracking, 2000);
+            console.warn("Fallo en despertar GPS, intentando Watch directo...");
+            // Manual fallback to watch even if getCurrentPosition fails
+            navigator.geolocation.watchPosition((position) => {
+                const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+                const heading = position.coords.heading || 0;
+                onLocationFound({ latlng: latlng, heading: heading });
+            }, onLocationError, {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            });
         }, {
-            enableHighAccuracy: true,
-            timeout: 20000, // Very long timeout to prevent easy disconnection
-            maximumAge: 0   // Ensuring 100% fresh data
+            enableHighAccuracy: false, // Low accuracy wakes the GPS chip faster
+            timeout: 5000,
+            maximumAge: 0
         });
     } else if (!window.Capacitor) {
         console.warn("Plugins de Capacitor no inicializados aún...");
