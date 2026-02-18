@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Caja Diaria | SA FUSIÓ By Nurestic</title>
+    <style>
+        /* ESTILOS (Mismos estilos para mantener la estética) */
+        :root {
+            --primary: #3b82f6; 
+            --secondary: #64748b; 
+            --success: #10b981; 
+            --danger: #ef4444; 
+            --bg: #f5f5f5; 
+            --card-bg: #ffffff;
+            --light-primary: #eff6ff; 
+        }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #334155; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Encabezado */
+        header { 
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px; 
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        h1 { color: #333; margin: 0; font-size: 1.8rem; }
+        .date-display { font-size: 1rem; color: var(--secondary); margin-top: 5px; }
+
+        /* Estructura Grid */
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        @media (max-width: 768px) { .grid-container { grid-template-columns: 1fr; } }
+
+        /* Tarjetas */
+        .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); }
+        .card.registradora { border-top-color: var(--success); }
+        .card h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
+        
+        /* Tablas de entrada */
+        .entry-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .entry-table th { text-align: left; font-size: 0.85rem; color: var(--secondary); padding: 5px; }
+        .entry-table td { padding: 5px; }
+        input[type="number"], input[type="text"], textarea { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+        input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+        
+        .btn-add { background: var(--light-primary); color: var(--primary); border: 1px dashed var(--primary); width: 100%; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn-add:hover { background: #dbeafe; }
+        .btn-remove { background: #fee2e2; color: var(--danger); border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* Totales */
+        .total-row { font-weight: bold; text-align: right; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 4px; margin-top: 10px; }
+        .total-efectivo { background: #e0f2fe; color: var(--primary); }
+        .total-tarjeta { background: #f0fdf4; color: var(--success); }
+
+        /* Sección Registradora */
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        
+        /* Conteo de Efectivo - 2 COLUMNAS ESTABLES */
+        .cash-count-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #e0e0e0;
+        }
+        @media (max-width: 550px) { .cash-count-columns { grid-template-columns: 1fr; } }
+        
+        .denomination-row { display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+        .denomination-row:last-child { border-bottom: none; }
+        .denomination-row .label { font-weight: 500; width: 60px; text-align: left; }
+        .denomination-row input { width: 40px; padding: 5px; margin: 0 10px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; }
+        .denomination-row .subtotal { font-weight: bold; text-align: right; color: var(--primary); flex-grow: 1; min-width: 60px; }
+        .cash-group h3 { font-size: 1rem; margin: 0 0 10px 0; color: var(--secondary); border-bottom: 1px dashed #e2e8f0; padding-bottom: 5px; }
+
+        /* Observaciones */
+        #observations { margin-top: 20px; }
+        #observations textarea { min-height: 80px; resize: vertical; }
+
+        /* Sección TPV */
+        .tpv-input-section { padding: 15px 20px; background: #f0f9ff; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dbeafe; }
+        .tpv-input-section label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--primary); }
+        .tpv-input-section input { width: 300px; max-width: 100%; font-size: 1.1rem; border-color: var(--primary); }
+
+        /* Sección Totales Finales */
+        .final-totals { background: var(--primary); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .final-totals h2 { border-bottom: 1px solid rgba(255,255,255,0.3); }
+        .final-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; }
+        .final-item small { display: block; opacity: 0.8; font-size: 0.8rem; }
+        .final-item div { font-size: 1.2rem; font-weight: bold; }
+        
+        /* Botones de Acción */
+        .actions { text-align: center; margin-bottom: 40px; }
+        .btn-save { background: var(--success); color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); transition: transform 0.1s; }
+        .btn-save:active { transform: scale(0.98); }
+
+        /* Historial */
+        .history-section { margin-top: 40px; border-top: 2px dashed var(--primary); padding-top: 20px; }
+        table.history { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        table.history th, table.history td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        table.history th { background: #f8fafc; font-weight: 600; }
+        .btn-view { background: #f0fdf4; color: var(--success); border: 1px solid var(--success); padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* Estilos del Diálogo del Reporte */
+        #record-dialog {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 0;
+            max-width: 90%;
+            width: 500px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            position: fixed;
+        }
+        #record-dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        #report-content {
+            white-space: pre-wrap; /* Respeta los saltos de línea y el espaciado */
+            font-family: monospace;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: #333;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .dialog-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .dialog-header button {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-text">
+            <h1>Cierre de Caja Diario</h1>
+            <div class="date-display" id="currentDate"></div>
+        </div>
+    </header>
+
+    <div class="tpv-input-section">
+        <label for="tpvRegistro">💳 REGISTRO TPV (Total de Tarjetas de la Máquina)</label>
+        <input type="number" id="tpvRegistro" value="0.00" step="0.01" placeholder="Ingrese el total del TPV" oninput="calculateAll()">
+    </div>
+
+    <div class="grid-container">
+        <div class="card">
+            <h2>1. CAJA MANUAL (Libro)</h2>
+            <table class="entry-table" id="manualTable">
+                <thead>
+                    <tr>
+                        <th width="45%">Efectivo</th>
+                        <th width="45%">Tarjeta</th>
+                        <th width="10%"></th>
+                    </tr>
+                </thead>
+                <tbody id="manualBody"></tbody>
+            </table>
+            <button class="btn-add" onclick="addRow('manualBody')">+ Añadir Venta</button>
+            <div class="total-row total-efectivo">
+                <span>Total Efectivo Manual:</span>
+                <span id="totalManualEfectivo">0.00 €</span>
+            </div>
+            <div class="total-row total-tarjeta" style="margin-top: 5px;">
+                <span>Total Tarjeta Manual:</span>
+                <span id="totalManualTarjeta">0.00 €</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>2. CAJA ORDENADOR</h2>
+            <table class="entry-table">
+                <thead>
+                    <tr>
+                        <th width="45%">Reg. Efec.</th>
+                        <th width="45%">Reg. Tarj.</th>
+                        <th width="10%"></th>
+                    </tr>
+                </thead>
+                <tbody id="ordenadorBody"></tbody>
+            </table>
+            <button class="btn-add" onclick="addRow('ordenadorBody')">+ Añadir Registro</button>
+            <div class="total-row total-efectivo">
+                <span>Total Efectivo Ordenador:</span>
+                <span id="totalOrdenadorEfectivo">0.00 €</span>
+            </div>
+             <div class="total-row total-tarjeta" style="margin-top: 5px;">
+                <span>Total Tarjeta Ordenador:</span>
+                <span id="totalOrdenadorTarjeta">0.00 €</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card registradora" style="margin-bottom: 20px;">
+        <h2>3. CAJA REGISTRADORA (Física)</h2>
+        <div class="grid-container" style="margin-bottom: 0;">
+            <div class="input-group">
+                <label>CAJA ANTERIOR (Fondo ayer)</label>
+                <input type="number" id="cajaAnterior" value="100.00" step="0.01" oninput="calculateAll()">
+            </div>
+            <div class="input-group">
+                <label>TOTAL CONTENIDO (Calculado)</label>
+                <input type="text" id="contenidoActualDisplay" value="0.00 €" disabled style="background-color: #e2e8f0; font-weight: bold; color: var(--primary);">
+            </div>
+        </div>
+        
+        <div class="cash-count-columns" id="cashCountBody">
+            <div class="cash-group">
+                <h3>BILLETES</h3>
+                <div class="denomination-row" data-value="500.00"><span class="label">500 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="200.00"><span class="label">200 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="100.00"><span class="label">100 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="50.00"><span class="label">50 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="20.00"><span class="label">20 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="10.00"><span class="label">10 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="5.00"><span class="label">5 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+            </div>
+            <div class="cash-group">
+                <h3>MONEDAS</h3>
+                <div class="denomination-row" data-value="2.00"><span class="label">2 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="1.00"><span class="label">1 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="0.50"><span class="label">0.50 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="0.20"><span class="label">0.20 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="0.10"><span class="label">0.10 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="0.05"><span class="label">0.05 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="0.02"><span class="label">0.02 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+                <div class="denomination-row" data-value="0.01"><span class="label">0.01 € x</span><input type="number" min="0" value="0" oninput="calculateAll()"><span class="subtotal">0.00 €</span></div>
+            </div>
+        </div>
+
+        <div class="total-row" style="background: var(--light-primary); color: var(--success);">
+            <span>TOTAL EFECTIVO GENERADO (Contenido - Anterior):</span>
+            <span id="totalRegistradora">0.00 €</span>
+        </div>
+
+        <div class="input-group" id="observations">
+            <label>📝 OBSERVACIONES DEL CIERRE</label>
+            <textarea id="cajaObservaciones" placeholder="Ej: Faltan 10€, se ha usado para comprar material, etc."></textarea>
+        </div>
+    </div>
+
+    <div class="final-totals">
+        <h2 style="margin-top:0; font-size: 1.2rem; padding-bottom: 10px;">RESUMEN Y CUADRE</h2>
+        <div class="final-grid">
+            <div class="final-item">
+                <small>Manual (Total Gral.)</small>
+                <div id="resumenManualTotal">0.00 €</div>
+            </div>
+            <div class="final-item">
+                <small>Ordenador (Total Gral.)</small>
+                <div id="resumenOrdenadorTotal">0.00 €</div>
+            </div>
+            <div class="final-item">
+                <small>Registradora (Contenido Real)</small>
+                <div id="resumenRegistradoraContenido">0.00 €</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-save" onclick="saveDay()">💾 GUARDAR CIERRE DEL DÍA</button>
+    </div>
+
+    <div class="history-section">
+        <h2>📂 Historial de Cierres</h2>
+        <table class="history">
+            <thead>
+                <tr>
+                    <th width="20%">Fecha</th>
+                    <th>Registro Completo</th>
+                    <th width="10%">Borrar</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+        <br>
+        <button onclick="exportToCSV()" style="color: var(--primary); background: none; border: none; cursor: pointer; text-decoration: underline;">Descargar Historial en Excel (.csv)</button>
+        <button onclick="clearHistory()" style="color: var(--danger); background: none; border: none; cursor: pointer; text-decoration: underline; margin-left: 20px;">Borrar Historial</button>
+    </div>
+</div>
+
+<dialog id="record-dialog">
+    <div class="dialog-header">
+        <h3 id="dialog-title">Detalles del Cierre</h3>
+        <div>
+            <button onclick="printReport()" title="Imprimir o Guardar como PDF" style="background: none; border: none; color: white; margin-right: 15px; font-size: 1rem; cursor: pointer;">
+                🖨️ PDF
+            </button>
+            <button onclick="document.getElementById('record-dialog').close()">×</button>
+        </div>
+    </div>
+    <pre id="report-content"></pre>
+</dialog>
+
+<script>
+    // =======================================================
+    // 1. CONFIGURACIÓN DE INDEXEDDB (BASE DE DATOS EN EL NAVEGADOR)
+    // =======================================================
+    const DB_NAME = 'CajaDiariaDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'cierres';
+    let db;
+
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            if (!window.indexedDB) {
+                reject("IndexedDB no soportado por este navegador.");
+                return;
+            }
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+            request.onerror = (event) => {
+                console.error("Error al abrir IndexedDB:", event.target.error);
+                reject("Error al abrir la base de datos.");
+            };
+
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                }
+            };
+        });
+    }
+
+    function getDB() {
+        return db ? Promise.resolve(db) : openDB();
+    }
+
+    async function addRecord(record) {
+        const database = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.add(record);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+
+    async function getAllRecords() {
+        const database = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([STORE_NAME], 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    
+    async function deleteRecord(id) {
+        const database = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.delete(id);
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    
+    async function deleteAllRecords() {
+        const database = await getDB();
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.clear();
+
+            request.onsuccess = () => resolve();
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+
+    /**
+     * @description Carga el último registro de la base de datos y actualiza el campo de Caja Anterior.
+     */
+    async function loadLastRecordForAnterior() {
+        try {
+            const history = await getAllRecords();
+            if (history.length > 0) {
+                // Obtener el último registro (el de ID más alto)
+                const lastRecord = history.sort((a, b) => b.id - a.id)[0];
+                document.getElementById('cajaAnterior').value = lastRecord.contenidoTotal.toFixed(2);
+                calculateAll();
+            }
+        } catch (error) {
+            console.warn("No se pudo cargar el último registro para la Caja Anterior. Se usará el valor por defecto (100.00).", error);
+        }
+    }
+
+
+    // =======================================================
+    // 2. FUNCIONES DE FORMATO Y UI
+    // =======================================================
+    
+    // Inicialización al cargar la página
+    openDB().then(() => {
+        loadHistory();
+        loadLastRecordForAnterior(); // Cargar la caja anterior del último cierre
+    }).catch(error => {
+        alert("Error crítico al cargar la base de datos: " + error);
+    });
+
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    
+    if (document.getElementById('manualBody').children.length === 0) {
+        addRow('manualBody'); addRow('manualBody');
+        addRow('ordenadorBody'); addRow('ordenadorBody');
+    }
+    calculateAll(); 
+
+    function addRow(tbodyId) {
+        const tbody = document.getElementById(tbodyId);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="number" step="0.01" class="monto-efectivo" value="0.00" oninput="calculateAll()"></td>
+            <td><input type="number" step="0.01" class="monto-tarjeta" value="0.00" oninput="calculateAll()"></td>
+            <td style="text-align:center"><button class="btn-remove" onclick="removeRow(this)">x</button></td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    function removeRow(btn) { btn.closest('tr').remove(); calculateAll(); }
+
+    function formatMoney(amount) {
+        return (Math.round(amount * 100) / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+    }
+
+    /**
+     * @description Formatea un número para CSV: 2 decimales, usando la coma (,) como separador decimal.
+     * @param {number} amount
+     * @returns {string}
+     */
+    function formatNumberForCSV(amount) {
+        // toFixed(2) usa el punto como separador decimal por defecto. Lo reemplazamos por coma.
+        return (parseFloat(amount) || 0).toFixed(2).replace('.', ',');
+    }
+
+    // 3. Funciones de Extracción y Cálculo
+    function getTableRowsData(tbodyId) {
+        const container = document.getElementById(tbodyId);
+        if(!container) return [];
+        
+        const rows = [];
+        container.querySelectorAll('tr').forEach((tr, index) => {
+            const efec = parseFloat(tr.querySelector('.monto-efectivo').value) || 0;
+            const tarj = parseFloat(tr.querySelector('.monto-tarjeta').value) || 0;
+            if (efec !== 0 || tarj !== 0) { 
+                rows.push({ index: index + 1, efec, tarj });
+            }
+        });
+        return rows;
+    }
+
+    function getCashCountData() {
+        const counts = [];
+        let total = 0;
+        document.querySelectorAll('.denomination-row').forEach(row => {
+            const den = parseFloat(row.dataset.value);
+            const count = parseInt(row.querySelector('input').value) || 0;
+            const sub = den * count;
+            total += sub;
+            if (count > 0) {
+                counts.push({ den, count, sub });
+            }
+        });
+        return { total, details: counts };
+    }
+
+    function sumInputs(selector) {
+        let sum = 0;
+        document.querySelectorAll(selector).forEach(input => sum += (parseFloat(input.value) || 0));
+        return sum;
+    }
+
+    function calculateAll() {
+        let manEfec = sumInputs('#manualBody .monto-efectivo');
+        let manTarj = sumInputs('#manualBody .monto-tarjeta');
+        let totalManual = manEfec + manTarj;
+
+        let ordEfec = sumInputs('#ordenadorBody .monto-efectivo');
+        let ordTarj = sumInputs('#ordenadorBody .monto-tarjeta');
+        let totalOrdenador = ordEfec + ordTarj;
+
+        let anterior = parseFloat(document.getElementById('cajaAnterior').value) || 0;
+        const cashData = getCashCountData(); 
+        let contenido = cashData.total;
+        let totalRegistradoraGenerado = contenido - anterior;
+
+        document.getElementById('contenidoActualDisplay').value = formatMoney(contenido);
+        document.querySelectorAll('#cashCountBody .denomination-row').forEach(row => {
+            const den = parseFloat(row.dataset.value);
+            const count = parseInt(row.querySelector('input').value) || 0;
+            row.querySelector('.subtotal').textContent = formatMoney(den * count);
+        });
+
+        document.getElementById('totalManualEfectivo').textContent = formatMoney(manEfec);
+        document.getElementById('totalManualTarjeta').textContent = formatMoney(manTarj);
+        document.getElementById('totalOrdenadorEfectivo').textContent = formatMoney(ordEfec);
+        document.getElementById('totalOrdenadorTarjeta').textContent = formatMoney(ordTarj);
+        document.getElementById('totalRegistradora').textContent = formatMoney(totalRegistradoraGenerado);
+
+        document.getElementById('resumenManualTotal').textContent = formatMoney(totalManual);
+        document.getElementById('resumenOrdenadorTotal').textContent = formatMoney(totalOrdenador);
+        document.getElementById('resumenRegistradoraContenido').textContent = formatMoney(contenido);
+    }
+
+    // 4. Historial: Formato y Visualización (USANDO DIALOG)
+    function formatTableDetails(details) {
+        if (!details || details.length === 0) return "   (Sin registros individuales)";
+        let html = "";
+        details.forEach(d => {
+            html += `   ➤ Fila ${d.index}: Efec ${formatMoney(d.efec)} | Tarj ${formatMoney(d.tarj)}\n`;
+        });
+        return html;
+    }
+
+    function formatCashDetails(details) {
+        if (!details || details.length === 0) return "   (Sin conteo detallado)";
+        let html = "";
+        details.forEach(d => {
+            html += `   • ${d.count} x ${d.den} € = ${formatMoney(d.sub)}\n`;
+        });
+        return html;
+    }
+
+    async function viewRecord(id) {
+        const history = await getAllRecords();
+        const rec = history.find(r => r.id === id);
+        const dialog = document.getElementById('record-dialog');
+        const reportContent = document.getElementById('report-content');
+
+        if (!rec) {
+            reportContent.textContent = "Registro no encontrado.";
+            dialog.showModal();
+            return;
+        }
+
+        const manualDet = formatTableDetails(rec.manualDetails);
+        const ordenadorDet = formatTableDetails(rec.ordenadorDetails);
+        const cashDet = formatCashDetails(rec.cashDetails);
+        const obs = rec.observaciones || "(Sin observaciones)";
+
+        const report = `
+Registro: ${rec.id} | Fecha: ${rec.date}
+
+-----------------------------------
+💳 TPV REGISTRO
+   Total TPV (Tarjetas): ${formatMoney(rec.tpv)}
+
+-----------------------------------
+1. CAJA MANUAL (Libro)
+${manualDet}
+   TOTAL EFECTIVO: ${formatMoney(rec.manEfec)}
+   TOTAL TARJETA:  ${formatMoney(rec.manTarj)}
+   >> TOTAL GENERAL: ${formatMoney(rec.manGral)}
+
+-----------------------------------
+2. CAJA ORDENADOR
+${ordenadorDet}
+   TOTAL EFECTIVO: ${formatMoney(rec.ordEfec)}
+   TOTAL TARJETA:  ${formatMoney(rec.ordTarj)}
+   >> TOTAL GENERAL: ${formatMoney(rec.ordGral)}
+
+-----------------------------------
+3. CAJA REGISTRADORA (Física)
+   Fondo Anterior: ${formatMoney(rec.fondoAnterior)}
+   
+   [Desglose del Conteo]
+${cashDet}
+   
+   >> CONTENIDO CAJA HOY: ${formatMoney(rec.contenidoTotal)}
+   >> EFECTIVO GENERADO: ${formatMoney(rec.regEfecGral)}
+
+-----------------------------------
+📝 OBSERVACIONES DEL CIERRE
+${obs}
+
+-----------------------------------
+📊 RESUMEN Y CUADRE
+   Manual (Total Gral):    ${formatMoney(rec.manGral)}
+   Ordenador (Total Gral): ${formatMoney(rec.ordGral)}
+   Registradora (Cont. Real): ${formatMoney(rec.contenidoTotal)}
+-----------------------------------
+        `; 
+        
+        document.getElementById('dialog-title').textContent = `Detalles del Cierre (${rec.date})`;
+        reportContent.textContent = report;
+        dialog.showModal(); // Muestra el diálogo
+    }
+
+    // =======================================================
+    // 6. FUNCIONALIDAD DE IMPRESIÓN/PDF (NUEVA FUNCIÓN)
+    // =======================================================
+
+    function printReport() {
+        const dialog = document.getElementById('record-dialog');
+        const content = dialog.querySelector('#report-content').textContent;
+        const title = dialog.querySelector('#dialog-title').textContent;
+
+        // Abrir una nueva ventana o pestaña para el contenido a imprimir
+        const printWindow = window.open('', '', 'height=600,width=800');
+        
+        // Crear la estructura HTML para la impresión
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>${title}</title>
+                <style>
+                    /* Estilos mínimos para que el PDF se vea bien */
+                    body { margin: 20px; font-family: monospace; font-size: 10pt; color: #333; }
+                    pre { white-space: pre-wrap; margin: 0; }
+                    h1 { font-size: 1.2rem; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+                </style>
+            </head>
+            <body>
+                <h1>${title}</h1>
+                <pre>${content}</pre>
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // Esperar un momento para asegurar que el contenido se cargó y luego imprimir
+        setTimeout(() => {
+            printWindow.print(); // Ejecuta el diálogo de impresión (donde se elige "Guardar como PDF")
+            // printWindow.close(); // Se comenta para que el usuario tenga control de la pestaña/ventana
+        }, 300);
+    }
+
+    // 5. Gestión del Historial (Usando IndexedDB)
+    
+    async function saveDay() {
+        const cashData = getCashCountData();
+        const manEfec = sumInputs('#manualBody .monto-efectivo');
+        const manTarj = sumInputs('#manualBody .monto-tarjeta');
+        const ordEfec = sumInputs('#ordenadorBody .monto-efectivo');
+        const ordTarj = sumInputs('#ordenadorBody .monto-tarjeta');
+        const tpv = parseFloat(document.getElementById('tpvRegistro').value) || 0;
+        const anterior = parseFloat(document.getElementById('cajaAnterior').value) || 0;
+        const contenido = cashData.total;
+        const generado = contenido - anterior;
+        const descuadre = generado - ordEfec;
+
+        const record = {
+            date: new Date().toLocaleDateString('es-ES'),
+            tpv: tpv,
+            manGral: manEfec + manTarj,
+            manEfec: manEfec,
+            manTarj: manTarj,
+            manualDetails: getTableRowsData('manualBody'),
+            ordGral: ordEfec + ordTarj,
+            ordEfec: ordEfec,
+            ordTarj: ordTarj,
+            ordenadorDetails: getTableRowsData('ordenadorBody'),
+            fondoAnterior: anterior,
+            contenidoTotal: contenido,
+            regEfecGral: generado,
+            cashDetails: cashData.details,
+            desc: descuadre,
+            observaciones: document.getElementById('cajaObservaciones').value.trim()
+        };
+
+        try {
+            await addRecord(record);
+            alert('Cierre guardado en la Base de Datos del navegador (IndexedDB).');
+            loadHistory();
+            
+            // ** APLICACIÓN DEL CAMBIO SOLICITADO ANTERIORMENTE **
+            // 1. La CAJA ANTERIOR del nuevo día es el CONTENIDO TOTAL del día que se acaba de cerrar.
+            document.getElementById('cajaAnterior').value = contenido.toFixed(2);
+            
+            // 2. Reset de los campos de venta/conteo
+            document.getElementById('tpvRegistro').value = '0.00';
+            document.querySelectorAll('.cash-count-columns input[type="number"]').forEach(i => i.value = '0');
+            document.querySelectorAll('#manualBody .monto-efectivo, #manualBody .monto-tarjeta').forEach(i => i.value = '0.00');
+            document.querySelectorAll('#ordenadorBody .monto-efectivo, #ordenadorBody .monto-tarjeta').forEach(i => i.value = '0.00');
+            document.getElementById('cajaObservaciones').value = '';
+            
+            // 3. Recalcular todo para reflejar la nueva Caja Anterior y los demás ceros
+            calculateAll();
+        } catch (error) {
+            alert('Error al guardar el cierre. Revise la consola para detalles.');
+            console.error(error);
+        }
+    }
+
+    async function loadHistory() {
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = '';
+        
+        try {
+            const history = await getAllRecords();
+            
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8;">No hay cierres guardados</td></tr>';
+                return;
+            }
+
+            history.slice().reverse().forEach(rec => {
+                tbody.innerHTML += `<tr>
+                    <td>${rec.date}</td>
+                    <td style="text-align:center;"><button class="btn-view" onclick="viewRecord(${rec.id})">🔍 Ver Detalles</button></td>
+                    <td><button class="btn-remove" onclick="deleteHistoryItem(${rec.id})">🗑️</button></td>
+                </tr>`;
+            });
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="3" style="color:var(--danger);">Error al cargar el historial.</td></tr>`;
+            console.error(error);
+        }
+    }
+
+    async function deleteHistoryItem(id) {
+        if(confirm('¿Borrar este registro?')) {
+            try {
+                await deleteRecord(id);
+                loadHistory();
+                // Si se borra el último registro, se debe reajustar la caja anterior
+                loadLastRecordForAnterior(); 
+            } catch (error) {
+                alert('Error al borrar el registro.');
+                console.error(error);
+            }
+        }
+    }
+
+    async function clearHistory() {
+        if(confirm('ADVERTENCIA: ¿Borrar TODO el historial guardado en la Base de Datos del navegador? Esta acción es irreversible.')) {
+            try {
+                await deleteAllRecords();
+                loadHistory();
+                // Si se borra todo, la Caja Anterior debe volver al valor por defecto
+                document.getElementById('cajaAnterior').value = '100.00';
+                calculateAll();
+                alert('Historial borrado permanentemente de la Base de Datos.');
+            } catch (error) {
+                alert('Error al borrar todo el historial.');
+                console.error(error);
+            }
+        }
+    }
+
+    /**
+     * @description Exporta todos los datos de resumen a un archivo CSV con formato numérico plano.
+     */
+    async function exportToCSV() {
+        try {
+            const history = await getAllRecords();
+            if(!history.length) { alert('No hay datos para exportar.'); return; }
+            
+            // 1. Definir encabezados completos y usar ';' como separador de campo.
+            let csv = "Fecha;ID;TPV Registro;Manual Efectivo;Manual Tarjeta;Total Manual;Ordenador Efectivo;Ordenador Tarjeta;Total Ordenador;Fondo Caja Anterior;Contenido Caja Total;Efectivo Generado;Descuadre Final;Observaciones\n";
+            
+            history.forEach(r => {
+                // Limpiar observaciones: reemplazar saltos de línea y el separador de campo.
+                let obs = (r.observaciones || '').replace(/\n/g, ' ').replace(/;/g, ',');
+                
+                let row = `${r.date};`;
+                row += `${r.id};`;
+                // Usar la función de formato para CSV para asegurar números planos con coma decimal.
+                row += `${formatNumberForCSV(r.tpv)};`;
+                row += `${formatNumberForCSV(r.manEfec)};`;
+                row += `${formatNumberForCSV(r.manTarj)};`;
+                row += `${formatNumberForCSV(r.manGral)};`;
+                row += `${formatNumberForCSV(r.ordEfec)};`;
+                row += `${formatNumberForCSV(r.ordTarj)};`;
+                row += `${formatNumberForCSV(r.ordGral)};`;
+                row += `${formatNumberForCSV(r.fondoAnterior)};`;
+                row += `${formatNumberForCSV(r.contenidoTotal)};`;
+                row += `${formatNumberForCSV(r.regEfecGral)};`;
+                row += `${formatNumberForCSV(r.desc)};`;
+                row += `${obs}\n`;
+
+                csv += row;
+            });
+            
+            // 2. Descargar el archivo.
+            const link = document.createElement("a");
+            // Se añade BOM (Byte Order Mark) para ayudar a Excel a interpretar correctamente la codificación UTF-8
+            const finalCsv = "\uFEFF" + csv; 
+            link.href = encodeURI("data:text/csv;charset=utf-8," + finalCsv);
+            link.download = `historial_caja_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            alert('Archivo CSV generado y descargado con todos los campos de resumen.');
+        } catch (error) {
+            alert('Error al generar el CSV. Revise la consola para detalles.');
+            console.error(error);
+        }
+    }
+</script>
+
+</body>
+</html>
