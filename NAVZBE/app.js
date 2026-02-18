@@ -729,7 +729,7 @@ function updateUserPosition(latlng, heading) {
         userMarker.setLatLng(latlng);
         userMarker.setIcon(rotatedIcon);
     } else {
-        userMarker = L.marker(latlng, { icon: rotatedIcon }).addTo(map).bindPopup("Tu vehículo");
+        userMarker = L.marker(latlng, { icon: rotatedIcon }).addTo(map);
     }
 
     checkProximityToRules(latlng, heading);
@@ -740,14 +740,14 @@ function onLocationError(e) {
     let errorMsg = "Sin señal GPS.";
 
     // Detailed error feedback for user
-    if (e.code === 1) errorMsg += " Permiso denegado.";
-    else if (e.code === 3) {
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+        errorMsg = "❌ Falta HTTPS. Chrome bloquea GPS en sitios no seguros.";
+    } else if (e.code === 1) {
+        errorMsg += " Permiso denegado.";
+    } else if (e.code === 3) {
         errorMsg += " Tiempo agotado. Reintentando...";
-        // Auto-retry after 3 seconds on timeout
         setTimeout(startGPSTracking, 3000);
     }
-    else if (window.location.protocol === 'file:') errorMsg += " Protocolo 'file://' restringe GPS.";
-    else if (!window.isSecureContext) errorMsg += " Origen no seguro (falta HTTPS).";
 
     document.getElementById('status-pill').innerText = errorMsg;
 }
