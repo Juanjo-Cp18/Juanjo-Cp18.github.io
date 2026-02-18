@@ -32,6 +32,8 @@ async function init() {
     let initialPosition = null;
 
     // Check GPS Permissions (Native or Browser)
+    document.getElementById('status-pill').innerText = "🛰️ Buscando GPS...";
+
     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
         try {
             const { Geolocation } = window.Capacitor.Plugins;
@@ -55,25 +57,41 @@ async function init() {
             console.error("Error en GPS Check Nativo:", e);
         }
     } else if (!window.Capacitor && navigator.geolocation) {
-        // Fallback for Android Chrome / Browsers
+        // Hyper-Robust Fallback for Android Chrome
+        console.log("Iniciando búsqueda inicial de GPS (Hyper-Robust)...");
+
         try {
-            const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
+            // Try up to 2 times for the initial lock with long timeout
+            let fetchAttempt = async (timeout) => {
+                return new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: timeout,
+                        maximumAge: 0
+                    });
                 });
-            });
+            };
+
+            let position = null;
+            try {
+                position = await fetchAttempt(10000); // 10s first try
+            } catch (e) {
+                console.warn("Primer intento GPS fallido, reintentando con 20s...");
+                position = await fetchAttempt(20000); // 20s second try
+            }
+
             if (position && position.coords) {
                 startView = [position.coords.latitude, position.coords.longitude];
                 startZoom = 15;
                 initialPosition = position.coords;
-                console.log("Posición inicial obtenida vía Navegador:", startView);
+                console.log("Posición inicial fijada (v1.7):", startView);
             }
         } catch (e) {
-            console.warn("No se pudo obtener posición inicial rápida:", e.message);
+            console.error("Fallo definitivo en búsqueda inicial GPS:", e.message);
+            document.getElementById('status-pill').innerText = "❌ No se pudo fijar GPS inicial.";
         }
     }
+
     // Initialize map with determined start location
     map = L.map('map').setView(startView, startZoom);
 
@@ -151,20 +169,22 @@ async function startGPSTracking() {
             document.getElementById('status-pill').innerText = "❌ Error iniciando GPS Nativo: " + e.message;
         }
     } else if (!window.ByPassWebGPS && navigator.geolocation) {
-        // High Reliability Fallback for Android Chrome / Browsers
-        console.log("Iniciando seguimiento GPS vía Navegador (Manual Watch)...");
+        // Hyper-Robust Continuous Tracking for Android Chrome v1.7
+        console.log("Activando sensor GPS (Manual Continuous Watch v1.7)...");
 
         navigator.geolocation.watchPosition((position) => {
             const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
             const heading = position.coords.heading || 0;
             onLocationFound({ latlng: latlng, heading: heading });
         }, (err) => {
-            console.warn("Error en GPS de Navegador:", err);
+            console.error("Error persistente en GPS de Navegador:", err);
             onLocationError(err);
+            // Auto-restart if it's a timeout error (code 3)
+            if (err.code === 3) setTimeout(startGPSTracking, 2000);
         }, {
             enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
+            timeout: 20000, // Very long timeout to prevent easy disconnection
+            maximumAge: 0   // Ensuring 100% fresh data
         });
     } else if (!window.Capacitor) {
         console.warn("Plugins de Capacitor no inicializados aún...");
