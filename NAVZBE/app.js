@@ -29,6 +29,8 @@ let gpsHeartbeat = Date.now();
 let gpsRetryCount = 0;
 let gpsStartTime = Date.now();
 let informedAboutPrecision = false;
+let consecutiveTimeouts = 0;
+let allowCoarseLocation = false;
 
 // --- Initialization ---
 async function init() {
@@ -755,16 +757,16 @@ function onLocationFound(e) {
 
     const accuracy = e.accuracy || 0;
 
-    // v1.13/v1.14 Accuracy Lockdown
+    // v1.13/v1.14/v1.17 Accuracy Lockdown
     // If we get a very poor accuracy (>200m) and we already have a previous reasonable position, ignore it.
-    if (accuracy > 200 && userMarker) {
+    if (accuracy > 200 && userMarker && !allowCoarseLocation) {
         console.log(`Rechazando ubicación poco precisa (${Math.round(accuracy)}m)`);
         document.getElementById('status-pill').innerHTML = `📡 Baja precisión (${Math.round(accuracy)}m). Buscando satélites...`;
         return;
     }
 
-    // v1.14 Initial Filter: If accuracy is 2000m (tower), don't show the marker yet
-    if (accuracy >= 1500 && !userMarker) {
+    // v1.14/v1.17 Initial Filter: If accuracy is 2000m (tower), don't show the marker yet UNLESS we are in recovery mode
+    if (accuracy >= 1500 && !userMarker && !allowCoarseLocation) {
         let waitMsg = `🛰️ Esperando señal satélite segura (${Math.round(accuracy)}m)...`;
 
         // v1.16 Hint if stuck
@@ -776,6 +778,12 @@ function onLocationFound(e) {
         return;
     }
 
+    // Reset recovery if we finally get a good fix
+    if (accuracy < 100) {
+        allowCoarseLocation = false;
+        consecutiveTimeouts = 0;
+    }
+
     // Update user marker
     updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
 
@@ -783,8 +791,15 @@ function onLocationFound(e) {
         map.setView(userMarker.getLatLng(), 15);
     }
 
+    // Update status bar
     const accuracyText = accuracy > 0 ? ` (${Math.round(accuracy)}m)` : "";
-    document.getElementById('status-pill').innerHTML = `✅ GPS Activo${accuracyText} <span id="aw-status" title="Keep-Awake Layers"></span>`;
+    let statusPrefix = "✅ GPS Activo";
+
+    if (accuracy > 200) {
+        statusPrefix = "⚠️ Ubicación Red (Buscando Satélites)";
+    }
+
+    document.getElementById('status-pill').innerHTML = `${statusPrefix}${accuracyText} <span id="aw-status" title="Keep-Awake Layers"></span>`;
     updateAwakeStatus();
 }
 
@@ -864,11 +879,18 @@ function onLocationError(e) {
 
     // Action plan logic
     if (e.code === 3) {
+        consecutiveTimeouts++;
         gpsRetryCount++;
+
+        if (consecutiveTimeouts >= 3 || (Date.now() - gpsStartTime > 90000)) {
+            console.warn("Multiple timeouts or long wait. Enabling Hybrid Recovery Mode.");
+            allowCoarseLocation = true;
+            document.getElementById('status-pill').innerHTML = "⚠️ El GPS tarda demasiado. Usando ubicación de red temporalmente...";
+        }
+
         if (gpsRetryCount > 2) {
             console.warn("Too many HighAccuracy timeouts. Relaxing requirements...");
-            document.getElementById('status-pill').innerText = "⚠️ Relajando precisión por falta de respuesta...";
-            // We don't stop, the polling loop/watchers will eventually hit something
+            // document.getElementById('status-pill').innerText = "⚠️ Relajando precisión por falta de respuesta...";
         }
     }
 
