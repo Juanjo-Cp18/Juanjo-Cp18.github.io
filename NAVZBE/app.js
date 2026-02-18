@@ -208,6 +208,25 @@ async function startGPSTracking() {
             timeout: 5000,
             maximumAge: 0
         });
+
+        // High-Frequency Polling (v1.11) - To bypass Chrome energy-saving stalls
+        if (window.pollingTimer) clearInterval(window.pollingTimer);
+        window.pollingTimer = setInterval(() => {
+            if (isAdminMode && isAdminGPSPaused) return;
+
+            navigator.geolocation.getCurrentPosition((position) => {
+                const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
+                const heading = position.coords.heading || 0;
+                onLocationFound({ latlng: latlng, heading: heading });
+            }, (err) => {
+                console.warn("Poll GPS Error:", err.message);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 4000,
+                maximumAge: 0
+            });
+        }, 5000);
+
     } else if (!window.Capacitor) {
         console.warn("Plugins de Capacitor no inicializados aún...");
         // Intentar de nuevo en 2 segundos si estamos en móvil
