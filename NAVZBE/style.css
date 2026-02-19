@@ -339,6 +339,71 @@ button:active {
     display: none !important;
 }
 
+/* ===== Simulation Mode (Admin Only) ===== */
+#simulation-controls {
+    position: fixed;
+    bottom: 40px;
+    right: 15px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+#sim-toggle-btn {
+    background: #ffc107 !important;
+    color: #333 !important;
+    font-size: 22px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#sim-keypad {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 15px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.sim-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+#sim-keypad button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+}
+
+#sim-keypad button:active {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(0.92);
+}
+
+#sim-label {
+    text-align: center;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
 @keyframes flash-bg {
     0% {
         background-color: rgba(255, 0, 0, 0.95);

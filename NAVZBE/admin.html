@@ -94,8 +94,26 @@
         </div>
     </div>
 
+    <!-- Simulation Mode (Admin) -->
+    <div id="simulation-controls">
+        <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación">🎮</button>
+        <div id="sim-keypad" class="hidden">
+            <div class="sim-row">
+                <button onclick="moveSimulated('up')">▲</button>
+            </div>
+            <div class="sim-row">
+                <button onclick="moveSimulated('left')">◀</button>
+                <button onclick="stopSimulated()" style="background:#f44336">✖</button>
+                <button onclick="moveSimulated('right')">▶</button>
+            </div>
+            <div class="sim-row">
+                <button onclick="moveSimulated('down')">▼</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Version Info -->
-    <div id="version-label">Versión: 1.17</div>
+    <div id="version-label">Versión: 1.20</div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

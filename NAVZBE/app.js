@@ -131,6 +131,22 @@ async function init() {
 
     // Request Wake Lock
     requestWakeLock();
+
+    // iOS Audio Unlock: silently hook into ALL natural app interactions
+    // (map taps, button presses, GPS interactions) - user never needs to do anything explicit
+    const unlockAudio = async () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            try {
+                await audioCtx.resume();
+                console.log('✅ AudioContext desbloqueado automáticamente (iOS fix)');
+            } catch (e) { /* silently ignore */ }
+        }
+    };
+    // Attach to every possible user interaction - silently transparent
+    ['touchstart', 'touchend', 'mousedown', 'click', 'keydown'].forEach(evt => {
+        document.addEventListener(evt, unlockAudio, { once: false, passive: true });
+    });
 }
 
 let watchId = null;
@@ -296,13 +312,17 @@ function toggleAdminMode() {
     document.body.style.border = isAdminMode ? "3px solid orange" : "none";
     document.getElementById('admin-controls').style.display = isAdminMode ? 'block' : 'none';
 
+    // Show/hide simulation button
+    const simControls = document.getElementById('simulation-controls');
+    if (simControls) simControls.classList.toggle('hidden', !isAdminMode);
+
     // Change Admin icon/label style
     const adminToggleLabel = document.querySelector('.admin-toggle-label');
     if (adminToggleLabel) {
         adminToggleLabel.style.backgroundColor = isAdminMode ? 'orange' : '';
     }
 
-    // Reset GPS pause when leaving admin mode
+    // Reset GPS pause and simulation when leaving admin mode
     if (!isAdminMode) {
         isAdminGPSPaused = false;
         const gpsBtn = document.getElementById('btn-pause-gps');
@@ -310,6 +330,7 @@ function toggleAdminMode() {
             gpsBtn.innerHTML = "📍";
             gpsBtn.style.backgroundColor = "";
         }
+        stopSimulated(); // Always stop simulation when leaving admin
     }
 
     renderRules(); // Re-render to show/hide admin buttons
@@ -883,6 +904,7 @@ function checkProximityToRules(userLatLng, userHeading) {
     if (isAdminMode) return;
 
     let triggeringType = null;
+    let triggeringRuleKey = null;
 
     trafficRules.forEach(rule => {
         const ruleLatLng = L.latLng(rule.lat, rule.lng);
@@ -898,6 +920,7 @@ function checkProximityToRules(userLatLng, userHeading) {
 
                 if (normalizedDiff < 45) {
                     triggeringType = 'forbidden';
+                    triggeringRuleKey = `forbidden_${rule.id}`; // unique per rule
                     document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓN PROHIBIDA DETECTADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
                 }
             }
@@ -909,6 +932,7 @@ function checkProximityToRules(userLatLng, userHeading) {
                 // If deviation is greater than 45 degrees, you are going wrong way
                 if (normalizedDiff > 45) {
                     triggeringType = 'mandatory';
+                    triggeringRuleKey = `mandatory_${rule.id}`; // unique per rule
                     document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓN OBLIGATORIA IGNORADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
                 }
             }
@@ -916,50 +940,61 @@ function checkProximityToRules(userLatLng, userHeading) {
     });
 
     if (triggeringType) {
-        startAlert(triggeringType);
+        startAlert(triggeringType, triggeringRuleKey);
     } else {
-        stopAlert();
+        // No rule active: reset so next encounter always re-triggers
+        if (currentAlertKey !== null) {
+            currentAlertKey = null;
+            stopAlert();
+        }
     }
 }
 
 
 
 // --- Audio & Visual Alert ---
-function startAlert(type = 'forbidden') {
+let currentAlertKey = null; // Tracks unique key of the currently active alert
+
+function startAlert(type = 'forbidden', ruleKey = null) {
     const alertDiv = document.getElementById('wrong-way-alert');
-    if (!alertDiv) {
-        playSiren();
-        return;
-    }
 
-    // Update Icon and Message
-    const iconDiv = document.getElementById('alert-icon');
-    const titleH2 = document.getElementById('alert-title');
-    const messageP = document.getElementById('alert-message');
+    // Build a unique key for this alert encounter
+    const alertKey = ruleKey || type;
 
-    if (type === 'forbidden') {
-        iconDiv.innerHTML = `
-            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                <circle cx="50" cy="50" r="48" fill="#C00" stroke="white" stroke-width="4"/>
-                <rect x="20" y="42" width="60" height="16" fill="white"/>
-            </svg>
-        `;
-        titleH2.innerText = "¡DIRECCIÓN PROHIBIDA!";
-        messageP.innerText = "NO ENTRE EN ESTA CALLE";
-    } else {
-        iconDiv.innerHTML = `
-            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                <circle cx="50" cy="50" r="48" fill="#0055A4" stroke="white" stroke-width="4"/>
-                <path d="M50 15 L20 55 L40 55 L40 85 L60 85 L60 55 L80 55 Z" fill="white"/>
-            </svg>
-        `;
-        titleH2.innerText = "¡DIRECCIÓN OBLIGATORIA!";
-        messageP.innerText = "SIGA LA SEÑALIZACIÓN";
-    }
+    // Update Icon and Message (always, so it reflects the current rule)
+    if (alertDiv) {
+        const iconDiv = document.getElementById('alert-icon');
+        const titleH2 = document.getElementById('alert-title');
+        const messageP = document.getElementById('alert-message');
 
-    if (alertDiv.classList.contains('hidden')) {
+        if (type === 'forbidden') {
+            iconDiv.innerHTML = `
+                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    <circle cx="50" cy="50" r="48" fill="#C00" stroke="white" stroke-width="4"/>
+                    <rect x="20" y="42" width="60" height="16" fill="white"/>
+                </svg>
+            `;
+            titleH2.innerText = "¡DIRECCIÓN PROHIBIDA!";
+            messageP.innerText = "NO ENTRE EN ESTA CALLE";
+        } else {
+            iconDiv.innerHTML = `
+                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    <circle cx="50" cy="50" r="48" fill="#0055A4" stroke="white" stroke-width="4"/>
+                    <path d="M50 15 L20 55 L40 55 L40 85 L60 85 L60 55 L80 55 Z" fill="white"/>
+                </svg>
+            `;
+            titleH2.innerText = "¡DIRECCIÓN OBLIGATORIA!";
+            messageP.innerText = "SIGA LA SEÑALIZACIÓN";
+        }
+
         alertDiv.classList.remove('hidden');
-        playSiren();
+    }
+
+    // If this is a NEW alert encounter (different key), restart the siren
+    if (currentAlertKey !== alertKey) {
+        currentAlertKey = alertKey;
+        stopSiren();   // Stop any previous siren first
+        playSiren();   // Start fresh for this new encounter
     }
 }
 
@@ -968,6 +1003,7 @@ function stopAlert() {
     if (alertDiv && !alertDiv.classList.contains('hidden')) {
         alertDiv.classList.add('hidden');
     }
+    stopSiren(); // Always stop the audio loop when alert is dismissed
 }
 
 function toggleWrongWayAlert() {
@@ -981,24 +1017,60 @@ function toggleWrongWayAlert() {
 }
 
 // Web Audio API Siren
-function playSiren() {
+let sirenInterval = null; // Handle for the repeating siren loop
+
+async function playSiren() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Create oscillator
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    // Try to resume AudioContext (required by iOS) - retry up to 5 times automatically
+    for (let attempt = 0; attempt < 5 && audioCtx.state === 'suspended'; attempt++) {
+        try {
+            await audioCtx.resume();
+        } catch (e) { /* silently ignore */ }
+        if (audioCtx.state === 'suspended') {
+            await new Promise(r => setTimeout(r, 300)); // wait 300ms and retry
+        }
+    }
 
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    // Avoid starting multiple loops
+    if (sirenInterval) return;
 
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.5);
-    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 1.0);
+    // Internal function to play one beep cycle
+    function playBeep() {
+        if (!audioCtx || audioCtx.state !== 'running') {
+            // Context still not ready - try again silently
+            audioCtx.resume().catch(() => { });
+            return;
+        }
 
-    // Play for 1 second loop
-    osc.start();
-    osc.stop(audioCtx.currentTime + 1);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.4);
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.8);
+
+        gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.8);
+    }
+
+    // Play immediately then repeat every 1.2 seconds
+    playBeep();
+    sirenInterval = setInterval(playBeep, 1200);
+}
+
+function stopSiren() {
+    if (sirenInterval) {
+        clearInterval(sirenInterval);
+        sirenInterval = null;
+    }
 }
 
 // --- Wake Lock Logic (Hyper-Robust for Chrome & iOS 16-26) ---
@@ -1182,3 +1254,68 @@ checkAndShowInstallPrompt();
 
 // Start
 init();
+
+// ===== Simulation Mode (v1.19) =====
+let isSimulating = false;
+let simLat = null;
+let simLng = null;
+let simHeading = 0;
+
+function toggleSimulation() {
+    isSimulating = !isSimulating;
+    const keypad = document.getElementById('sim-keypad');
+    const btn = document.getElementById('sim-toggle-btn');
+
+    if (isSimulating) {
+        // Grab current car position as starting point
+        if (userMarker) {
+            simLat = userMarker.getLatLng().lat;
+            simLng = userMarker.getLatLng().lng;
+        } else {
+            simLat = map.getCenter().lat;
+            simLng = map.getCenter().lng;
+        }
+        simHeading = 0;
+        keypad.classList.remove('hidden');
+        btn.style.background = '#ff9800';
+        btn.title = 'Salir de Simulación';
+        document.getElementById('status-pill').innerText = '🎮 Modo Simulación Activo';
+    } else {
+        stopSimulated();
+    }
+}
+
+function stopSimulated() {
+    isSimulating = false;
+    const keypad = document.getElementById('sim-keypad');
+    const btn = document.getElementById('sim-toggle-btn');
+    if (keypad) keypad.classList.add('hidden');
+    if (btn) { btn.style.background = ''; btn.title = 'Modo Simulación'; }
+    document.getElementById('status-pill').innerText = '🛰️ GPS Reanudado';
+    // Snap back to real GPS position if available
+    if (userMarker) map.setView(userMarker.getLatLng(), 15);
+}
+
+function moveSimulated(direction) {
+    if (!isSimulating) return;
+
+    // Step size: ~8 metres in degrees
+    const step = 0.00008;
+
+    if (direction === 'up') { simLat += step; simHeading = 0; }
+    if (direction === 'down') { simLat -= step; simHeading = 180; }
+    if (direction === 'right') { simLng += step; simHeading = 90; }
+    if (direction === 'left') { simLng -= step; simHeading = 270; }
+
+    const latlng = L.latLng(simLat, simLng);
+
+    // Update UI marker
+    updateUserPosition(latlng, simHeading, 5);
+    map.setView(latlng, map.getZoom());
+
+    // Trigger proximity check (same as real GPS)
+    checkProximityToRules(latlng, simHeading);
+
+    document.getElementById('status-pill').innerText =
+        `🎮 Sim | Rumbo: ${simHeading}° | Lat: ${simLat.toFixed(5)} Lng: ${simLng.toFixed(5)}`;
+}
