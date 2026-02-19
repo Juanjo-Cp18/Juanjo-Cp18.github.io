@@ -141,130 +141,107 @@ async function startGPSTracking() {
         try {
             const { Geolocation } = window.Capacitor.Plugins;
 
-            // Clear existing watch if any
             if (watchId != null) {
-                try {
-                    await Geolocation.clearWatch({ id: watchId });
-                } catch (e) {
-                    console.warn("Error clearing watch:", e);
-                }
+                try { await Geolocation.clearWatch({ id: watchId }); } catch (e) { }
             }
 
-            console.log("Iniciando seguimiento GPS nativo con ajustes robustos...");
+            console.log("Iniciando seguimiento GPS nativo...");
             watchId = await Geolocation.watchPosition({
-                timeout: 30000,     // Aumentado a 30 segundos para v1.14
-                maximumAge: 5000    // Permitir datos ligeramente antiguos para acelerar lock
+                timeout: 30000,
+                maximumAge: 5000
             }, (position, err) => {
                 if (err) {
-                    console.warn("GPS Watch Error:", err);
                     onLocationError(err);
                     return;
                 }
-
                 if (position && position.coords) {
-                    const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
-                    const heading = position.coords.heading || 0;
-
-                    // Update UI
                     gpsHeartbeat = Date.now();
-                    onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
+                    onLocationFound({
+                        latlng: L.latLng(position.coords.latitude, position.coords.longitude),
+                        heading: position.coords.heading || 0,
+                        accuracy: position.coords.accuracy
+                    });
                 }
             });
-
         } catch (e) {
-            console.error("Error starting GPS Watcher:", e);
-            document.getElementById('status-pill').innerText = "❌ Error iniciando GPS Nativo: " + e.message;
+            console.error("Error GPS Nativo:", e);
+            document.getElementById('status-pill').innerText = "❌ Error GPS Nativo";
         }
-    } else if (!window.ByPassWebGPS && navigator.geolocation) {
-        // Multi-Stage GPS Wake-up Sequence (v1.10)
-        console.log("Iniciando secuencia de despertar GPS (v1.10)...");
+    } else if (navigator.geolocation) {
+        console.log("Iniciando GPS Web (v1.18)...");
 
-        // Stage 1: Coarse hit to wake up the sensor chip
-        // v1.16: Use a fresh request to try and clear position cache
-        navigator.geolocation.getCurrentPosition((pos) => {
+        // Simple Watch with High Accuracy
+        watchId = navigator.geolocation.watchPosition((position) => {
             gpsHeartbeat = Date.now();
-            gpsRetryCount = 0;
-            gpsStartTime = Date.now();
-            console.log("GPS Despertado (Coarse Fix). Activando Watch Alta Precisión...");
-
-            // Stage 2: Immediate Watch with High Accuracy
-            navigator.geolocation.watchPosition((position) => {
-                const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
-                const heading = position.coords.heading || 0;
-                onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
-                gpsHeartbeat = Date.now();
-            }, (err) => {
-                console.error("Error persistente en GPS (Watch):", err);
-                gpsHeartbeat = Date.now(); // Error also counts as heartbeat (at least it's talking)
-                onLocationError(err);
-                if (err.code === 3) setTimeout(startGPSTracking, 3000);
-            }, {
-                enableHighAccuracy: true,
-                timeout: 35000, // Extendido a 35s
-                maximumAge: 5000
+            onLocationFound({
+                latlng: L.latLng(position.coords.latitude, position.coords.longitude),
+                heading: position.coords.heading || 0,
+                accuracy: position.coords.accuracy
             });
-
         }, (err) => {
-            console.warn("Fallo en despertar GPS, intentando Watch directo...");
-            // Manual fallback to watch even if getCurrentPosition fails
-            navigator.geolocation.watchPosition((position) => {
-                const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
-                const heading = position.coords.heading || 0;
-                onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
-            }, onLocationError, {
-                enableHighAccuracy: true,
-                timeout: 30000,
-                maximumAge: 0
-            });
+            gpsHeartbeat = Date.now();
+            onLocationError(err);
+            if (err.code === 3) setTimeout(startGPSTracking, 3000);
         }, {
-            enableHighAccuracy: false, // Low accuracy wakes the GPS chip faster
-            timeout: 5000,
+            enableHighAccuracy: true,
+            timeout: 30000,
             maximumAge: 0
         });
 
-        // Aggressive Locking Polling (v1.13)
-        if (window.pollingTimer) clearInterval(window.pollingTimer);
-        window.pollingTimer = setInterval(() => {
-            if (isAdminMode && isAdminGPSPaused) return;
-
-            // If accuracy is still poor (>100m), we poll more aggressively
-            navigator.geolocation.getCurrentPosition((position) => {
-                const latlng = L.latLng(position.coords.latitude, position.coords.longitude);
-                const heading = position.coords.heading || 0;
-                onLocationFound({ latlng: latlng, heading: heading, accuracy: position.coords.accuracy });
-            }, (err) => {
-                console.warn("Poll GPS Error:", err.message);
-            }, {
-                enableHighAccuracy: true,
-                timeout: 25000, // V1.14: Timeout largo para no forzar coarse
-                maximumAge: 0
-            });
-        }, 5000);
-
-        // Heartbeat Watchdog (v1.15) + Precision Check (v1.16)
-        if (window.heartbeatTimer) clearInterval(window.heartbeatTimer);
-        window.heartbeatTimer = setInterval(() => {
+        // Precision Watchdog (v1.18)
+        if (window.precisionTimer) clearInterval(window.precisionTimer);
+        window.precisionTimer = setInterval(() => {
             const now = Date.now();
-            if (now - gpsHeartbeat > 15000) {
-                console.warn("Heartbeat failure. Restarting GPS...");
-                gpsHeartbeat = now;
+
+            // Check for Heartbeat (GPS stopped talking entirely)
+            if (now - gspHeartbeat > 20000) {
+                console.warn("GPS Heartbeat fail. Restarting...");
                 startGPSTracking();
+                return;
             }
 
-            // v1.16: Check for persistent poor accuracy (Approximate Location trap)
-            if (!informedAboutPrecision && !userMarker && (now - gpsStartTime > 40000)) {
-                console.warn("Persistent poor accuracy detected. Likely Android 'Approximate Location' limit.");
-                document.getElementById('status-pill').innerHTML = `⚠️ <span style="color:#FFF">Modo Aproximado activado.</span><br><small>Ve a Ajustes -> Aplicaciones -> Chrome -> Permisos -> Ubicación -> Activar 'Ubicación Precisa'.</small>`;
-                informedAboutPrecision = true;
+            // Check for Poor Accuracy (likely "Google Location Accuracy" disabled)
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const timeSinceStart = now - gpsStartTime;
+
+            if (isAndroid && !informedAboutPrecision && timeSinceStart > 15000) {
+                // If we haven't found a single good position yet, or if accuracy is consistently bad
+                if (!userMarker || (userMarker && accuracyCircle && accuracyCircle.getRadius() > 200)) {
+                    console.warn("Posible falta de 'Precisión de ubicación' en Android.");
+                    showPrecisionAlert();
+                    informedAboutPrecision = true;
+                }
             }
         }, 10000);
-
-    } else if (!window.Capacitor) {
-        console.warn("Plugins de Capacitor no inicializados aún...");
-        // Intentar de nuevo en 2 segundos si estamos en móvil
-        setTimeout(startGPSTracking, 2000);
     }
 }
+
+function showPrecisionAlert() {
+    const statusPill = document.getElementById('status-pill');
+    statusPill.style.height = "auto";
+    statusPill.style.background = "#d32f2f";
+    statusPill.innerHTML = `
+        <div style="padding: 10px; line-height: 1.4;">
+            <strong>⚠️ POSIBLE ERROR DE PRECISIÓN</strong><br>
+            <small>Si el vehículo no se mueve, actívalo así:</small><br>
+            <div style="text-align: left; margin-top: 5px; font-size: 11px;">
+                1. Ajustes del Teléfono<br>
+                2. Ubicación<br>
+                3. Servicios de ubicación<br>
+                4. <b>Precisión de la ubicación de Google</b> -> <span style="color:yellow">ACTIVAR</span>
+            </div>
+            <button onclick="this.parentElement.parentElement.style.height=''; informedAboutPrecision=true; renderStatusPill();" style="margin-top:5px; background:white; color:black; border:none; padding:2px 10px; border-radius:10px; font-size:10px;">Entendido</button>
+        </div>
+    `;
+}
+
+function renderStatusPill() {
+    // Helper to restore pill state
+    const statusPill = document.getElementById('status-pill');
+    statusPill.style.background = "";
+    statusPill.innerText = "🛰️ Buscando GPS...";
+}
+
 
 // --- Icons ---
 const carIcon = L.icon({
