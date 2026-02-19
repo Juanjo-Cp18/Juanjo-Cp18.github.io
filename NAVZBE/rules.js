@@ -1,5 +1,5 @@
 // Título: Configuración de Reglas de Tráfico
-// Fecha: 19/2/2026, 14:13:58
+// Fecha: 19/2/2026, 14:35:19
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_RULES = [
