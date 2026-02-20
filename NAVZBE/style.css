@@ -240,7 +240,8 @@ button:active {
 }
 
 /* Modal Styling */
-#rule-modal {
+#rule-modal,
+#overlay-modal {
     position: fixed;
     top: 0;
     left: 0;

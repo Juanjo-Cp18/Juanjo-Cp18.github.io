@@ -31,6 +31,9 @@ let gpsStartTime = Date.now();
 let informedAboutPrecision = false;
 let consecutiveTimeouts = 0;
 let allowCoarseLocation = false;
+let isOverlayMode = false; // New mode to add visual arrows that cover map arrows
+let mapOverlays = []; // Array of objects: {id, lat, lng, angle}
+let overlayMarkers = [];
 
 // --- Initialization ---
 async function init() {
@@ -115,9 +118,11 @@ async function init() {
 
     // Load rules immediately (from LocalStorage or rules.js fallback)
     loadRulesFromStorage();
+    loadOverlaysFromStorage(); // New
 
     // Start Firebase Sync (will update rules if cloud data exists)
     initFirebaseSync();
+    initOverlaySync(); // New
 
     // Map Click Listener (Only active in Admin Mode)
     map.on('click', onMapClick);
@@ -127,6 +132,10 @@ async function init() {
 
     // Map Interaction Listeners
     map.on('dragstart', handleMapDrag);
+    map.on('zoomend', () => {
+        renderOverlays();
+        renderRules(); // Also rescale rules if needed
+    });
     // map.on('zoomstart', handleMapDrag); // DEACTIVATED: Allow user to zoom without losing the center follow mode (Fix for regression v1.31)
 
 
@@ -305,10 +314,10 @@ const carIcon = L.icon({
 
 // Custom SVG Icons
 function getRuleIcon(type, angle) {
+    // ... items from rule icon ...
     let htmlContent = '';
-
+    // (Existing rule icon logic - I will keep it but I need to provide the new overlay icon function)
     if (type === 'forbidden') {
-        // No Entry Sign
         htmlContent = `
             <div style="transform: rotate(${angle}deg); width: 15px; height: 15px; display:flex; justify-content:center; align-items:center;">
                 <svg viewBox="0 0 100 100" style="width: 15px; height: 15px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">
@@ -319,7 +328,6 @@ function getRuleIcon(type, angle) {
             </div>
         `;
     } else {
-        // Mandatory Direction
         htmlContent = `
             <div style="transform: rotate(${angle}deg); width: 15px; height: 15px; display:flex; justify-content:center; align-items:center;">
                 <svg viewBox="0 0 100 100" style="width: 15px; height: 15px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">
@@ -335,6 +343,38 @@ function getRuleIcon(type, angle) {
         html: htmlContent,
         iconSize: [15, 15],
         iconAnchor: [7.5, 7.5]
+    });
+}
+
+// NEW: Overlay Icon (Designed to cover OSM arrows)
+function getOverlayIcon(angle) {
+    const zoom = map ? map.getZoom() : 15;
+
+    // Dynamic sizing based on zoom level (OpenStreetMap scale)
+    // Minimalist size to match native map arrows
+    let size = 8;
+    if (zoom <= 13) size = 4;
+    else if (zoom === 14) size = 6;
+    else if (zoom === 15) size = 8;
+    else if (zoom === 16) size = 11;
+    else if (zoom === 17) size = 15;
+    else if (zoom === 18) size = 20;
+    else if (zoom >= 19) size = 30;
+
+    const iconPadding = size * 0.1;
+    const svgSize = size * 0.75;
+
+    return L.divIcon({
+        className: 'map-overlay-marker',
+        html: `
+            <div style="transform: rotate(${angle}deg); width: ${size}px; height: ${size}px; display:flex; justify-content:center; align-items:center; background: #4CAF50; border-radius: 2px; box-shadow: 0 0 2px rgba(0,0,0,0.3);">
+                <svg viewBox="0 0 100 100" style="width: ${svgSize}px; height: ${svgSize}px;">
+                    <path d="M50 5 L15 60 L40 60 L40 95 L60 95 L60 60 L85 60 Z" fill="white"/>
+                </svg>
+            </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
     });
 }
 
@@ -428,12 +468,28 @@ function toggleUI() {
         toggleBtn.innerText = isUIVisible ? '👁️' : '👁️‍🗨️';
         toggleBtn.style.opacity = isUIVisible ? '1' : '0.5';
     }
+
+    // Hide/Show overlays markers
+    overlayMarkers.forEach(m => {
+        if (isUIVisible) map.addLayer(m);
+        else map.removeLayer(m);
+    });
 }
 
 // (Replaced alert with simplified toggle logic to avoid annoying popups)
 
 function onMapClick(e) {
     if (!isAdminMode) return;
+
+    if (isOverlayMode) {
+        // Overlay Creation
+        tempClickLocation = e.latlng;
+        editingOverlayId = null;
+        document.getElementById('overlay-angle').value = 0;
+        updateOverlayAnglePreview();
+        document.getElementById('overlay-modal').classList.remove('hidden');
+        return;
+    }
 
     // New Rule Mode
     editingRuleId = null;
@@ -445,6 +501,134 @@ function onMapClick(e) {
     updateAnglePreview(); // Reset preview
 
     document.getElementById('rule-modal').classList.remove('hidden');
+}
+
+// --- Overlay Admin Functions ---
+let editingOverlayId = null;
+
+function toggleOverlayMode() {
+    isOverlayMode = !isOverlayMode;
+    const btn = document.getElementById('overlay-mode-btn');
+    if (btn) {
+        btn.style.boxShadow = isOverlayMode ? "0 0 10px #673AB7, inset 0 0 5px rgba(0,0,0,0.5)" : "";
+        btn.style.border = isOverlayMode ? "2px solid white" : "";
+    }
+    document.getElementById('status-pill').innerText = isOverlayMode ? "🎨 Modo Capa Visual: Haz clic para tapar flecha" : "📍 Modo Normal";
+}
+
+function updateOverlayAnglePreview() {
+    const angle = document.getElementById('overlay-angle').value;
+    document.getElementById('overlay-angle-display').innerText = angle;
+    document.getElementById('overlay-angle-arrow').style.transform = `rotate(${angle}deg)`;
+}
+
+function closeOverlayModal() {
+    document.getElementById('overlay-modal').classList.add('hidden');
+    tempClickLocation = null;
+    editingOverlayId = null;
+}
+
+function saveOverlay() {
+    const angle = parseInt(document.getElementById('overlay-angle').value) || 0;
+
+    if (editingOverlayId) {
+        const idx = mapOverlays.findIndex(o => o.id === editingOverlayId);
+        if (idx !== -1) mapOverlays[idx].angle = angle;
+    } else {
+        if (!tempClickLocation) return;
+        mapOverlays.push({
+            id: Date.now(),
+            lat: tempClickLocation.lat,
+            lng: tempClickLocation.lng,
+            angle: angle
+        });
+    }
+
+    saveOverlaysToStorage();
+    renderOverlays();
+    closeOverlayModal();
+}
+
+function editOverlay(id) {
+    if (!isAdminMode) return;
+    const overlay = mapOverlays.find(o => o.id === id);
+    if (!overlay) return;
+
+    editingOverlayId = id;
+    tempClickLocation = null;
+    document.getElementById('overlay-angle').value = overlay.angle;
+    updateOverlayAnglePreview();
+    document.getElementById('overlay-modal').classList.remove('hidden');
+    map.closePopup();
+}
+
+function deleteOverlay(id) {
+    if (!isAdminMode) return;
+    if (confirm("¿Borrar esta flecha visual?")) {
+        mapOverlays = mapOverlays.filter(o => o.id !== id);
+        saveOverlaysToStorage();
+        renderOverlays();
+    }
+}
+
+function renderOverlays() {
+    overlayMarkers.forEach(m => map.removeLayer(m));
+    overlayMarkers = [];
+
+    mapOverlays.forEach(overlay => {
+        const marker = L.marker([overlay.lat, overlay.lng], {
+            icon: getOverlayIcon(overlay.angle)
+        }).addTo(map);
+
+        if (isAdminMode) {
+            let popupContent = `
+                <div style="text-align:center;">
+                    <b>Flecha Visual (Capa)</b><br>
+                    Rumbo: ${overlay.angle}°
+                    <div style="margin-top:10px; display:flex; gap:5px; justify-content:center;">
+                        <button onclick="editOverlay(${overlay.id})" style="background:#673AB7; color:white; padding:5px 10px; font-size:12px; border:none; border-radius:3px;">Editar</button>
+                        <button onclick="deleteOverlay(${overlay.id})" style="background:#f44336; color:white; padding:5px 10px; font-size:12px; border:none; border-radius:3px;">Borrar</button>
+                    </div>
+                </div>
+            `;
+            marker.bindPopup(popupContent);
+        }
+        overlayMarkers.push(marker);
+    });
+}
+
+function saveOverlaysToStorage() {
+    localStorage.setItem('map_overlays', JSON.stringify(mapOverlays));
+    if (isAdminMode && db && window.FirebaseSDK) {
+        const { set, ref } = window.FirebaseSDK;
+        const overlaysRef = ref(db, 'map_overlays');
+        const overlaysObj = {};
+        mapOverlays.forEach(o => { overlaysObj[o.id.toString()] = o; });
+        set(overlaysRef, overlaysObj);
+    }
+}
+
+function loadOverlaysFromStorage() {
+    const localData = localStorage.getItem('map_overlays');
+    if (localData) {
+        mapOverlays = JSON.parse(localData);
+    } else if (typeof PRELOADED_OVERLAYS !== 'undefined') {
+        mapOverlays = [...PRELOADED_OVERLAYS];
+    }
+    renderOverlays();
+}
+
+function initOverlaySync() {
+    if (!window.FirebaseSDK || !db) return;
+    const { ref, onValue } = window.FirebaseSDK;
+    const overlaysRef = ref(db, 'map_overlays');
+    onValue(overlaysRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            mapOverlays = Object.values(data);
+            renderOverlays();
+        }
+    });
 }
 
 function editRule(id) {

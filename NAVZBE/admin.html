@@ -71,6 +71,35 @@
             <button title="Borrar Todo" onclick="clearAllRules()" style="background-color: #f44336;">🗑️</button>
             <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación"
                 style="background-color: #ffc107; color: #333;">🎮</button>
+            <div class="separator"></div>
+            <button id="overlay-mode-btn" onclick="toggleOverlayMode()" title="Modo Capa Visual (Tapar Flechas)"
+                style="background-color: #673AB7;">🎨</button>
+        </div>
+    </div>
+
+    <!-- Admin: Overlay Creation Modal -->
+    <div id="overlay-modal" class="hidden">
+        <div class="modal-content" style="border-top: 5px solid #673AB7;">
+            <h3>Añadir Flecha Visual</h3>
+            <p><small>Esta flecha solo sirve para corregir el mapa visualmente. No activará alarmas.</small></p>
+            <div class="direction-inputs">
+                <p>Dirección (Rumbo): <span id="overlay-angle-display">0</span>°</p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <input type="range" id="overlay-angle" min="0" max="360" value="0"
+                        oninput="updateOverlayAnglePreview()">
+                    <div id="overlay-angle-preview"
+                        style="width: 35px; height: 35px; border: 2px solid #673AB7; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: #fff;">
+                        <div id="overlay-angle-arrow"
+                            style="font-size: 24px; font-weight: bold; transform-origin: center; color: #673AB7;">
+                            ↑
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="saveOverlay()" style="background-color: #673AB7;">✅ Colocar</button>
+                <button onclick="closeOverlayModal()" style="background-color: #777;">❌ Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -168,7 +197,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versión: 1.33</div>
+    <div id="version-label">Versión: 1.34</div>
 
 
 
@@ -193,6 +222,12 @@
     </script>
 
     <script src="./rules.js"></script>
+    <script>
+        // Placeholder for overlays if overlays.js doesn't exist yet
+        if (typeof PRELOADED_OVERLAYS === 'undefined') {
+            window.PRELOADED_OVERLAYS = [];
+        }
+    </script>
     <script src="./app.js"></script>
 </body>
 
