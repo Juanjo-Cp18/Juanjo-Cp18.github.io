@@ -149,6 +149,25 @@ async function init() {
     });
 }
 
+function refreshRules() {
+    console.log("🔄 Actualización manual solicitada...");
+    document.getElementById('status-pill').innerText = "🔄 Sincronizando señales...";
+
+    if (window.FirebaseSDK && db) {
+        initFirebaseSync();
+    } else {
+        loadRulesFromStorage();
+    }
+
+    // Quick visual feedback
+    setTimeout(() => {
+        const currentText = document.getElementById('status-pill').innerText;
+        if (currentText === "🔄 Sincronizando señales...") {
+            document.getElementById('status-pill').innerText = "✅ Señales actualizadas";
+        }
+    }, 1500);
+}
+
 let watchId = null;
 
 async function startGPSTracking() {
