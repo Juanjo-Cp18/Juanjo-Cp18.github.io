@@ -57,7 +57,7 @@ async function init() {
                 const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
                 if (position && position.coords) {
                     startView = [position.coords.latitude, position.coords.longitude];
-                    startZoom = 18; // Closer zoom for navigation
+                    startZoom = 19; // Maximum zoom for close navigation
                     initialPosition = position.coords;
                 }
             } else {
@@ -92,7 +92,7 @@ async function init() {
 
             if (position && position.coords) {
                 startView = [position.coords.latitude, position.coords.longitude];
-                startZoom = 18; // Closer zoom for navigation
+                startZoom = 19; // Maximum zoom for close navigation
                 initialPosition = position.coords;
                 console.log("Posición inicial fijada (v1.7):", startView);
             }
@@ -832,33 +832,35 @@ function initFirebaseSync() {
         return;
     }
 
-    const { initializeApp, getDatabase, ref, onValue } = window.FirebaseSDK;
+    const { initializeApp, getApps, getDatabase, ref, onValue } = window.FirebaseSDK;
 
     try {
-        const app = initializeApp(firebaseConfig);
+        // Prevent "app already exists" error
+        const existingApps = getApps();
+        const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
+
         db = getDatabase(app);
         const rulesRef = ref(db, 'traffic_rules');
 
-        // Real-time synchronization:
-        // This function triggers every time the database changes in the cloud!
+        console.log("📡 Iniciando escucha en tiempo real de reglas...");
         onValue(rulesRef, (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                // Firebase stores objects, we need an array
                 trafficRules = Object.values(data);
-                console.log("🔄 Reglas sincronizadas desde la nube:", trafficRules.length);
+                console.log("🔄 Reglas sincronizadas:", trafficRules.length);
                 renderRules();
             } else {
-                console.log("ℹ️ La nube está vacía. Cargando locales...");
+                console.log("ℹ️ Cargando reglas locales (nube vacía)...");
                 loadRulesFromStorage();
             }
         });
 
-        // Trigger overlay sync after global db is initialized
+        // Independent call for overlays to ensure they sync even if rules are empty
         initOverlaySync();
     } catch (err) {
-        console.error("❌ Error Firebase:", err);
+        console.error("❌ Error Crítico Firebase:", err);
         loadRulesFromStorage();
+        loadOverlaysFromStorage();
     }
 }
 
@@ -1031,8 +1033,12 @@ function onLocationFound(e) {
     updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
 
     if (isMapCentered) {
-        // Maintain current zoom instead of forcing 15 to avoid zoomstart triggering auto-follow disabling and for better UX
-        map.setView(userMarker.getLatLng(), map.getZoom());
+        // Forced Close-up Navigation Zoom:
+        // If the user zoom is too far (e.g. < 17), we force it back to 19 while driving
+        let zoom = map.getZoom();
+        if (zoom < 17) zoom = 19;
+
+        map.setView(userMarker.getLatLng(), zoom);
     }
 
 
@@ -1051,7 +1057,7 @@ function onLocationFound(e) {
 function centerMap() {
     isMapCentered = true;
     if (userMarker) {
-        map.setView(userMarker.getLatLng(), 18);
+        map.setView(userMarker.getLatLng(), 19); // Force deep zoom on manual center
     }
 }
 
