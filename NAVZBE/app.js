@@ -395,22 +395,41 @@ function toggleAdminGPS() {
 let isUIVisible = true;
 function toggleUI() {
     isUIVisible = !isUIVisible;
-    const controls = document.getElementById('main-controls');
-    const centerBtn = document.getElementById('center-btn');
     const toggleBtn = document.getElementById('ui-toggle-btn');
+    const buttons = document.querySelectorAll('button:not(#ui-toggle-btn)');
+    const cityCrest = document.getElementById('city-crest');
+    const mainControls = document.getElementById('main-controls');
+    const simKeypad = document.getElementById('sim-keypad');
 
-    if (isUIVisible) {
-        if (controls) controls.style.display = 'block';
-        if (centerBtn) centerBtn.style.display = 'flex';
-        toggleBtn.innerText = '👁️';
-        if (toggleBtn.style) toggleBtn.style.opacity = '1';
-    } else {
-        if (controls) controls.style.display = 'none';
-        if (centerBtn) centerBtn.style.display = 'none';
-        toggleBtn.innerText = '👁️‍🗨️';
-        if (toggleBtn.style) toggleBtn.style.opacity = '0.5';
+    buttons.forEach(btn => {
+        // Skip buttons inside modals or the simulation keypad to avoid breaking active interactions
+        if (!btn.closest('.modal-content') && !btn.closest('#sim-keypad')) {
+            btn.style.display = isUIVisible ? '' : 'none';
+        }
+    });
+
+    if (cityCrest) {
+        cityCrest.style.display = isUIVisible ? '' : 'none';
+    }
+
+    if (mainControls) {
+        // For Admin sidebar background
+        mainControls.style.background = isUIVisible ? '' : 'transparent';
+        mainControls.style.border = isUIVisible ? '' : 'none';
+        mainControls.style.boxShadow = isUIVisible ? '' : 'none';
+    }
+
+    // Hide simulation keypad if UI is hidden
+    if (simKeypad && !isUIVisible) {
+        simKeypad.classList.add('hidden');
+    }
+
+    if (toggleBtn) {
+        toggleBtn.innerText = isUIVisible ? '👁️' : '👁️‍🗨️';
+        toggleBtn.style.opacity = isUIVisible ? '1' : '0.5';
     }
 }
+
 // (Replaced alert with simplified toggle logic to avoid annoying popups)
 
 function onMapClick(e) {
