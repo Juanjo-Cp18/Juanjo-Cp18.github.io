@@ -1,48 +1,13 @@
 // Título: Configuración de Reglas de Tráfico
-// Fecha: 20/2/2026, 14:30:51
+// Fecha: 20/2/2026, 23:29:20
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_RULES = [
-    {
-        "angle": 308,
-        "id": 1769900715703,
-        "lat": 39.510857015820754,
-        "lng": 2.544880735136102,
-        "type": "forbidden"
-    },
-    {
-        "angle": 333,
-        "id": 1770139370135.1125,
-        "lat": 39.7622517,
-        "lng": 2.7117858,
-        "type": "forbidden"
-    },
-    {
-        "angle": 56,
-        "id": 1770139370135.2656,
-        "lat": 39.7645419,
-        "lng": 2.7162487,
-        "type": "forbidden"
-    },
     {
         "angle": 83,
         "id": 1770139370135.3586,
         "lat": 39.7656072,
         "lng": 2.7182849,
-        "type": "forbidden"
-    },
-    {
-        "angle": 41,
-        "id": 1770139370135.4446,
-        "lat": 39.7637702,
-        "lng": 2.7184364,
-        "type": "forbidden"
-    },
-    {
-        "angle": 10,
-        "id": 1770139370135.5833,
-        "lat": 39.7629881,
-        "lng": 2.714493,
         "type": "forbidden"
     },
     {
@@ -92,27 +57,6 @@ const PRELOADED_RULES = [
         "id": 1770999666815,
         "lat": 39.76371921119144,
         "lng": 2.712682922007366,
-        "type": "forbidden"
-    },
-    {
-        "angle": 46,
-        "id": 1770999680967,
-        "lat": 39.76283676208814,
-        "lng": 2.7115462636400167,
-        "type": "forbidden"
-    },
-    {
-        "angle": 0,
-        "id": 1770999741965,
-        "lat": 39.761005850306255,
-        "lng": 2.7114703885713096,
-        "type": "forbidden"
-    },
-    {
-        "angle": 21,
-        "id": 1770999773589,
-        "lat": 39.76258109715098,
-        "lng": 2.7112023087676733,
         "type": "forbidden"
     },
     {
