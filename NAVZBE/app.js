@@ -753,6 +753,9 @@ function onLocationFound(e) {
     // If Admin paused GPS, ignore everything
     if (isAdminMode && isAdminGPSPaused) return;
 
+    // If Simulating, ignore real GPS updates to prevent jumping
+    if (isSimulating) return;
+
     const accuracy = e.accuracy || 0;
 
     // v1.13/v1.14/v1.17 Accuracy Lockdown
@@ -901,7 +904,8 @@ function onLocationError(e) {
 
 // --- Intelligent Alert Logic ---
 function checkProximityToRules(userLatLng, userHeading) {
-    if (isAdminMode) return;
+    // Allow alerts if NOT admin OR if simulating (Admin testing simulation)
+    if (isAdminMode && !isSimulating) return;
 
     let triggeringType = null;
     let triggeringRuleKey = null;
