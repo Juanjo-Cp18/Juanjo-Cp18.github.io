@@ -42,158 +42,155 @@
     <img id="city-crest" src="./soller_crest.svg" alt="Escudo Sóller">
     <div id="map"></div>
 
-    <!-- Top Right Actions Wrapper -->
-    <div id="top-right-controls">
-        <!-- UI Toggle Button -->
-        <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos">👁️</button>
+    <!-- GPS Status (Top Center) -->
+    <div id="status-pill">...</div>
+    <div id="status" class="hidden"></div>
 
-        <!-- Refresh Rule Button -->
-        <button id="refresh-btn" title="Refrescar Señales" onclick="refreshRules()"
-            style="background-color: #4CAF50;">🔄</button>
+    <!-- UI Controls Sidebar (Unified Admin Panel) -->
+    <div class="controls" id="main-controls">
+        <div id="admin-controls">
+            <!-- General Map Controls -->
+            <button id="center-btn" title="Centrar Mapa" onclick="centerMap()"
+                style="background-color: #2196F3;">🎯</button>
+            <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos"
+                style="background-color: #fff; color: #444;">👁️</button>
+            <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
+                style="background-color: #2196F3;">❓</button>
 
-        <!-- Help Button -->
-        <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
-            style="background-color: #2196F3;">❓</button>
+            <div class="separator"></div>
 
-        <!-- Center Map Button -->
-        <button id="center-btn" title="Centrar Mapa" onclick="centerMap()">🎯</button>
-
-        <!-- GPS Status (Top Center) -->
-        <div id="status-pill">...</div>
-        <div id="status" class="hidden"></div>
-
-        <!-- UI Controls Sidebar (Always Admin in this page) -->
-        <div class="controls" id="main-controls">
-            <div id="admin-controls">
-                <button id="btn-pause-gps" title="Pausar GPS" onclick="toggleAdminGPS()"
-                    style="background-color: #607D8B;">📍</button>
-                <button title="Importar OSM" onclick="importOSMRules()" style="background-color: #FF9800;">🌍</button>
-                <button title="Cargar rules.js" onclick="resetRulesFromFile()"
-                    style="background-color: #9C27B0;">🔄</button>
-                <button title="Descargar Config" onclick="downloadConfig()"
-                    style="background-color: #2196F3;">💾</button>
-                <button title="Borrar Todo" onclick="clearAllRules()" style="background-color: #f44336;">🗑️</button>
-            </div>
+            <!-- Admin Logic Controls -->
+            <button id="btn-pause-gps" title="Pausar GPS" onclick="toggleAdminGPS()"
+                style="background-color: #607D8B;">📍</button>
+            <button id="refresh-btn" title="Refrescar Señales" onclick="refreshRules()"
+                style="background-color: #4CAF50;">🔄</button>
+            <button title="Importar OSM" onclick="importOSMRules()" style="background-color: #FF9800;">🌍</button>
+            <button title="Cargar rules.js" onclick="resetRulesFromFile()"
+                style="background-color: #9C27B0;">🔄</button>
+            <button title="Descargar Config" onclick="downloadConfig()" style="background-color: #2196F3;">💾</button>
+            <button title="Borrar Todo" onclick="clearAllRules()" style="background-color: #f44336;">🗑️</button>
         </div>
+    </div>
 
-        <!-- Admin: Rule Creation Modal -->
-        <div id="rule-modal" class="hidden">
-            <div class="modal-content">
-                <h3>Añadir Regla de Tráfico</h3>
-                <select id="rule-type">
-                    <option value="forbidden">⛔ Dirección Prohibida</option>
-                    <option value="mandatory">⬇️ Dirección Obligatoria</option>
-                </select>
-                <div class="direction-inputs">
-                    <p>Dirección (Rumbo): <span id="angle-display">0</span>°</p>
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                        <input type="range" id="rule-angle" min="0" max="360" value="0" oninput="updateAnglePreview()">
-                        <div id="angle-preview"
-                            style="width: 30px; height: 30px; border: 2px solid #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: #eee;">
-                            <div id="angle-arrow" style="font-size: 20px; font-weight: bold; transform-origin: center;">
-                                ⬆️
-                            </div>
+    <!-- Admin: Rule Creation Modal -->
+    <div id="rule-modal" class="hidden">
+        <div class="modal-content">
+            <h3>Añadir Regla de Tráfico</h3>
+            <select id="rule-type">
+                <option value="forbidden">⛔ Dirección Prohibida</option>
+                <option value="mandatory">⬇️ Dirección Obligatoria</option>
+            </select>
+            <div class="direction-inputs">
+                <p>Dirección (Rumbo): <span id="angle-display">0</span>°</p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <input type="range" id="rule-angle" min="0" max="360" value="0" oninput="updateAnglePreview()">
+                    <div id="angle-preview"
+                        style="width: 30px; height: 30px; border: 2px solid #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: #eee;">
+                        <div id="angle-arrow" style="font-size: 20px; font-weight: bold; transform-origin: center;">
+                            ⬆️
                         </div>
                     </div>
                 </div>
-                <div class="modal-actions">
-                    <button onclick="saveRule()" style="background-color: #4CAF50;">✅ Guardar</button>
-                    <button onclick="closeModal()" style="background-color: #777;">❌ Cancelar</button>
-                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="saveRule()" style="background-color: #4CAF50;">✅ Guardar</button>
+                <button onclick="closeModal()" style="background-color: #777;">❌ Cancelar</button>
             </div>
         </div>
+    </div>
 
-        <!-- Help Modal -->
-        <div id="help-modal" class="hidden">
-            <div class="modal-content help-content">
-                <div class="help-scroll-area">
-                    <div class="help-lang-section">
-                        <h3>ℹ️ Ajuda / Información</h3>
-                        <p><b>CATALÀ</b></p>
-                        <p>Aquest és un prototip de navegació. Pot presentar errors. Cal respectar sempre la
-                            senyalització viària existent. Circuli amb precaució.</p>
-                        <p><b>Requisits:</b> Cal tenir activada la <b>Ubicació</b> del telèfon i la <b>Precisió de la
-                                ubicació</b>.</p>
-                        <p><b>Instal·lació:</b></p>
-                        <ul>
-                            <li><b>iOS (iPhone):</b> Prem 'Compartir' ⎋ i 'Afegir a la pantalla d'inici' ⊞.</li>
-                            <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla
-                                inici'.</li>
-                        </ul>
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden">
+        <div class="modal-content help-content">
+            <div class="help-scroll-area">
+                <div class="help-lang-section">
+                    <h3>ℹ️ Ajuda / Información</h3>
+                    <p><b>CATALÀ</b></p>
+                    <p>Aquest és un prototip de navegació. Pot presentar errors. Cal respectar sempre la senyalització
+                        viària existent. Circuli amb precaució.</p>
+                    <p><b>Requisits:</b> Cal tenir activada la <b>Ubicació</b> del telèfon i la <b>Precisió de la
+                            ubicació</b>.</p>
+                    <p><b>Instal·lació:</b></p>
+                    <ul>
+                        <li><b>iOS (iPhone):</b> Prem 'Compartir' ⎋ i 'Afegir a la pantalla d'inici' ⊞.</li>
+                        <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla inici'.
+                        </li>
+                    </ul>
 
-                        <hr>
+                    <hr>
 
-                        <p><b>ESPAÑOL</b></p>
-                        <p>Este es un prototipo de navegación. Puede presentar errores. Se debe respetar siempre la
-                            señalización viaria existente. Circule con precaución.</p>
-                        <p><b>Requisitos:</b> Debe estar activada la <b>Ubicación</b> del teléfono y la <b>Precisión de
-                                la ubicación</b>.</p>
-                        <p><b>Instalación:</b></p>
-                        <ul>
-                            <li><b>iOS (iPhone):</b> Pulsa 'Compartir' ⎋ y 'Añadir a la pantalla de inicio' ⊞.</li>
-                            <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
-                                inicio'.</li>
-                        </ul>
-                    </div>
-                </div>
-                <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
-            </div>
-        </div>
-        <div id="simulation-controls">
-            <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación">🎮</button>
-            <div id="sim-keypad" class="hidden">
-                <div class="sim-row">
-                    <button class="sim-btn" data-dir="up-left">↖</button>
-                    <button class="sim-btn" data-dir="up">▲</button>
-                    <button class="sim-btn" data-dir="up-right">↗</button>
-                </div>
-                <div class="sim-row">
-                    <button class="sim-btn" data-dir="left">◀</button>
-                    <button onclick="stopSimulated()" style="background:#f44336">✖</button>
-                    <button class="sim-btn" data-dir="right">▶</button>
-                </div>
-                <div class="sim-row">
-                    <button class="sim-btn" data-dir="down-left">↙</button>
-                    <button class="sim-btn" data-dir="down">▼</button>
-                    <button class="sim-btn" data-dir="down-right">↘</button>
+                    <p><b>ESPAÑOL</b></p>
+                    <p>Este es un prototipo de navegación. Puede presentar errores. Se debe respetar siempre la
+                        señalización viaria existente. Circule con precaución.</p>
+                    <p><b>Requisitos:</b> Debe estar activada la <b>Ubicación</b> del teléfono y la <b>Precisión de la
+                            ubicación</b>.</p>
+                    <p><b>Instalación:</b></p>
+                    <ul>
+                        <li><b>iOS (iPhone):</b> Pulsa 'Compartir' ⎋ y 'Añadir a la pantalla de inicio' ⊞.</li>
+                        <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
+                            inicio'.</li>
+                    </ul>
                 </div>
             </div>
+            <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
         </div>
+    </div>
 
-        <!-- Scrolling Ticker -->
-        <div id="ticker-container">
-            <div id="ticker-text">
-                Reforma circulatòria de Sóller - 27/02/2026 - ASISTENT DE CIRCULACIÓ - Prototip de navegació, circuli
-                amb
-                precaució.
+    <!-- Simulation Mode (Admin) -->
+    <div id="simulation-controls">
+        <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación">🎮</button>
+        <div id="sim-keypad" class="hidden">
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="up-left">↖</button>
+                <button class="sim-btn" data-dir="up">▲</button>
+                <button class="sim-btn" data-dir="up-right">↗</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="left">◀</button>
+                <button onclick="stopSimulated()" style="background:#f44336">✖</button>
+                <button class="sim-btn" data-dir="right">▶</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="down-left">↙</button>
+                <button class="sim-btn" data-dir="down">▼</button>
+                <button class="sim-btn" data-dir="down-right">↘</button>
             </div>
         </div>
+    </div>
 
-        <!-- Version Info -->
-        <div id="version-label">Versión: 1.29</div>
+    <!-- Scrolling Ticker -->
+    <div id="ticker-container">
+        <div id="ticker-text">
+            Reforma circulatòria de Sóller - 27/02/2026 - ASISTENT DE CIRCULACIÓ - Prototip de navegació, circuli amb
+            precaució.
+        </div>
+    </div>
 
-        <!-- Leaflet JS -->
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Version Info -->
+    <div id="version-label">Versión: 1.3</div>
 
-        <!-- Global Configuration -->
-        <script>
-            window.isAplicationAdmin = true;
-        </script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-        <!-- Firebase SDK (Lite via CDN) -->
-        <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-            import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <!-- Global Configuration -->
+    <script>
+        window.isAplicationAdmin = true;
+    </script>
 
-            // This will be accessible from app.js once loaded
-            window.FirebaseSDK = { initializeApp, getDatabase, ref, set, onValue };
+    <!-- Firebase SDK (Lite via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-            // Signal Firebase readiness if app.js is already waiting
-            if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
-        </script>
+        // This will be accessible from app.js once loaded
+        window.FirebaseSDK = { initializeApp, getDatabase, ref, set, onValue };
 
-        <script src="./rules.js"></script>
-        <script src="./app.js"></script>
+        // Signal Firebase readiness if app.js is already waiting
+        if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
+    </script>
+
+    <script src="./rules.js"></script>
+    <script src="./app.js"></script>
 </body>
 
 </html>
