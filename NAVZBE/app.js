@@ -127,7 +127,8 @@ async function init() {
 
     // Map Interaction Listeners
     map.on('dragstart', handleMapDrag);
-    map.on('zoomstart', handleMapDrag);
+    // map.on('zoomstart', handleMapDrag); // DEACTIVATED: Allow user to zoom without losing the center follow mode (Fix for regression v1.31)
+
 
     // Request Wake Lock
     requestWakeLock();
@@ -824,8 +825,10 @@ function onLocationFound(e) {
     updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
 
     if (isMapCentered) {
-        map.setView(userMarker.getLatLng(), 15);
+        // Maintain current zoom instead of forcing 15 to avoid zoomstart triggering auto-follow disabling and for better UX
+        map.setView(userMarker.getLatLng(), map.getZoom());
     }
+
 
     // Update status bar
     const accuracyText = accuracy > 0 ? ` (${Math.round(accuracy)}m)` : "";

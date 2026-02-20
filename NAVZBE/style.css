@@ -511,9 +511,11 @@ button:active {
 /* ===== Simulation Mode (Admin Only) ===== */
 #simulation-controls {
     position: fixed;
-    bottom: 40px;
-    right: 15px;
-    z-index: 2000;
+    bottom: 30px;
+    right: 80px;
+    /* Moved left to avoid overlapping the sidebar controls */
+    z-index: 5000;
+    /* Higher than sidebar controls (3000) and ticker (3500) */
     display: flex;
     flex-direction: column;
     align-items: flex-end;
