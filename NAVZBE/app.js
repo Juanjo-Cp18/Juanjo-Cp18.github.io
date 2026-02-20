@@ -636,6 +636,42 @@ function loadOverlaysFromStorage() {
     renderOverlays();
 }
 
+function downloadOverlaysConfig() {
+    if (!isAdminMode) return;
+
+    const content = `// Título: Configuración de Capas Visuales (Flechas)
+// Fecha: ${new Date().toLocaleString()}
+// Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
+
+const PRELOADED_OVERLAYS = ${JSON.stringify(mapOverlays, null, 4)};
+`;
+
+    const blob = new Blob([content], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'overlays.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert("Capas Visuales downloadadas. \n\nMueve 'overlays.js' a la carpeta del proyecto para sincronizar.");
+}
+
+function resetOverlaysFromFile() {
+    if (!isAdminMode) return;
+
+    if (confirm("⚠️ ¿Cargar flechas desde archivo?\n\nEsto reemplazará tus flechas actuales por las que hay en 'overlays.js'.")) {
+        localStorage.removeItem('map_overlays');
+        if (typeof PRELOADED_OVERLAYS !== 'undefined') {
+            mapOverlays = [...PRELOADED_OVERLAYS];
+            renderOverlays();
+            document.getElementById('status-pill').innerText = "🔄 Capas visuales cargadas desde archivo.";
+        }
+    }
+}
+
 function initOverlaySync() {
     if (!window.FirebaseSDK || !db) return;
 
