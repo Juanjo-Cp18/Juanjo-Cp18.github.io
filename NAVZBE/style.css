@@ -587,28 +587,39 @@ button:active {
     }
 }
 
-/* Response to Portrait/Narrow overlap */
-@media (max-width: 500px) {
+/* Response to Portrait/Narrow overlap - Versión 1.29 */
+@media (max-width: 600px),
+(orientation: portrait) {
     #top-right-controls {
-        top: 60px;
-        /* Move down to clear the GPS status pill */
+        top: 80px;
+        /* Moved much lower to clear everything */
+        right: 12px;
         flex-direction: column-reverse;
-        /* Stack vertically to save horizontal space */
-        gap: 8px;
+        gap: 10px;
     }
 
     #city-crest {
-        top: 60px;
+        top: 80px;
+        left: 12px;
     }
 
     .admin-mode #city-crest {
-        top: 100px;
+        top: 120px;
+        /* Even lower in admin mode */
+    }
+
+    .admin-mode #top-right-controls {
+        top: 120px;
     }
 
     #status-pill {
-        width: 80%;
-        max-width: 280px;
-        text-align: center;
-        padding: 6px 15px;
+        top: 12px;
+        width: 75%;
+        max-width: 260px;
+        font-size: 10px;
+        padding: 8px 12px;
+        white-space: normal;
+        /* Allow wrap if very long */
+        line-height: 1.2;
     }
 }
