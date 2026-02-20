@@ -586,3 +586,29 @@ button:active {
         background-color: rgba(255, 0, 0, 0.95);
     }
 }
+
+/* Response to Portrait/Narrow overlap */
+@media (max-width: 500px) {
+    #top-right-controls {
+        top: 60px;
+        /* Move down to clear the GPS status pill */
+        flex-direction: column-reverse;
+        /* Stack vertically to save horizontal space */
+        gap: 8px;
+    }
+
+    #city-crest {
+        top: 60px;
+    }
+
+    .admin-mode #city-crest {
+        top: 100px;
+    }
+
+    #status-pill {
+        width: 80%;
+        max-width: 280px;
+        text-align: center;
+        padding: 6px 15px;
+    }
+}
