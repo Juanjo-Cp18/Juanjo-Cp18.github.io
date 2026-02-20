@@ -1,13 +1,14 @@
 // --- Firebase Configuration ---
 // TO THE USER: Replace this placeholder with your real Firebase config from the Firebase Console.
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAveZHSLKApVO0zB3uXuawUiXIDrr4Xf_U",
+    authDomain: "navzbe.firebaseapp.com",
+    databaseURL: "https://navzbe-default-rtdb.firebaseio.com",
+    projectId: "navzbe",
+    storageBucket: "navzbe.firebasestorage.app",
+    messagingSenderId: "842359305593",
+    appId: "1:842359305593:web:fb0e9f58efc7e664fd2ba8",
+    measurementId: "G-WW4TDNV8WX"
 };
 
 // --- Global State ---
@@ -287,6 +288,7 @@ function showPrecisionAlert() {
     statusPill.style.background = "#d32f2f";
     statusPill.innerHTML = `
         <div style="padding: 10px; line-height: 1.4;">
+            <div id="version-label">Versión: 1.38</div>
             <strong>⚠️ POSIBLE ERROR DE PRECISIÓN</strong><br>
             <small>Si el vehículo no se mueve, actívalo así:</small><br>
             <div style="text-align: left; margin-top: 5px; font-size: 11px;">
