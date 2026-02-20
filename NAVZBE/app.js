@@ -1326,7 +1326,10 @@ function toggleSimulation() {
             simLng = map.getCenter().lng;
         }
         simHeading = 0;
-        keypad.classList.remove('hidden');
+        if (keypad) keypad.classList.remove('hidden');
+        const container = document.getElementById('simulation-controls');
+        if (container) container.classList.remove('hidden');
+
         btn.style.background = '#ff9800';
         btn.title = 'Salir de Simulación';
         document.getElementById('status-pill').innerText = '🎮 Modo Simulación Activo';
@@ -1339,7 +1342,11 @@ function stopSimulated() {
     isSimulating = false;
     const keypad = document.getElementById('sim-keypad');
     const btn = document.getElementById('sim-toggle-btn');
+    const container = document.getElementById('simulation-controls');
+
     if (keypad) keypad.classList.add('hidden');
+    if (container && !container.contains(btn)) container.classList.add('hidden'); // Only hide if button isn't there (Unified Admin)
+
     if (btn) { btn.style.background = ''; btn.title = 'Modo Simulación'; }
     document.getElementById('status-pill').innerText = '🛰️ GPS Reanudado';
     // Snap back to real GPS position if available
