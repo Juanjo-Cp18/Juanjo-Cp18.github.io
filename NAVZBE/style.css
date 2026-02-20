@@ -20,11 +20,12 @@ html {
 }
 
 .controls {
-    position: absolute;
+    position: fixed;
+    /* Fixed to viewport so it doesn't disappear on zoom */
     top: 50%;
     right: 15px;
     transform: translateY(-50%);
-    z-index: 1000;
+    z-index: 3000;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -494,10 +495,11 @@ button:active {
 }
 
 #top-right-controls {
-    position: absolute;
+    position: fixed;
+    /* Use fixed for Safari/iOS compatibility on zoom */
     top: 15px;
     right: 15px;
-    z-index: 2000;
+    z-index: 3500;
     display: flex;
     gap: 12px;
 }

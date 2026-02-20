@@ -143,6 +143,22 @@ async function init() {
             } catch (e) { /* silently ignore */ }
         }
     };
+    // Help Modal Listener (v1.27 fix for Safari)
+    const helpBtn = document.getElementById('help-btn');
+    if (helpBtn) {
+        ['click', 'touchstart'].forEach(evt => {
+            helpBtn.addEventListener(evt, (e) => {
+                // Prevent multi-firing on some devices
+                if (e.type === 'touchstart') helpBtn.clickedByTouch = true;
+                if (e.type === 'click' && helpBtn.clickedByTouch) {
+                    helpBtn.clickedByTouch = false;
+                    return;
+                }
+                openHelpModal();
+            }, { passive: true });
+        });
+    }
+
     // Attach to every possible user interaction - silently transparent
     ['touchstart', 'touchend', 'mousedown', 'click', 'keydown'].forEach(evt => {
         document.addEventListener(evt, unlockAudio, { once: false, passive: true });
