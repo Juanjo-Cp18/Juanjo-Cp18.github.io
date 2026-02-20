@@ -1265,6 +1265,17 @@ function closeInstallPrompt() {
     if (prompt) prompt.classList.add('hidden');
 }
 
+// Help Modal Logic (v1.26)
+function openHelpModal() {
+    const modal = document.getElementById('help-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeHelpModal() {
+    const modal = document.getElementById('help-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
 // Android: The browser handles the prompt automatically if requirements are met,
 // but we can listen to it for future custom buttons.
 window.addEventListener('beforeinstallprompt', (e) => {

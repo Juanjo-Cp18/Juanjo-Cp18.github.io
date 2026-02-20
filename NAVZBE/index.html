@@ -49,6 +49,10 @@
         <button id="refresh-btn" title="Refrescar Señales" onclick="refreshRules()"
             style="background-color: #4CAF50;">🔄</button>
 
+        <!-- Help Button -->
+        <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
+            style="background-color: #2196F3;">❓</button>
+
         <!-- Center Map Button -->
         <button id="center-btn" title="Centrar Mapa" onclick="centerMap()">🎯</button>
     </div>
@@ -84,7 +88,42 @@
         </div>
     </div>
 
-    <!-- Wrong Way Alert Overlay -->
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden">
+        <div class="modal-content help-content">
+            <div class="help-scroll-area">
+                <div class="help-lang-section">
+                    <h3>ℹ️ Ajuda / Información</h3>
+                    <p><b>CATALÀ</b></p>
+                    <p>Aquest és un prototip de navegació. Pot presentar errors. Cal respectar sempre la senyalització
+                        viària existent. Circuli amb precaució.</p>
+                    <p><b>Requisits:</b> Cal tenir activada la <b>Ubicació</b> del telèfon i la <b>Precisió de la
+                            ubicació</b>.</p>
+                    <p><b>Instal·lació:</b></p>
+                    <ul>
+                        <li><b>iOS (iPhone):</b> Prem 'Compartir' ⎋ i 'Afegir a la pantalla d'inici' ⊞.</li>
+                        <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla inici'.
+                        </li>
+                    </ul>
+
+                    <hr>
+
+                    <p><b>ESPAÑOL</b></p>
+                    <p>Este es un prototipo de navegación. Puede presentar errores. Se debe respetar siempre la
+                        señalización viaria existente. Circule con precaución.</p>
+                    <p><b>Requisitos:</b> Debe estar activada la <b>Ubicación</b> del teléfono y la <b>Precisión de la
+                            ubicación</b>.</p>
+                    <p><b>Instalación:</b></p>
+                    <ul>
+                        <li><b>iOS (iPhone):</b> Pulsa 'Compartir' ⎋ y 'Añadir a la pantalla de inicio' ⊞.</li>
+                        <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
+                            inicio'.</li>
+                    </ul>
+                </div>
+            </div>
+            <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
+        </div>
+    </div>
     <div id="wrong-way-alert" class="hidden">
         <div class="alert-content">
             <div id="alert-icon"></div>
@@ -103,7 +142,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versión: 1.25</div>
+    <div id="version-label">Versión: 1.26</div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
