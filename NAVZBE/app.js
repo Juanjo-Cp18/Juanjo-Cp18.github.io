@@ -1322,13 +1322,18 @@ function stopSimulated() {
 function moveSimulated(direction) {
     if (!isSimulating) return;
 
-    // Step size: ~8 metres in degrees
-    const step = 0.00008;
+    // Smaller step size for smooth continuous movement (~3-4 metres in degrees)
+    const step = 0.00004;
+    const diagStep = step * 0.707; // Maintain consistent speed on diagonals
 
     if (direction === 'up') { simLat += step; simHeading = 0; }
     if (direction === 'down') { simLat -= step; simHeading = 180; }
     if (direction === 'right') { simLng += step; simHeading = 90; }
     if (direction === 'left') { simLng -= step; simHeading = 270; }
+    if (direction === 'up-left') { simLat += diagStep; simLng -= diagStep; simHeading = 315; }
+    if (direction === 'up-right') { simLat += diagStep; simLng += diagStep; simHeading = 45; }
+    if (direction === 'down-left') { simLat -= diagStep; simLng -= diagStep; simHeading = 225; }
+    if (direction === 'down-right') { simLat -= diagStep; simLng += diagStep; simHeading = 135; }
 
     const latlng = L.latLng(simLat, simLng);
 
@@ -1342,3 +1347,47 @@ function moveSimulated(direction) {
     document.getElementById('status-pill').innerText =
         `🎮 Sim | Rumbo: ${simHeading}° | Lat: ${simLat.toFixed(5)} Lng: ${simLng.toFixed(5)}`;
 }
+
+// Continuous Movement Logic
+let simMoveInterval = null;
+
+function startContinuousSim(dir) {
+    if (!isSimulating) return;
+    if (simMoveInterval) clearInterval(simMoveInterval);
+    moveSimulated(dir); // Initial step
+    simMoveInterval = setInterval(() => {
+        moveSimulated(dir);
+    }, 100); // 10 ticks per second
+}
+
+function stopContinuousSim() {
+    if (simMoveInterval) {
+        clearInterval(simMoveInterval);
+        simMoveInterval = null;
+    }
+}
+
+// Attach event listeners for press-and-hold movement
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.sim-btn').forEach(btn => {
+        const dir = btn.getAttribute('data-dir');
+
+        const start = (e) => {
+            if (e.type !== 'mousedown' || e.button === 0) { // Only left click or touch
+                e.preventDefault();
+                startContinuousSim(dir);
+            }
+        };
+        const stop = (e) => {
+            e.preventDefault();
+            stopContinuousSim();
+        };
+
+        btn.addEventListener('mousedown', start, { passive: false });
+        btn.addEventListener('touchstart', start, { passive: false });
+        btn.addEventListener('mouseup', stop);
+        btn.addEventListener('mouseleave', stop);
+        btn.addEventListener('touchend', stop);
+        btn.addEventListener('touchcancel', stop);
+    });
+});
