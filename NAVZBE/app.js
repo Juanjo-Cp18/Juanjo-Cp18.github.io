@@ -619,15 +619,26 @@ function loadOverlaysFromStorage() {
 }
 
 function initOverlaySync() {
-    if (!window.FirebaseSDK || !db) return;
+    if (!window.FirebaseSDK || !db) {
+        console.warn("⚠️ No se puede iniciar sync de overlays: SDK o DB no listos.");
+        return;
+    }
     const { ref, onValue } = window.FirebaseSDK;
     const overlaysRef = ref(db, 'map_overlays');
+
+    console.log("🎨 Iniciando escucha en tiempo real de overlays...");
     onValue(overlaysRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             mapOverlays = Object.values(data);
+            console.log("🔄 Overlays sincronizados desde la nube:", mapOverlays.length);
             renderOverlays();
+        } else {
+            console.log("ℹ️ Nube de overlays vacía. Cargando locales...");
+            loadOverlaysFromStorage();
         }
+    }, (error) => {
+        console.error("❌ Error en sync de overlays:", error);
     });
 }
 
