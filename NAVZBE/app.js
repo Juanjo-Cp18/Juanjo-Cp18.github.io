@@ -57,7 +57,7 @@ async function init() {
                 const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
                 if (position && position.coords) {
                     startView = [position.coords.latitude, position.coords.longitude];
-                    startZoom = 15;
+                    startZoom = 18; // Closer zoom for navigation
                     initialPosition = position.coords;
                 }
             } else {
@@ -92,7 +92,7 @@ async function init() {
 
             if (position && position.coords) {
                 startView = [position.coords.latitude, position.coords.longitude];
-                startZoom = 15;
+                startZoom = 18; // Closer zoom for navigation
                 initialPosition = position.coords;
                 console.log("Posición inicial fijada (v1.7):", startView);
             }
@@ -122,7 +122,7 @@ async function init() {
 
     // Start Firebase Sync (will update rules if cloud data exists)
     initFirebaseSync();
-    initOverlaySync(); // New
+    // initOverlaySync() is now called inside initFirebaseSync() to ensure db is ready
 
     // Map Click Listener (Only active in Admin Mode)
     map.on('click', onMapClick);
@@ -853,6 +853,9 @@ function initFirebaseSync() {
                 loadRulesFromStorage();
             }
         });
+
+        // Trigger overlay sync after global db is initialized
+        initOverlaySync();
     } catch (err) {
         console.error("❌ Error Firebase:", err);
         loadRulesFromStorage();
@@ -1048,7 +1051,7 @@ function onLocationFound(e) {
 function centerMap() {
     isMapCentered = true;
     if (userMarker) {
-        map.setView(userMarker.getLatLng(), 15);
+        map.setView(userMarker.getLatLng(), 18);
     }
 }
 
