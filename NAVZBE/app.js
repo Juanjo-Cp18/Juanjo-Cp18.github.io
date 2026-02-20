@@ -57,7 +57,7 @@ async function init() {
                 const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
                 if (position && position.coords) {
                     startView = [position.coords.latitude, position.coords.longitude];
-                    startZoom = 19; // Maximum zoom for close navigation
+                    startZoom = 18; // Adjusted zoom per request
                     initialPosition = position.coords;
                 }
             } else {
@@ -92,7 +92,7 @@ async function init() {
 
             if (position && position.coords) {
                 startView = [position.coords.latitude, position.coords.longitude];
-                startZoom = 19; // Maximum zoom for close navigation
+                startZoom = 18; // Adjusted zoom per request
                 initialPosition = position.coords;
                 console.log("Posición inicial fijada (v1.7):", startView);
             }
@@ -181,8 +181,10 @@ function refreshRules() {
 
     if (window.FirebaseSDK && db) {
         initFirebaseSync();
+        initOverlaySync(); // Ensure overlays are also refreshed
     } else {
         loadRulesFromStorage();
+        loadOverlaysFromStorage();
     }
 
     // Quick visual feedback
@@ -427,7 +429,7 @@ function toggleAdminGPS() {
         // Return to car if it exists
         if (userMarker) {
             isMapCentered = true;
-            map.setView(userMarker.getLatLng(), 15);
+            map.setView(userMarker.getLatLng(), 18);
         }
     }
 }
@@ -598,13 +600,26 @@ function renderOverlays() {
 }
 
 function saveOverlaysToStorage() {
+    // 1. Local storage fallback
     localStorage.setItem('map_overlays', JSON.stringify(mapOverlays));
-    if (isAdminMode && db && window.FirebaseSDK) {
+
+    // 2. Firebase Cloud persistence - PROACTIVE SYNC
+    if (db && window.FirebaseSDK) {
         const { set, ref } = window.FirebaseSDK;
         const overlaysRef = ref(db, 'map_overlays');
+
+        // Convert array to object for Firebase saving
         const overlaysObj = {};
-        mapOverlays.forEach(o => { overlaysObj[o.id.toString()] = o; });
-        set(overlaysRef, overlaysObj);
+        mapOverlays.forEach(o => {
+            // Clean ID for Firebase key safety
+            const cleanId = o.id.toString().replace('.', '_');
+            overlaysObj[cleanId] = o;
+        });
+
+        console.log("☁️ Intentando guardar overlays en Firebase...", mapOverlays.length);
+        set(overlaysRef, overlaysObj)
+            .then(() => console.log("✅ Overlays guardados en la nube con éxito"))
+            .catch(err => console.error("❌ Error al guardar overlays en la nube:", err));
     }
 }
 
@@ -1044,10 +1059,9 @@ function onLocationFound(e) {
     updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
 
     if (isMapCentered) {
-        // Forced Close-up Navigation Zoom:
-        // If the user zoom is too far (e.g. < 17), we force it back to 19 while driving
+        // Navigation Zoom 18
         let zoom = map.getZoom();
-        if (zoom < 17) zoom = 19;
+        if (zoom < 16) zoom = 18;
 
         map.setView(userMarker.getLatLng(), zoom);
     }
@@ -1068,7 +1082,7 @@ function onLocationFound(e) {
 function centerMap() {
     isMapCentered = true;
     if (userMarker) {
-        map.setView(userMarker.getLatLng(), 19); // Force deep zoom on manual center
+        map.setView(userMarker.getLatLng(), 18); // Force zoom 18 on manual center
     }
 }
 
@@ -1576,7 +1590,7 @@ function stopSimulated() {
     if (btn) { btn.style.background = ''; btn.title = 'Modo Simulación'; }
     document.getElementById('status-pill').innerText = '🛰️ GPS Reanudado';
     // Snap back to real GPS position if available
-    if (userMarker) map.setView(userMarker.getLatLng(), 15);
+    if (userMarker) map.setView(userMarker.getLatLng(), 18);
 }
 
 function moveSimulated(direction) {
