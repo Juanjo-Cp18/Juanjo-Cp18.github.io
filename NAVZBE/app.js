@@ -11,6 +11,8 @@ const firebaseConfig = {
 };
 
 // --- Global State ---
+let db = null;
+let isSyncInitialized = false;
 let map;
 let userMarker = null;
 let isAdminMode = window.isAplicationAdmin || false;
@@ -24,7 +26,6 @@ let isAdminGPSPaused = false; // Admin can pause GPS to edit map
 let wakeLock = null; // Screen Wake Lock instance
 let noSleepVideo = null; // Video fallback
 let noSleepAudio = null; // Audio fallback (Web Audio API)
-let db = null; // Firebase Database instance
 let gpsHeartbeat = Date.now();
 let gpsRetryCount = 0;
 let gpsStartTime = Date.now();
@@ -179,9 +180,10 @@ function refreshRules() {
     console.log("🔄 Actualización manual solicitada...");
     document.getElementById('status-pill').innerText = "🔄 Sincronizando señales...";
 
-    if (window.FirebaseSDK && db) {
+    if (window.FirebaseSDK) {
+        // Force re-initialization if not active, or just log
+        console.log("🔄 Re-sincronizando servicios...");
         initFirebaseSync();
-        initOverlaySync(); // Ensure overlays are also refreshed
     } else {
         loadRulesFromStorage();
         loadOverlaysFromStorage();
@@ -634,26 +636,24 @@ function loadOverlaysFromStorage() {
 }
 
 function initOverlaySync() {
-    if (!window.FirebaseSDK || !db) {
-        console.warn("⚠️ No se puede iniciar sync de overlays: SDK o DB no listos.");
-        return;
-    }
+    if (!window.FirebaseSDK || !db) return;
+
     const { ref, onValue } = window.FirebaseSDK;
     const overlaysRef = ref(db, 'map_overlays');
 
-    console.log("🎨 Iniciando escucha en tiempo real de overlays...");
+    console.log("🎨 Escuchando capa de flechas (overlays)...");
     onValue(overlaysRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
             mapOverlays = Object.values(data);
-            console.log("🔄 Overlays sincronizados desde la nube:", mapOverlays.length);
+            console.log("✅ Capa visual cargada desde red:", mapOverlays.length, "flechas.");
             renderOverlays();
         } else {
-            console.log("ℹ️ Nube de overlays vacía. Cargando locales...");
+            console.warn("⚠️ Capa visual vacía en red. Usando datos locales.");
             loadOverlaysFromStorage();
         }
     }, (error) => {
-        console.error("❌ Error en sync de overlays:", error);
+        console.error("❌ ERROR de red en capa visual:", error.message);
     });
 }
 
@@ -849,18 +849,30 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 // --- Firebase Sync Logic ---
 function initFirebaseSync() {
+    if (isSyncInitialized) {
+        console.log("ℹ️ Sincronización ya activa.");
+        return;
+    }
+
     if (!window.FirebaseSDK) {
-        console.warn("⚠️ Firebase SDK no detectado aún. Esperando...");
+        console.warn("⚠️ Firebase SDK no detectado aún.");
         window.onFirebaseSDKLoaded = () => {
-            console.log("🔥 Firebase SDK cargado, iniciando sincronización...");
             initFirebaseSync();
         };
         return;
     }
 
+    isSyncInitialized = true;
+
     const { initializeApp, getApps, getDatabase, ref, onValue } = window.FirebaseSDK;
 
     try {
+        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+            console.error("❌ ERROR: Firebase no configurado.");
+            document.getElementById('status-pill').innerText = "⚠️ Error: Falta Configuración Firebase";
+            return;
+        }
+
         // Prevent "app already exists" error
         const existingApps = getApps();
         const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
