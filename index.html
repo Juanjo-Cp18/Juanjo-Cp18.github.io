@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juanjo Vivas | Informática & IA</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background:#0a0f1c;
+      color:#fff;
+      overflow-x:hidden;
+    }
+    canvas {
+      position:fixed;
+      top:0;
+      left:0;
+      z-index:-1;
+    }
+    header {
+      text-align:center;
+      padding:100px 20px 50px;
+      position:relative;
+    }
+
+    /* Sticky Mini Header */
+    .mini-header{
+      position:fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:70px;
+      background:rgba(10,15,28,0.85);
+      backdrop-filter:blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transform:translateY(-100%);
+      transition:0.4s ease;
+      z-index:1000;
+    }
+
+    .mini-header.active{
+      transform:translateY(0);
+    }
+
+    .mini-logo{
+      font-family:'Orbitron', sans-serif;
+      font-size:1.5rem;
+      letter-spacing:3px;
+      background:linear-gradient(90deg,#00f5ff,#7b2ff7);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    h1 {
+      font-family:'Orbitron', sans-serif;
+      font-size:3rem;
+      letter-spacing:3px;
+      background:linear-gradient(90deg,#00f5ff,#7b2ff7);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    h2 { font-weight:300; margin-top:15px; color:#ccc; }
+    section { padding:60px 20px; max-width:1200px; margin:auto; }
+    .logos { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px; margin-top:40px; }
+    .logo-card {
+      background:rgba(255,255,255,0.05);
+      padding:30px;
+      border-radius:20px;
+      text-align:center;
+      backdrop-filter:blur(10px);
+      transition:0.4s;
+    }
+    .logo-card:hover {
+      transform:translateY(-10px) scale(1.05);
+      box-shadow:0 0 25px rgba(0,245,255,0.5);
+    }
+    .logo-svg {
+      width:220px;
+      height:220px;
+      margin:0 auto 30px;
+      display:block;
+      filter:drop-shadow(0 0 20px rgba(0,245,255,0.6));
+      animation:pulseGlow 4s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%,100% { filter:drop-shadow(0 0 15px rgba(0,245,255,0.5)); }
+      50% { filter:drop-shadow(0 0 35px rgba(123,47,247,0.9)); }
+    }
+    .logo-card:hover .logo-svg {
+      transform:scale(1.1) rotate(5deg);
+      filter:drop-shadow(0 0 25px rgba(123,47,247,0.9));
+    }
+    .logo-title {
+      font-size:1.1rem;
+      letter-spacing:2px;
+      margin-top:10px;
+      font-weight:600;
+    }
+    .logo-sub {
+      font-size:0.9rem;
+      color:#aaa;
+      margin-top:5px;
+    }
+    .works { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:30px; margin-top:40px; }
+    .work-card {
+      background:rgba(255,255,255,0.05);
+      padding:30px;
+      border-radius:20px;
+      transition:0.4s;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+    .work-card::before {
+      content:"";
+      position:absolute;
+      width:100%; height:100%;
+      background:linear-gradient(120deg,transparent,rgba(0,245,255,0.3),transparent);
+      top:0; left:-100%;
+      transition:0.5s;
+    }
+    .work-card:hover::before { left:100%; }
+    .work-card:hover {
+      transform:translateY(-8px);
+      box-shadow:0 0 20px rgba(123,47,247,0.6);
+    }
+    .work-card i { font-size:2rem; margin-bottom:15px; color:#00f5ff; }
+    .contact { text-align:center; padding:60px 20px; }
+    .contact a {
+      color:#00f5ff;
+      font-size:1.2rem;
+      text-decoration:none;
+      border-bottom:1px solid transparent;
+      transition:0.3s;
+    }
+    .contact a:hover { border-bottom:1px solid #00f5ff; }
+    footer { text-align:center; padding:30px; font-size:0.9rem; color:#aaa; }
+  </style>
+</head>
+<body>
+
+<div class="mini-header" id="miniHeader">
+  <div class="mini-logo">JV</div>
+</div>
+
+<canvas id="universe"></canvas>
+
+<header>
+  <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:85vh;text-align:center;">
+    <svg class="logo-svg" viewBox="0 0 400 400">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#00f5ff" />
+          <stop offset="100%" stop-color="#7b2ff7" />
+        </linearGradient>
+      </defs>
+
+      <!-- Outer Ring -->
+      <circle cx="200" cy="200" r="150" stroke="url(#logoGrad)" stroke-width="6" fill="none" />
+
+      <!-- Animated Orbit -->
+      <circle cx="200" cy="200" r="170" stroke="#00f5ff" stroke-width="2" fill="none" stroke-dasharray="6 10" opacity="0.4">
+        <animateTransform attributeName="transform"
+                          attributeType="XML"
+                          type="rotate"
+                          from="0 200 200"
+                          to="360 200 200"
+                          dur="40s"
+                          repeatCount="indefinite"/>
+      </circle>
+
+      <!-- Initials -->
+      <text x="50%" y="48%" text-anchor="middle" fill="#ffffff" font-size="110" font-family="Orbitron" dy=".3em">JV</text>
+
+      <!-- Name -->
+      <text x="50%" y="72%" text-anchor="middle" fill="#ffffff" font-size="28" font-family="Inter" letter-spacing="4">JUANJO VIVAS</text>
+
+      <!-- Tagline -->
+      <text x="50%" y="80%" text-anchor="middle" fill="#aaaaaa" font-size="18" font-family="Inter" letter-spacing="2">
+        TECNOLOGÍA · DESARROLLO WEB · IA
+      </text>
+    </svg>
+  </div>
+</header>
+
+
+
+<section>
+  <h2>Trabajos Destacados</h2>
+  <div class="works">
+    <div class="work-card" onclick="window.location.href='#'">
+      <i class="fas fa-code"></i>
+      <h3>Proyecto Web Moderno</h3>
+      <p>Aplicación web desarrollada con tecnologías actuales.</p>
+    </div>
+    <div class="work-card" onclick="window.location.href='#'">
+      <i class="fas fa-robot"></i>
+      <h3>Proyecto IA</h3>
+      <p>Experimentos y desarrollos con Inteligencia Artificial.</p>
+    </div>
+  </div>
+</section>
+
+<section class="contact">
+  <h2>Contacto</h2>
+  <p><a href="mailto:juanjo.vivasm@gmail.com">juanjo.vivasm@gmail.com</a></p>
+</section>
+
+<footer>
+  © 2026 · Tecnología & IA
+</footer>
+
+<script>
+  const canvas = document.getElementById('universe');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let stars = [];
+  for(let i=0;i<200;i++){
+    stars.push({
+      x:Math.random()*canvas.width,
+      y:Math.random()*canvas.height,
+      radius:Math.random()*1.5,
+      vx:(Math.random()-0.5)*0.5,
+      vy:(Math.random()-0.5)*0.5
+    });
+  }
+
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='white';
+    stars.forEach(s=>{
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.radius,0,Math.PI*2);
+      ctx.fill();
+      s.x+=s.vx;
+      s.y+=s.vy;
+      if(s.x<0||s.x>canvas.width) s.vx*=-1;
+      if(s.y<0||s.y>canvas.height) s.vy*=-1;
+    });
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  // Sticky header on scroll
+  const miniHeader = document.getElementById('miniHeader');
+  window.addEventListener('scroll',()=>{
+    if(window.scrollY > window.innerHeight * 0.6){
+      miniHeader.classList.add('active');
+    } else {
+      miniHeader.classList.remove('active');
+    }
+  });
+</script>
+
+</body>
+</html>
