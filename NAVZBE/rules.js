@@ -1,8 +1,29 @@
 // Título: Configuración de Reglas de Tráfico
-// Fecha: 21/2/2026, 16:19:31
+// Fecha: 21/2/2026, 16:46:43
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_RULES = [
+    {
+        "angle": 247,
+        "id": 1770139370135.5884,
+        "lat": 39.7667345,
+        "lng": 2.717385,
+        "type": "forbidden"
+    },
+    {
+        "angle": 157,
+        "id": 1770139370135.9587,
+        "lat": 39.7663392,
+        "lng": 2.716297,
+        "type": "forbidden"
+    },
+    {
+        "angle": 333,
+        "id": 1770139370136.2817,
+        "lat": 39.7666013,
+        "lng": 2.717472,
+        "type": "forbidden"
+    },
     {
         "angle": 150,
         "id": 1770999363196,
@@ -29,6 +50,13 @@ const PRELOADED_RULES = [
         "id": 1770999666815,
         "lat": 39.76371921119144,
         "lng": 2.712682922007366,
+        "type": "forbidden"
+    },
+    {
+        "angle": 162,
+        "id": 1771592511930,
+        "lat": 39.76936208210008,
+        "lng": 2.7149990200996403,
         "type": "forbidden"
     },
     {
@@ -64,20 +92,6 @@ const PRELOADED_RULES = [
         "id": 1771592738472,
         "lat": 39.765809828184594,
         "lng": 2.7167853713035583,
-        "type": "forbidden"
-    },
-    {
-        "angle": 251,
-        "id": 1771592756132,
-        "lat": 39.76542840871383,
-        "lng": 2.716527879238129,
-        "type": "forbidden"
-    },
-    {
-        "angle": 249,
-        "id": 1771592779633,
-        "lat": 39.76548201374004,
-        "lng": 2.7167505025863647,
         "type": "forbidden"
     },
     {
@@ -144,24 +158,24 @@ const PRELOADED_RULES = [
         "type": "forbidden"
     },
     {
-        "id": 1771686987887,
-        "lat": 39.76556471488115,
-        "lng": 2.718322277069092,
+        "id": 1771688729895,
+        "lat": 39.76506356470231,
+        "lng": 2.717178453406266,
         "type": "forbidden",
-        "angle": 147
+        "angle": 316
     },
     {
-        "id": 1771687007237,
-        "lat": 39.76559767827287,
-        "lng": 2.718228399753571,
+        "id": 1771688745018,
+        "lat": 39.76380308684629,
+        "lng": 2.718399096897511,
         "type": "forbidden",
-        "angle": 264
+        "angle": 325
     },
     {
-        "id": 1771687024667,
-        "lat": 39.76380321068281,
-        "lng": 2.718400061130524,
+        "id": 1771688772001,
+        "lat": 39.76559993125941,
+        "lng": 2.718235450187688,
         "type": "forbidden",
-        "angle": 320
+        "angle": 263
     }
 ];
