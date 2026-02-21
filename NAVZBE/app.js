@@ -15,7 +15,7 @@ let db = null;
 let isSyncInitialized = false;
 let map;
 let userMarker = null;
-let isAdminMode = window.isAplicationAdmin || false;
+let isAdminMode = window.isApplicationAdmin || false;
 let trafficRules = []; // Array of objects: {id, lat, lng, type, angle}
 let ruleMarkers = [];
 let accuracyCircle = null; // Visual circle for GPS precision
@@ -316,7 +316,7 @@ async function startGPSTracking() {
             const now = Date.now();
 
             // Check for Heartbeat (GPS stopped talking entirely)
-            if (now - gspHeartbeat > 20000) {
+            if (now - gpsHeartbeat > 20000) {
                 console.warn("GPS Heartbeat fail. Restarting...");
                 startGPSTracking();
                 return;
