@@ -1,36 +1,8 @@
 // Título: Configuración de Reglas de Tráfico
-// Fecha: 20/2/2026, 23:29:20
+// Fecha: 21/2/2026, 16:19:31
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_RULES = [
-    {
-        "angle": 83,
-        "id": 1770139370135.3586,
-        "lat": 39.7656072,
-        "lng": 2.7182849,
-        "type": "forbidden"
-    },
-    {
-        "angle": 247,
-        "id": 1770139370135.5884,
-        "lat": 39.7667345,
-        "lng": 2.717385,
-        "type": "forbidden"
-    },
-    {
-        "angle": 157,
-        "id": 1770139370135.9587,
-        "lat": 39.7663392,
-        "lng": 2.716297,
-        "type": "forbidden"
-    },
-    {
-        "angle": 333,
-        "id": 1770139370136.2817,
-        "lat": 39.7666013,
-        "lng": 2.717472,
-        "type": "forbidden"
-    },
     {
         "angle": 150,
         "id": 1770999363196,
@@ -57,13 +29,6 @@ const PRELOADED_RULES = [
         "id": 1770999666815,
         "lat": 39.76371921119144,
         "lng": 2.712682922007366,
-        "type": "forbidden"
-    },
-    {
-        "angle": 162,
-        "id": 1771592511930,
-        "lat": 39.76936208210008,
-        "lng": 2.7149990200996403,
         "type": "forbidden"
     },
     {
@@ -177,5 +142,26 @@ const PRELOADED_RULES = [
         "lat": 39.76638710768886,
         "lng": 2.7127754688262944,
         "type": "forbidden"
+    },
+    {
+        "id": 1771686987887,
+        "lat": 39.76556471488115,
+        "lng": 2.718322277069092,
+        "type": "forbidden",
+        "angle": 147
+    },
+    {
+        "id": 1771687007237,
+        "lat": 39.76559767827287,
+        "lng": 2.718228399753571,
+        "type": "forbidden",
+        "angle": 264
+    },
+    {
+        "id": 1771687024667,
+        "lat": 39.76380321068281,
+        "lng": 2.718400061130524,
+        "type": "forbidden",
+        "angle": 320
     }
 ];

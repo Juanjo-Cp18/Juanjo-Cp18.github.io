@@ -1,5 +1,5 @@
 // Título: Configuración de Capas Visuales (Flechas)
-// Fecha: 20/2/2026, 23:40:03
+// Fecha: 21/2/2026, 16:19:42
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_OVERLAYS = [
@@ -218,5 +218,35 @@ const PRELOADED_OVERLAYS = [
         "lat": 39.768283733910806,
         "lng": 2.7122654545919693,
         "angle": 326
+    },
+    {
+        "id": 1771686759530,
+        "lat": 39.76512009164828,
+        "lng": 2.717126608084111,
+        "angle": 138
+    },
+    {
+        "id": 1771686776264,
+        "lat": 39.76427634167005,
+        "lng": 2.7179475259379253,
+        "angle": 138
+    },
+    {
+        "id": 1771686792153,
+        "lat": 39.7639565790403,
+        "lng": 2.7186477192373064,
+        "angle": 49
+    },
+    {
+        "id": 1771686801482,
+        "lat": 39.76459403984448,
+        "lng": 2.7188891652026075,
+        "angle": 51
+    },
+    {
+        "id": 1771686884792,
+        "lat": 39.76530512761997,
+        "lng": 2.7185690402984624,
+        "angle": 316
     }
 ];
