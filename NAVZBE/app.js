@@ -176,26 +176,55 @@ async function init() {
     });
 }
 
+async function reloadServerFiles() {
+    console.log("🛰️ Recarregant fitxers base des del servidor...");
+    return new Promise((resolve) => {
+        let loaded = 0;
+        const total = 2;
+        const onScriptLoad = () => {
+            loaded++;
+            if (loaded === total) resolve();
+        };
+
+        const scripts = [
+            { id: 'rules-script', src: 'rules.js' },
+            { id: 'overlays-script', src: 'overlays.js' }
+        ];
+
+        scripts.forEach(s => {
+            const oldScript = document.getElementById(s.id) || document.querySelector(`script[src^="./${s.src}"], script[src^="${s.src}"]`);
+            if (oldScript) oldScript.remove();
+
+            const newScript = document.createElement('script');
+            newScript.id = s.id;
+            newScript.src = `./${s.src}?t=${Date.now()}`;
+            newScript.onload = onScriptLoad;
+            newScript.onerror = onScriptLoad;
+            document.body.appendChild(newScript);
+        });
+    });
+}
+
 function refreshRules() {
-    console.log("🔄 Actualización manual solicitada...");
-    document.getElementById('status-pill').innerText = "🔄 Sincronizando señales...";
+    console.log("🔄 Actualització manual sol·licitada...");
+    document.getElementById('status-pill').innerText = "🔄 Sincronitzant senyals...";
 
-    if (window.FirebaseSDK) {
-        // Force re-initialization if not active, or just log
-        console.log("🔄 Re-sincronizando servicios...");
-        initFirebaseSync();
-    } else {
-        loadRulesFromStorage();
-        loadOverlaysFromStorage();
-    }
-
-    // Quick visual feedback
-    setTimeout(() => {
-        const currentText = document.getElementById('status-pill').innerText;
-        if (currentText === "🔄 Sincronizando señales...") {
-            document.getElementById('status-pill').innerText = "✅ Señales actualizadas";
+    reloadServerFiles().then(() => {
+        if (window.FirebaseSDK && db) {
+            console.log("🔄 Firebase actiu, els fitxers del servidor serveixen de base.");
+            // Re-syncing Firebase is usually real-time, but we ensure local state is fresh
+        } else {
+            loadRulesFromStorage();
+            loadOverlaysFromStorage();
         }
-    }, 1500);
+
+        setTimeout(() => {
+            const currentText = document.getElementById('status-pill').innerText;
+            if (currentText === "🔄 Sincronitzant senyals...") {
+                document.getElementById('status-pill').innerText = "✅ Senyals actualitzats";
+            }
+        }, 1500);
+    });
 }
 
 let watchId = null;
@@ -287,16 +316,16 @@ function showPrecisionAlert() {
     statusPill.style.background = "#d32f2f";
     statusPill.innerHTML = `
         <div style="padding: 10px; line-height: 1.4;">
-            <div id="version-label">Versión: 1.39</div>
-            <strong>⚠️ POSIBLE ERROR DE PRECISIÓN</strong><br>
-            <small>Si el vehículo no se mueve, actívalo así:</small><br>
+            <div id="version-label">Versió: 1.40</div>
+            <strong>⚠️ POSSIBLE ERROR DE PRECISIÓ</strong><br>
+            <small>Si el vehicle no es mou, activa-ho així:</small><br>
             <div style="text-align: left; margin-top: 5px; font-size: 11px;">
-                1. Ajustes del Teléfono<br>
-                2. Ubicación<br>
-                3. Servicios de ubicación<br>
-                4. <b>Precisión de la ubicación de Google</b> -> <span style="color:yellow">ACTIVAR</span>
+                1. Ajustos del Telèfon<br>
+                2. Ubicació<br>
+                3. Serveis d'ubicació<br>
+                4. <b>Precisió de la ubicació de Google</b> -> <span style="color:yellow">ACTIVAR</span>
             </div>
-            <button onclick="this.parentElement.parentElement.style.height=''; informedAboutPrecision=true; renderStatusPill();" style="margin-top:5px; background:white; color:black; border:none; padding:2px 10px; border-radius:10px; font-size:10px;">Entendido</button>
+            <button onclick="this.parentElement.parentElement.style.height=''; informedAboutPrecision=true; renderStatusPill();" style="margin-top:5px; background:white; color:black; border:none; padding:2px 10px; border-radius:10px; font-size:10px;">Entès</button>
         </div>
     `;
 }
@@ -569,7 +598,7 @@ function editOverlay(id) {
 
 function deleteOverlay(id) {
     if (!isAdminMode) return;
-    if (confirm("¿Borrar esta flecha visual?")) {
+    if (confirm("¿Esborrar aquesta fletxa visual?")) {
         mapOverlays = mapOverlays.filter(o => o.id !== id);
         saveOverlaysToStorage();
         renderOverlays();
@@ -656,13 +685,13 @@ const PRELOADED_OVERLAYS = ${JSON.stringify(mapOverlays, null, 4)};
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    alert("Capas Visuales downloadadas. \n\nMueve 'overlays.js' a la carpeta del proyecto para sincronizar.");
+    alert("Capes Visuals descarregades. \n\nMou 'overlays.js' a la carpeta del projecte per sincronitzar.");
 }
 
 function resetOverlaysFromFile() {
     if (!isAdminMode) return;
 
-    if (confirm("⚠️ ¿Cargar flechas desde archivo?\n\nEsto reemplazará tus flechas actuales por las que hay en 'overlays.js'.")) {
+    if (confirm("⚠️ ¿Carregar fletxes des d'arxiu?\n\nAixò reemplaçarà les teves fletxes actuals per les que hi ha a 'overlays.js'.")) {
         localStorage.removeItem('map_overlays');
         if (typeof PRELOADED_OVERLAYS !== 'undefined') {
             mapOverlays = [...PRELOADED_OVERLAYS];
@@ -763,8 +792,8 @@ function saveRule() {
 
 function deleteRule(id) {
     if (!isAdminMode) return;
-    if (confirm("¿Borrar esta señal permanentemente?")) {
-        trafficRules = trafficRules.filter(r => r.id !== id);
+    if (confirm("¿Esborrar aquest senyal permanentment?")) {
+        trafficRules = trafficRules.filter(o => o.id !== id);
         saveRulesToStorage();
         renderRules();
     }
@@ -851,7 +880,7 @@ function processOSMData(data) {
 
     saveRulesToStorage();
     renderRules();
-    document.getElementById('status-pill').innerText = `✅ Importación completada. ${newRulesCount} nuevas señales.`;
+    document.getElementById('status-pill').innerText = `✅ Importació completada. ${newRulesCount} nous senyals.`;
 }
 
 function calculateBearing(startLat, startLng, destLat, destLng) {
@@ -983,7 +1012,7 @@ function loadRulesFromStorage() {
 function resetRulesFromFile() {
     if (!isAdminMode) return;
 
-    if (confirm("⚠️ ¿RECARGAR DESDE ARCHIVO?\n\nEsto borrará los cambios locales no guardados en 'rules.js' y cargará las señales que estén en el archivo físico.\n\n¿Continuar?")) {
+    if (confirm("⚠️ ¿RECARREGAR DES D'ARXIU?\n\nAixò esborrarà els canvis locals no guardats a 'rules.js' i carregarà els senyals que hi hagi a l'arxiu físic.\n\n¿Continuar?")) {
         localStorage.removeItem('traffic_rules');
         if (typeof PRELOADED_RULES !== 'undefined') {
             trafficRules = [...PRELOADED_RULES];
@@ -991,7 +1020,7 @@ function resetRulesFromFile() {
             renderRules();
             document.getElementById('status-pill').innerText = "🔄 Reglas recargadas desde archivo.";
         } else {
-            alert("Error: No se encontró PRELOADED_RULES en rules.js");
+            alert("Error: No s'ha trobat PRELOADED_RULES a rules.js");
         }
     }
 }
@@ -1011,8 +1040,8 @@ function renderRules() {
         // Build Popup Content
         let popupContent = `
             <div style="text-align:center;">
-                <b>${rule.type === 'forbidden' ? '⛔ PROHIBIDO' : '⬇️ OBLIGATORIO'}</b><br>
-                Rumbo: ${rule.angle}°
+                <b>${rule.type === 'forbidden' ? '⛔ PROHIBIT' : '⬇️ OBLIGATORI'}</b><br>
+                Rumb: ${rule.angle}°
             </div>
         `;
 
@@ -1052,7 +1081,7 @@ const PRELOADED_RULES = ${JSON.stringify(trafficRules, null, 4)};
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    alert("Archivo 'rules.js' descargado. \n\nPara hacer los cambios PERMANENTES:\n1. Ve a tu carpeta de descargas.\n2. Mueve el archivo 'rules.js' a la carpeta del proyecto.\n3. Reemplaza el archivo existente.");
+    alert("Arxiu 'rules.js' descarregat. \n\nPer fer els canvis PERMANENTS:\n1. Ves a la teva carpeta de descàrregues.\n2. Mou l'arxiu 'rules.js' a la carpeta del projecte.\n3. Reemplaça l'arxiu existent.");
 }
 
 function clearAllRules() {
@@ -1250,7 +1279,7 @@ function checkProximityToRules(userLatLng, userHeading) {
                 if (normalizedDiff < 45) {
                     triggeringType = 'forbidden';
                     triggeringRuleKey = `forbidden_${rule.id}`; // unique per rule
-                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓN PROHIBIDA DETECTADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
+                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓ PROHIBIDA DETECTADA (Rumb ${Math.round(userHeading)}º vs Senyal ${rule.angle}º)`;
                 }
             }
             else if (rule.type === 'mandatory') {
@@ -1262,7 +1291,7 @@ function checkProximityToRules(userLatLng, userHeading) {
                 if (normalizedDiff > 45) {
                     triggeringType = 'mandatory';
                     triggeringRuleKey = `mandatory_${rule.id}`; // unique per rule
-                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓN OBLIGATORIA IGNORADA (Rumbo ${Math.round(userHeading)}º vs Señal ${rule.angle}º)`;
+                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓ OBLIGATÒRIA IGNORADA (Rumb ${Math.round(userHeading)}º vs Senyal ${rule.angle}º)`;
                 }
             }
         }
@@ -1303,8 +1332,8 @@ function startAlert(type = 'forbidden', ruleKey = null) {
                     <rect x="20" y="42" width="60" height="16" fill="white"/>
                 </svg>
             `;
-            titleH2.innerText = "¡DIRECCIÓN PROHIBIDA!";
-            messageP.innerText = "NO ENTRE EN ESTA CALLE";
+            titleH2.innerText = "¡DIRECCIÓ PROHIBIDA!";
+            messageP.innerText = "NO ENTREU EN AQUEST CARRER";
         } else {
             iconDiv.innerHTML = `
                 <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
@@ -1312,8 +1341,8 @@ function startAlert(type = 'forbidden', ruleKey = null) {
                     <path d="M50 15 L20 55 L40 55 L40 85 L60 85 L60 55 L80 55 Z" fill="white"/>
                 </svg>
             `;
-            titleH2.innerText = "¡DIRECCIÓN OBLIGATORIA!";
-            messageP.innerText = "SIGA LA SEÑALIZACIÓN";
+            titleH2.innerText = "¡DIRECCIÓ OBLIGATÒRIA!";
+            messageP.innerText = "SEGUIU LA SENYALITZACIÓ";
         }
 
         alertDiv.classList.remove('hidden');
@@ -1622,7 +1651,7 @@ function toggleSimulation() {
 
         btn.style.background = '#ff9800';
         btn.title = 'Salir de Simulación';
-        document.getElementById('status-pill').innerText = '🎮 Modo Simulación Activo';
+        document.getElementById('status-pill').innerText = '🎮 Modo Simulació Actiu';
     } else {
         stopSimulated();
     }
@@ -1638,7 +1667,7 @@ function stopSimulated() {
     if (container && !container.contains(btn)) container.classList.add('hidden'); // Only hide if button isn't there (Unified Admin)
 
     if (btn) { btn.style.background = ''; btn.title = 'Modo Simulación'; }
-    document.getElementById('status-pill').innerText = '🛰️ GPS Reanudado';
+    document.getElementById('status-pill').innerText = '🛰️ GPS Reprès';
     // Snap back to real GPS position if available
     if (userMarker) map.setView(userMarker.getLatLng(), 18);
 }
@@ -1669,7 +1698,7 @@ function moveSimulated(direction) {
     checkProximityToRules(latlng, simHeading);
 
     document.getElementById('status-pill').innerText =
-        `🎮 Sim | Rumbo: ${simHeading}° | Lat: ${simLat.toFixed(5)} Lng: ${simLng.toFixed(5)}`;
+        `🎮 Sim | Rumb: ${simHeading}° | Lat: ${simLat.toFixed(5)} Lng: ${simLng.toFixed(5)}`;
 }
 
 // Continuous Movement Logic

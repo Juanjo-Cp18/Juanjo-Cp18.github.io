@@ -38,7 +38,7 @@
 </head>
 
 <body class="admin-mode">
-    <div class="admin-header">MODO ADMINISTRADOR</div>
+    <div class="admin-header">MODE ADMINISTRADOR</div>
     <img id="city-crest" src="./soller_crest.svg" alt="Escudo Sóller">
     <div id="map"></div>
 
@@ -62,7 +62,7 @@
             <!-- Admin Logic Controls -->
             <button id="btn-pause-gps" title="Pausar GPS" onclick="toggleAdminGPS()"
                 style="background-color: #607D8B;">📍</button>
-            <button id="refresh-btn" title="Refrescar Señales" onclick="refreshRules()"
+            <button id="refresh-btn" title="Refrescar Senyals" onclick="refreshRules()"
                 style="background-color: #4CAF50;">🔄</button>
             <button title="Importar OSM" onclick="importOSMRules()" style="background-color: #FF9800;">🌍</button>
             <button title="Cargar rules.js" onclick="resetRulesFromFile()"
@@ -84,10 +84,10 @@
     <!-- Admin: Overlay Creation Modal -->
     <div id="overlay-modal" class="hidden">
         <div class="modal-content" style="border-top: 5px solid #673AB7;">
-            <h3>Añadir Flecha Visual</h3>
-            <p><small>Esta flecha solo sirve para corregir el mapa visualmente. No activará alarmas.</small></p>
+            <h3>Afegir Fletxa Visual</h3>
+            <p><small>Aquesta fletxa només serveix per corregir el mapa visualment. No activarà alarmes.</small></p>
             <div class="direction-inputs">
-                <p>Dirección (Rumbo): <span id="overlay-angle-display">0</span>°</p>
+                <p>Direcció (Rumb): <span id="overlay-angle-display">0</span>°</p>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <input type="range" id="overlay-angle" min="0" max="360" value="0"
                         oninput="updateOverlayAnglePreview()">
@@ -101,8 +101,8 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button onclick="saveOverlay()" style="background-color: #673AB7;">✅ Colocar</button>
-                <button onclick="closeOverlayModal()" style="background-color: #777;">❌ Cancelar</button>
+                <button onclick="saveOverlay()" style="background-color: #673AB7;">✅ Col·locar</button>
+                <button onclick="closeOverlayModal()" style="background-color: #777;">❌ Cancel·lar</button>
             </div>
         </div>
     </div>
@@ -110,13 +110,13 @@
     <!-- Admin: Rule Creation Modal -->
     <div id="rule-modal" class="hidden">
         <div class="modal-content">
-            <h3>Añadir Regla de Tráfico</h3>
+            <h3>Afegir Regla de Trànsit</h3>
             <select id="rule-type">
-                <option value="forbidden">⛔ Dirección Prohibida</option>
-                <option value="mandatory">⬇️ Dirección Obligatoria</option>
+                <option value="forbidden">⛔ Direcció Prohibida</option>
+                <option value="mandatory">⬇️ Direcció Obligatòria</option>
             </select>
             <div class="direction-inputs">
-                <p>Dirección (Rumbo): <span id="angle-display">0</span>°</p>
+                <p>Direcció (Rumb): <span id="angle-display">0</span>°</p>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <input type="range" id="rule-angle" min="0" max="360" value="0" oninput="updateAnglePreview()">
                     <div id="angle-preview"
@@ -128,8 +128,8 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button onclick="saveRule()" style="background-color: #4CAF50;">✅ Guardar</button>
-                <button onclick="closeModal()" style="background-color: #777;">❌ Cancelar</button>
+                <button onclick="saveRule()" style="background-color: #4CAF50;">✅ Desar</button>
+                <button onclick="closeModal()" style="background-color: #777;">❌ Cancel·lar</button>
             </div>
         </div>
     </div>
@@ -201,7 +201,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versión: 1.39</div>
+    <div id="version-label">Versió: 1.40</div>
 
 
 
