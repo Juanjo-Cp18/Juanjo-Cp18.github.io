@@ -12,7 +12,13 @@
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./style.css?v=1.0">
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.44';
+            document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
+        })();
+    </script>
 
     <style>
         /* Admin specific adjustments */
@@ -201,7 +207,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versió: 1.43</div>
+    <div id="version-label">Versió: 1.44</div>
 
 
 
@@ -225,15 +231,16 @@
         if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
     </script>
 
-    <script src="./rules.js?v=1.0"></script>
-    <script src="./overlays.js?v=1.0"></script>
+
     <script>
-        // Placeholder for overlays if overlays.js doesn't exist yet
-        if (typeof PRELOADED_OVERLAYS === 'undefined') {
-            window.PRELOADED_OVERLAYS = [];
-        }
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.44';
+            const scripts = ['./rules.js', './overlays.js', './app.js'];
+            scripts.forEach(src => {
+                document.write('<script src="' + src + '?v=' + v + '"><\/script>');
+            });
+        })();
     </script>
-    <script src="./app.js?v=1.0"></script>
 </body>
 
 </html>
