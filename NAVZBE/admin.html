@@ -12,7 +12,7 @@
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style.css?v=1.0">
 
     <style>
         /* Admin specific adjustments */
@@ -201,7 +201,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versió: 1.40</div>
+    <div id="version-label">Versió: 1.41</div>
 
 
 
@@ -225,15 +225,15 @@
         if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
     </script>
 
-    <script src="./rules.js"></script>
-    <script src="./overlays.js"></script>
+    <script src="./rules.js?v=1.0"></script>
+    <script src="./overlays.js?v=1.0"></script>
     <script>
         // Placeholder for overlays if overlays.js doesn't exist yet
         if (typeof PRELOADED_OVERLAYS === 'undefined') {
             window.PRELOADED_OVERLAYS = [];
         }
     </script>
-    <script src="./app.js"></script>
+    <script src="./app.js?v=1.0"></script>
 </body>
 
 </html>

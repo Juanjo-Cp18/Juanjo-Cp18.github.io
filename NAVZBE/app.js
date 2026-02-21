@@ -180,16 +180,27 @@ async function reloadServerFiles() {
     console.log("🛰️ Recarregant fitxers base des del servidor...");
     return new Promise((resolve) => {
         let loaded = 0;
-        const total = 2;
-        const onScriptLoad = () => {
-            loaded++;
-            if (loaded === total) resolve();
-        };
 
+        // 1. Reload CSS
+        const links = document.getElementsByTagName("link");
+        for (let i = 0; i < links.length; i++) {
+            const link = links[i];
+            if (link.rel === "stylesheet" && link.href.includes("style.css")) {
+                link.href = link.href.split("?")[0] + "?t=" + Date.now();
+                console.log("🎨 CSS recarregat");
+            }
+        }
+
+        // 2. Reload dynamic scripts
         const scripts = [
             { id: 'rules-script', src: 'rules.js' },
             { id: 'overlays-script', src: 'overlays.js' }
         ];
+        const total = scripts.length;
+        const onScriptLoad = () => {
+            loaded++;
+            if (loaded === total) resolve();
+        };
 
         scripts.forEach(s => {
             const oldScript = document.getElementById(s.id) || document.querySelector(`script[src^="./${s.src}"], script[src^="${s.src}"]`);
@@ -202,6 +213,9 @@ async function reloadServerFiles() {
             newScript.onerror = onScriptLoad;
             document.body.appendChild(newScript);
         });
+
+        // If no scripts to load, resolve immediately
+        if (total === 0) resolve();
     });
 }
 
@@ -316,7 +330,7 @@ function showPrecisionAlert() {
     statusPill.style.background = "#d32f2f";
     statusPill.innerHTML = `
         <div style="padding: 10px; line-height: 1.4;">
-            <div id="version-label">Versió: 1.40</div>
+            <div id="version-label">Versió: 1.41</div>
             <strong>⚠️ POSSIBLE ERROR DE PRECISIÓ</strong><br>
             <small>Si el vehicle no es mou, activa-ho així:</small><br>
             <div style="text-align: left; margin-top: 5px; font-size: 11px;">
