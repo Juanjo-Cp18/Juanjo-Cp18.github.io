@@ -38,68 +38,81 @@ let overlayMarkers = [];
 
 // --- Initialization ---
 async function init() {
-    let startView = [40.4168, -3.7038]; // Madrid Default
-    let startZoom = 13; // Starting wider
+    let startView = [39.7663, 2.7151]; // Sóller Default
+    let startZoom = 18;
     let initialPosition = null;
+    let hasSavedState = false;
+
+    // --- State Restoration (v1.42) ---
+    const savedStateJson = sessionStorage.getItem('nav_app_state');
+    if (savedStateJson) {
+        try {
+            const savedState = JSON.parse(savedStateJson);
+            startView = [savedState.center.lat, savedState.center.lng];
+            startZoom = savedState.zoom;
+            hasSavedState = true;
+            console.log("♻️ Estat base restaurat");
+        } catch (e) { console.error("Error base restauración:", e); }
+    }
 
     // Check GPS Permissions (Native or Browser)
     document.getElementById('status-pill').innerText = "🛰️ Buscando GPS...";
 
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
-        try {
-            const { Geolocation } = window.Capacitor.Plugins;
-            let status = await Geolocation.checkPermissions();
+    // Skip initial GPS center if we are restoring a previous view
+    if (!hasSavedState) {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation) {
+            try {
+                const { Geolocation } = window.Capacitor.Plugins;
+                let status = await Geolocation.checkPermissions();
 
-            if (status.location !== 'granted') {
-                status = await Geolocation.requestPermissions({ permissions: ['location'] });
+                if (status.location !== 'granted') {
+                    status = await Geolocation.requestPermissions({ permissions: ['location'] });
+                }
+
+                if (status.location === 'granted') {
+                    const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+                    if (position && position.coords) {
+                        startView = [position.coords.latitude, position.coords.longitude];
+                        startZoom = 18;
+                        initialPosition = position.coords;
+                    }
+                } else {
+                    document.getElementById('status-pill').innerText = "⚠️ Permisos de ubicación necesarios.";
+                }
+            } catch (e) {
+                console.error("Error en GPS Check Nativo:", e);
             }
+        } else if (!window.Capacitor && navigator.geolocation) {
+            console.log("Iniciando búsqueda inicial de GPS (Hyper-Robust)...");
 
-            if (status.location === 'granted') {
-                const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+            try {
+                let fetchAttempt = async (timeout) => {
+                    return new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: timeout,
+                            maximumAge: 0
+                        });
+                    });
+                };
+
+                let position = null;
+                try {
+                    position = await fetchAttempt(10000);
+                } catch (e) {
+                    console.warn("Reintentando GPS...");
+                    position = await fetchAttempt(40000);
+                }
+
                 if (position && position.coords) {
                     startView = [position.coords.latitude, position.coords.longitude];
-                    startZoom = 18; // Adjusted zoom per request
+                    startZoom = 18;
                     initialPosition = position.coords;
                 }
-            } else {
-                document.getElementById('status-pill').innerText = "⚠️ Permisos de ubicación necesarios.";
-            }
-        } catch (e) {
-            console.error("Error en GPS Check Nativo:", e);
-        }
-    } else if (!window.Capacitor && navigator.geolocation) {
-        // Hyper-Robust Fallback for Android Chrome
-        console.log("Iniciando búsqueda inicial de GPS (Hyper-Robust)...");
-
-        try {
-            // Try up to 2 times for the initial lock with long timeout
-            let fetchAttempt = async (timeout) => {
-                return new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: timeout,
-                        maximumAge: 0
-                    });
-                });
-            };
-
-            let position = null;
-            try {
-                position = await fetchAttempt(10000); // 10s first try
             } catch (e) {
-                console.warn("Primer intento GPS fallido, reintentando con 60s (v1.14)...");
-                position = await fetchAttempt(60000); // 60s second try for cold start
+                console.error("Fallo inicial GPS:", e.message);
+                document.getElementById('status-pill').innerText = "❌ No se pudo fijar GPS inicial.";
             }
-
-            if (position && position.coords) {
-                startView = [position.coords.latitude, position.coords.longitude];
-                startZoom = 18; // Adjusted zoom per request
-                initialPosition = position.coords;
-                console.log("Posición inicial fijada (v1.7):", startView);
-            }
-        } catch (e) {
-            console.error("Fallo definitivo en búsqueda inicial GPS:", e.message);
-            document.getElementById('status-pill').innerText = "❌ No se pudo fijar GPS inicial.";
         }
     }
 
@@ -170,75 +183,70 @@ async function init() {
         });
     }
 
-    // Attach to every possible user interaction - silently transparent
+    // Reactivate UI states if restored (v1.42)
+    if (savedStateJson) {
+        try {
+            const savedState = JSON.parse(savedStateJson);
+            sessionStorage.removeItem('nav_app_state'); // Clear it
+
+            if (savedState.isOverlayMode) {
+                isOverlayMode = false; // Reset to let toggle work
+                toggleOverlayMode();
+            }
+            if (savedState.isAdminGPSPaused) {
+                isAdminGPSPaused = false;
+                toggleAdminGPS();
+            }
+            if (savedState.isSimulating) {
+                isSimulating = true;
+                simLat = savedState.simLat;
+                simLng = savedState.simLng;
+                simHeading = savedState.simHeading;
+
+                // Re-trigger visual simulation UI
+                const keypad = document.getElementById('sim-keypad');
+                const btn = document.getElementById('sim-toggle-btn');
+                const container = document.getElementById('simulation-controls');
+                if (keypad) keypad.classList.remove('hidden');
+                if (container) container.classList.remove('hidden');
+                if (btn) {
+                    btn.style.background = '#ff9800';
+                    btn.title = 'Salir de Simulación';
+                }
+                // Update marker
+                updateUserPosition(L.latLng(simLat, simLng), simHeading, 5);
+            }
+        } catch (e) { console.error("Error aplicando estado guardado:", e); }
+    }
+
+    // Attach to every possible user interaction - silently transparent (iOS fix)
     ['touchstart', 'touchend', 'mousedown', 'click', 'keydown'].forEach(evt => {
         document.addEventListener(evt, unlockAudio, { once: false, passive: true });
     });
 }
 
-async function reloadServerFiles() {
-    console.log("🛰️ Recarregant fitxers base des del servidor...");
-    return new Promise((resolve) => {
-        let loaded = 0;
-
-        // 1. Reload CSS
-        const links = document.getElementsByTagName("link");
-        for (let i = 0; i < links.length; i++) {
-            const link = links[i];
-            if (link.rel === "stylesheet" && link.href.includes("style.css")) {
-                link.href = link.href.split("?")[0] + "?t=" + Date.now();
-                console.log("🎨 CSS recarregat");
-            }
-        }
-
-        // 2. Reload dynamic scripts
-        const scripts = [
-            { id: 'rules-script', src: 'rules.js' },
-            { id: 'overlays-script', src: 'overlays.js' }
-        ];
-        const total = scripts.length;
-        const onScriptLoad = () => {
-            loaded++;
-            if (loaded === total) resolve();
-        };
-
-        scripts.forEach(s => {
-            const oldScript = document.getElementById(s.id) || document.querySelector(`script[src^="./${s.src}"], script[src^="${s.src}"]`);
-            if (oldScript) oldScript.remove();
-
-            const newScript = document.createElement('script');
-            newScript.id = s.id;
-            newScript.src = `./${s.src}?t=${Date.now()}`;
-            newScript.onload = onScriptLoad;
-            newScript.onerror = onScriptLoad;
-            document.body.appendChild(newScript);
-        });
-
-        // If no scripts to load, resolve immediately
-        if (total === 0) resolve();
-    });
-}
-
 function refreshRules() {
-    console.log("🔄 Actualització manual sol·licitada...");
-    document.getElementById('status-pill').innerText = "🔄 Sincronitzant senyals...";
+    console.log("🔄 Reiniciant aplicació per descarregar fitxers nous...");
+    document.getElementById('status-pill').innerText = "⏳ Recarregant aplicació...";
 
-    reloadServerFiles().then(() => {
-        if (window.FirebaseSDK && db) {
-            console.log("🔄 Firebase actiu, els fitxers del servidor serveixen de base.");
-            // Re-syncing Firebase is usually real-time, but we ensure local state is fresh
-        } else {
-            loadRulesFromStorage();
-            loadOverlaysFromStorage();
-        }
+    // Save State
+    const state = {
+        zoom: map.getZoom(),
+        center: map.getCenter(),
+        isMapCentered: isMapCentered,
+        isOverlayMode: isOverlayMode,
+        isAdminGPSPaused: isAdminGPSPaused,
+        isSimulating: isSimulating,
+        simLat: simLat,
+        simLng: simLng,
+        simHeading: simHeading
+    };
+    sessionStorage.setItem('nav_app_state', JSON.stringify(state));
 
-        setTimeout(() => {
-            const currentText = document.getElementById('status-pill').innerText;
-            if (currentText === "🔄 Sincronitzant senyals...") {
-                document.getElementById('status-pill').innerText = "✅ Senyals actualitzats";
-            }
-        }, 1500);
-    });
+    // Force hard reload with timestamp to bypass ANY server/browser cache
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('v', Date.now());
+    window.location.href = currentUrl.toString();
 }
 
 let watchId = null;
@@ -330,7 +338,7 @@ function showPrecisionAlert() {
     statusPill.style.background = "#d32f2f";
     statusPill.innerHTML = `
         <div style="padding: 10px; line-height: 1.4;">
-            <div id="version-label">Versió: 1.41</div>
+            <div id="version-label">Versió: 1.43</div>
             <strong>⚠️ POSSIBLE ERROR DE PRECISIÓ</strong><br>
             <small>Si el vehicle no es mou, activa-ho així:</small><br>
             <div style="text-align: left; margin-top: 5px; font-size: 11px;">
