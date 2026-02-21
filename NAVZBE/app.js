@@ -344,7 +344,7 @@ function showPrecisionAlert() {
     statusPill.style.background = "#d32f2f";
     statusPill.innerHTML = `
         <div style="padding: 10px; line-height: 1.4;">
-            <div id="version-label">Versió: 1.44</div>
+            <div id="version-label">Versió: 1.45</div>
             <strong>⚠️ POSSIBLE ERROR DE PRECISIÓ</strong><br>
             <small>Si el vehicle no es mou, activa-ho així:</small><br>
             <div style="text-align: left; margin-top: 5px; font-size: 11px;">

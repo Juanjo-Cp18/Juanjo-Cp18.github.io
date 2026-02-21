@@ -15,7 +15,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.44';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.45';
             document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
         })();
     </script>
@@ -206,7 +206,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versió: 1.44</div>
+    <div id="version-label">Versió: 1.45</div>
 
 
 
@@ -233,7 +233,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.44';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.45';
             const scripts = ['./rules.js', './overlays.js', './app.js'];
             scripts.forEach(src => {
                 document.write('<script src="' + src + '?v=' + v + '"><\/script>');
