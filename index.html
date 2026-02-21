@@ -42,11 +42,7 @@
       transition:0.4s ease;
       z-index:1000;
     }
-
-    .mini-header.active{
-      transform:translateY(0);
-    }
-
+    .mini-header.active{ transform:translateY(0); }
     .mini-logo{
       font-family:'Orbitron', sans-serif;
       font-size:1.5rem;
@@ -55,91 +51,182 @@
       -webkit-background-clip:text;
       -webkit-text-fill-color:transparent;
     }
-    h1 {
-      font-family:'Orbitron', sans-serif;
-      font-size:3rem;
-      letter-spacing:3px;
-      background:linear-gradient(90deg,#00f5ff,#7b2ff7);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-    }
-    h2 { font-weight:300; margin-top:15px; color:#ccc; }
+
     section { padding:60px 20px; max-width:1200px; margin:auto; }
-    .logos { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:30px; margin-top:40px; }
-    .logo-card {
+    
+    h2 { 
+      font-weight:300; 
+      margin-bottom:50px; 
+      color:#ccc; 
+      font-family:'Orbitron', sans-serif; 
+      letter-spacing:2px; 
+      text-align: center;
+    }
+
+    .works { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:30px; }
+    
+    .work-card {
       background:rgba(255,255,255,0.05);
-      padding:30px;
+      padding:40px;
       border-radius:20px;
-      text-align:center;
-      backdrop-filter:blur(10px);
       transition:0.4s;
+      position:relative;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-height: 400px;
     }
-    .logo-card:hover {
-      transform:translateY(-10px) scale(1.05);
-      box-shadow:0 0 25px rgba(0,245,255,0.5);
+
+    .work-card i { font-size:2.5rem; margin-bottom:20px; color:#00f5ff; }
+
+    /* GPS Dropdown Menu Overlay */
+    .gps-menu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 15, 28, 0.98);
+      backdrop-filter: blur(15px);
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.4s ease;
+      z-index: 10;
+      overflow-y: auto;
     }
+
+    .work-card:hover .gps-menu,
+    .work-card.active .gps-menu {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .gps-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      color: #7b2ff7;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .gps-list {
+      list-style: none;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .gps-button {
+      text-decoration: none;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      transition: 0.3s;
+      border: 1px solid rgba(0, 245, 255, 0.1);
+    }
+
+    .gps-icon-wrapper {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #00f5ff;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      background: rgba(0, 245, 255, 0.05);
+    }
+
+    .gps-icon-wrapper i {
+      font-size: 1rem;
+      margin: 0;
+      color: #00f5ff;
+    }
+
+    .gps-nav-arrow { transform: rotate(-45deg); }
+
+    .gps-whatsapp i { color: #25D366; }
+
+    .gps-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      color: #ccc;
+      transition: 0.3s;
+      text-align: left;
+      line-height: 1.2;
+    }
+
+    .gps-button:hover {
+      background: rgba(0, 245, 255, 0.1);
+      border-color: #00f5ff;
+      transform: translateX(5px);
+    }
+
+    .gps-button:hover .gps-text { color: #fff; }
+
+    .gps-button:hover .gps-icon-wrapper {
+      background: #00f5ff;
+      animation: pulseGps 1.5s infinite;
+    }
+
+    .gps-button:hover .gps-icon-wrapper i { color: #0a0f1c; }
+
+    @keyframes pulseGps {
+      0% { box-shadow: 0 0 0px rgba(0, 245, 255, 0.6); }
+      50% { box-shadow: 0 0 15px rgba(0, 245, 255, 0.8); }
+      100% { box-shadow: 0 0 0px rgba(0, 245, 255, 0.6); }
+    }
+
     .logo-svg {
-      width:220px;
-      height:220px;
+      width:280px;
+      height:280px;
       margin:0 auto 30px;
       display:block;
       filter:drop-shadow(0 0 20px rgba(0,245,255,0.6));
-      animation:pulseGlow 4s ease-in-out infinite;
     }
 
-    @keyframes pulseGlow {
-      0%,100% { filter:drop-shadow(0 0 15px rgba(0,245,255,0.5)); }
-      50% { filter:drop-shadow(0 0 35px rgba(123,47,247,0.9)); }
+    /* Footer Actualizado con icono de email */
+    footer { 
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      flex-wrap: wrap;
     }
-    .logo-card:hover .logo-svg {
-      transform:scale(1.1) rotate(5deg);
-      filter:drop-shadow(0 0 25px rgba(123,47,247,0.9));
+
+    .footer-copy { color: #aaa; }
+    
+    .footer-email { 
+      color: #00f5ff; 
+      text-decoration: none; 
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px; /* Espacio entre icono y texto */
     }
-    .logo-title {
-      font-size:1.1rem;
-      letter-spacing:2px;
-      margin-top:10px;
-      font-weight:600;
+    
+    .footer-email:hover { filter: brightness(1.2); text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      footer { gap: 15px; flex-direction: column; text-align: center; }
     }
-    .logo-sub {
-      font-size:0.9rem;
-      color:#aaa;
-      margin-top:5px;
-    }
-    .works { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:30px; margin-top:40px; }
-    .work-card {
-      background:rgba(255,255,255,0.05);
-      padding:30px;
-      border-radius:20px;
-      transition:0.4s;
-      cursor:pointer;
-      position:relative;
-      overflow:hidden;
-    }
-    .work-card::before {
-      content:"";
-      position:absolute;
-      width:100%; height:100%;
-      background:linear-gradient(120deg,transparent,rgba(0,245,255,0.3),transparent);
-      top:0; left:-100%;
-      transition:0.5s;
-    }
-    .work-card:hover::before { left:100%; }
-    .work-card:hover {
-      transform:translateY(-8px);
-      box-shadow:0 0 20px rgba(123,47,247,0.6);
-    }
-    .work-card i { font-size:2rem; margin-bottom:15px; color:#00f5ff; }
-    .contact { text-align:center; padding:60px 20px; }
-    .contact a {
-      color:#00f5ff;
-      font-size:1.2rem;
-      text-decoration:none;
-      border-bottom:1px solid transparent;
-      transition:0.3s;
-    }
-    .contact a:hover { border-bottom:1px solid #00f5ff; }
-    footer { text-align:center; padding:30px; font-size:0.9rem; color:#aaa; }
   </style>
 </head>
 <body>
@@ -159,67 +246,90 @@
           <stop offset="100%" stop-color="#7b2ff7" />
         </linearGradient>
       </defs>
-
-      <!-- Outer Ring -->
       <circle cx="200" cy="200" r="150" stroke="url(#logoGrad)" stroke-width="6" fill="none" />
-
-      <!-- Animated Orbit -->
       <circle cx="200" cy="200" r="170" stroke="#00f5ff" stroke-width="2" fill="none" stroke-dasharray="6 10" opacity="0.4">
-        <animateTransform attributeName="transform"
-                          attributeType="XML"
-                          type="rotate"
-                          from="0 200 200"
-                          to="360 200 200"
-                          dur="40s"
-                          repeatCount="indefinite"/>
+        <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="40s" repeatCount="indefinite"/>
       </circle>
-
-      <!-- Initials -->
       <text x="50%" y="48%" text-anchor="middle" fill="#ffffff" font-size="110" font-family="Orbitron" dy=".3em">JV</text>
-
-      <!-- Name -->
       <text x="50%" y="72%" text-anchor="middle" fill="#ffffff" font-size="28" font-family="Inter" letter-spacing="4">JUANJO VIVAS</text>
-
-      <!-- Tagline -->
-      <text x="50%" y="80%" text-anchor="middle" fill="#aaaaaa" font-size="18" font-family="Inter" letter-spacing="2">
-        TECNOLOGÍA · DESARROLLO WEB · IA
+      <text x="50%" y="79%" text-anchor="middle" fill="#aaaaaa" font-size="11" font-family="Inter" letter-spacing="0.5" textLength="340" lengthAdjust="spacingAndGlyphs">
+        AFICIONADO A LA TECNOLOGÍA · DESARROLLO WEB · IA
       </text>
     </svg>
   </div>
 </header>
 
-
-
 <section>
   <h2>Trabajos Destacados</h2>
   <div class="works">
-    <div class="work-card" onclick="window.location.href='#'">
+    <div class="work-card">
       <i class="fas fa-code"></i>
       <h3>Proyecto Web Moderno</h3>
       <p>Aplicación web desarrollada con tecnologías actuales.</p>
     </div>
-    <div class="work-card" onclick="window.location.href='#'">
+
+    <div class="work-card" id="ia-card">
       <i class="fas fa-robot"></i>
       <h3>Proyecto IA</h3>
       <p>Experimentos y desarrollos con Inteligencia Artificial.</p>
+      
+      <div class="gps-menu">
+        <span class="gps-title">Destinos Disponibles</span>
+        <ul class="gps-list">
+          <li>
+            <a href="https://juanjo-cp18.github.io/NAVZBE/index.html" target="_blank" class="gps-button">
+              <div class="gps-icon-wrapper">
+                <i class="fas fa-location-arrow gps-nav-arrow"></i>
+              </div>
+              <span class="gps-text">Prototipo Navegación con avisos</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://juanjo-cp18.github.io/JOC_ESCRITURA.html" target="_blank" class="gps-button">
+              <div class="gps-icon-wrapper">
+                <i class="fas fa-keyboard"></i>
+              </div>
+              <span class="gps-text">Juego de Escritura para Niños</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://juanjo-cp18.github.io/CAIXADIARIA/CaixaDiaria.html" target="_blank" class="gps-button">
+              <div class="gps-icon-wrapper">
+                <i class="fas fa-calculator"></i>
+              </div>
+              <span class="gps-text">Calculadora Caixa Diària</span>
+            </a>
+          </li>
+          <li>
+            <a href="https://juanjo-cp18.github.io/App_Whatssap/index.html" target="_blank" class="gps-button">
+              <div class="gps-icon-wrapper gps-whatsapp">
+                <i class="fab fa-whatsapp"></i>
+              </div>
+              <span class="gps-text">Envío recordatorio de cita</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="contact">
-  <h2>Contacto</h2>
-  <p><a href="mailto:juanjo.vivasm@gmail.com">juanjo.vivasm@gmail.com</a></p>
-</section>
-
 <footer>
-  © 2026 · Tecnología & IA
+  <span class="footer-copy">© 2026 · Juanjo Vivas -Tecnología & IA</span>
+  <a href="mailto:juanjo.vivasm@gmail.com" class="footer-email">
+    <i class="fas fa-envelope"></i> juanjo.vivasm@gmail.com
+  </a>
 </footer>
 
 <script>
   const canvas = document.getElementById('universe');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
 
   let stars = [];
   for(let i=0;i<200;i++){
@@ -239,27 +349,24 @@
       ctx.beginPath();
       ctx.arc(s.x,s.y,s.radius,0,Math.PI*2);
       ctx.fill();
-      s.x+=s.vx;
-      s.y+=s.vy;
-      if(s.x<0||s.x>canvas.width) s.vx*=-1;
-      if(s.y<0||s.y>canvas.height) s.vy*=-1;
+      s.x+=s.vx; s.y+=s.vy;
+      if(s.x<0) s.x=canvas.width; if(s.x>canvas.width) s.x=0;
+      if(s.y<0) s.y=canvas.height; if(s.y>canvas.height) s.y=0;
     });
     requestAnimationFrame(animate);
   }
   animate();
 
-  window.addEventListener('resize',()=>{
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  });
-
-  // Sticky header on scroll
   const miniHeader = document.getElementById('miniHeader');
   window.addEventListener('scroll',()=>{
-    if(window.scrollY > window.innerHeight * 0.6){
-      miniHeader.classList.add('active');
-    } else {
-      miniHeader.classList.remove('active');
+    if(window.scrollY > window.innerHeight * 0.5) miniHeader.classList.add('active');
+    else miniHeader.classList.remove('active');
+  });
+
+  const iaCard = document.getElementById('ia-card');
+  iaCard.addEventListener('click', (e) => {
+    if(!e.target.closest('.gps-button')) {
+      iaCard.classList.toggle('active');
     }
   });
 </script>
