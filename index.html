@@ -197,7 +197,6 @@
       filter:drop-shadow(0 0 20px rgba(0,245,255,0.6));
     }
 
-    /* Footer Actualizado con icono de email */
     footer { 
       padding: 40px 20px;
       max-width: 1200px;
@@ -205,27 +204,28 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 30px;
-      font-size: 0.9rem;
+      gap: 15px;
+      font-size: 0.85rem;
       border-top: 1px solid rgba(255,255,255,0.05);
       flex-wrap: wrap;
     }
 
     .footer-copy { color: #aaa; }
-    
+    .footer-separator { color: rgba(255,255,255,0.2); font-weight: 300; }
+    .footer-date { color: #888; }
     .footer-email { 
       color: #00f5ff; 
       text-decoration: none; 
       transition: 0.3s;
       display: flex;
       align-items: center;
-      gap: 8px; /* Espacio entre icono y texto */
+      gap: 8px;
     }
-    
     .footer-email:hover { filter: brightness(1.2); text-decoration: underline; }
 
-    @media (max-width: 600px) {
-      footer { gap: 15px; flex-direction: column; text-align: center; }
+    @media (max-width: 768px) {
+      footer { gap: 10px; flex-direction: column; text-align: center; }
+      .footer-separator { display: none; }
     }
   </style>
 </head>
@@ -262,12 +262,7 @@
 <section>
   <h2>Trabajos Destacados</h2>
   <div class="works">
-    <div class="work-card">
-      <i class="fas fa-code"></i>
-      <h3>Proyecto Web Moderno</h3>
-      <p>Aplicación web desarrollada con tecnologías actuales.</p>
-    </div>
-
+    
     <div class="work-card" id="ia-card">
       <i class="fas fa-robot"></i>
       <h3>Proyecto IA</h3>
@@ -311,11 +306,21 @@
         </ul>
       </div>
     </div>
+
+    <div class="work-card">
+      <i class="fas fa-shield-halved"></i>
+      <h3>Herramientas Policiales</h3>
+      <p>Aplicaciones web y otras, desarrolladas con tecnologías actuales.</p>
+    </div>
+
   </div>
 </section>
 
 <footer>
-  <span class="footer-copy">© 2026 · Juanjo Vivas -Tecnología & IA</span>
+  <span class="footer-copy">© 2026 · Juanjo Vivas - Tecnología & IA</span>
+  <span class="footer-separator">|</span>
+  <span class="footer-date">15/02/2026</span>
+  <span class="footer-separator">|</span>
   <a href="mailto:juanjo.vivasm@gmail.com" class="footer-email">
     <i class="fas fa-envelope"></i> juanjo.vivasm@gmail.com
   </a>
