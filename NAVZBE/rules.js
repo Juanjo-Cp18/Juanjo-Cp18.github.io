@@ -1,5 +1,5 @@
 // Título: Configuración de Reglas de Tráfico
-// Fecha: 21/2/2026, 17:30:15
+// Fecha: 22/2/2026, 13:14:32
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_RULES = [
@@ -156,5 +156,19 @@ const PRELOADED_RULES = [
         "lng": 2.724020411804947,
         "type": "forbidden",
         "angle": 273
+    },
+    {
+        "id": 1771762332622,
+        "lat": 39.760928873729924,
+        "lng": 2.7114831575353553,
+        "type": "forbidden",
+        "angle": 351
+    },
+    {
+        "id": 1771762417392,
+        "lat": 39.762464707766306,
+        "lng": 2.711158182743439,
+        "type": "forbidden",
+        "angle": 318
     }
 ];
