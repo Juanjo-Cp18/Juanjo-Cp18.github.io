@@ -1,15 +1,18 @@
-const map = L.map('map').setView([40.4168, -3.7038], 15);
+// Inicializar mapa
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap'
+const map = L.map('map', {
+    center: [40.4168, -3.7038],
+    zoom: 15
+});
+
+// Capa base oscura compatible con el diseño
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap & CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
 }).addTo(map);
 
-let drawnLine = null;
-
-map.on('click', function(e) {
-    if (!drawnLine) {
-        drawnLine = L.polyline([e.latlng], {color: 'red'}).addTo(map);
-    } else {
-        drawnLine.addLatLng(e.latlng);
-    }
-});
+// Forzar recalculo tamaño tras carga
+setTimeout(() => {
+    map.invalidateSize();
+}, 200);
