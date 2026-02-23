@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Generador de Croquis Catastral</title>
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-  <!-- Estilos propios -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -20,6 +17,15 @@
   <div class="container">
 
     <aside class="panel">
+
+      <label>Tipo de mapa:</label>
+      <select id="mapSelector">
+        <option value="catastro" selected>Catastro (oficial)</option>
+        <option value="standard">Estándar (color)</option>
+        <option value="grayscale">Técnico (escala de grises)</option>
+        <option value="satellite">Satélite (fotografía)</option>
+      </select>
+
       <label>Escala:</label>
       <select id="scale">
         <option value="100">1:100</option>
@@ -29,26 +35,17 @@
         <option value="1000">1:1000</option>
       </select>
 
-      <label>Tipo de mapa:</label>
-      <select id="mapType">
-        <option value="basic">Básico técnico</option>
-        <option value="parcelario">Parcelario</option>
-        <option value="eje">Solo eje</option>
-      </select>
-
       <button id="generateBtn">Generar SVG</button>
+
     </aside>
 
     <main id="map"></main>
 
   </div>
 
-  <div class="version">Versión: 1.1</div>
+  <div class="version">Versión: 1.3</div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <!-- Scripts propios -->
   <script src="map.js"></script>
   <script src="scaling.js"></script>
 
