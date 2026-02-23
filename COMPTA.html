@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SmartScan Pro - Final</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        :root { --accent: #10b981; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0a0a0a; 
+            color: #e5e5e5; 
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .glass { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+        }
+        .scan-line { 
+            height: 3px; 
+            background: linear-gradient(90deg, transparent, var(--accent), transparent); 
+            box-shadow: 0 0 20px var(--accent); 
+            position: absolute; 
+            width: 100%; 
+            z-index: 10; 
+            top: 0; 
+            display: none; 
+        }
+        .scanning .scan-line { display: block; animation: scanAnim 1.5s infinite ease-in-out; }
+        @keyframes scanAnim { 
+            0% { top: 0%; opacity: 0; } 
+            50% { opacity: 1; } 
+            100% { top: 100%; opacity: 0; } 
+        }
+        video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .btn-action { @apply flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-black transition-all active:scale-95 uppercase tracking-widest; }
+        input, select { background: transparent; border: none; color: inherit; outline: none; }
+        .animate-row { animation: slideIn 0.4s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-24">
+
+    <audio id="shutter-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <header class="p-6 pt-12 sticky top-0 z-30 bg-[#0a0a0a]/90 backdrop-blur-md">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-black tracking-tighter text-white">SMART<span class="text-emerald-500 italic">DATA</span></h1>
+                <p class="text-[9px] text-gray-500 font-bold tracking-[0.3em] uppercase">High-Precision OCR</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="btn-pdf" class="hidden btn-action bg-red-500/10 text-red-400 border border-red-500/20">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+                <button id="btn-csv" class="hidden btn-action bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <i class="fas fa-file-csv"></i> CSV
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 px-4 space-y-8">
+        <div id="camera-frame" class="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="scan-line"></div>
+            
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
+                <button onclick="adjustZoom(0.2)" class="w-12 h-12 glass rounded-full flex items-center justify-center text-white active:bg-emerald-500/20">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button onclick="adjustZoom(-0.2)" class="w-12 h-12 glass rounded-full flex items-center justify-center text-white active:bg-emerald-500/20">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+            </div>
+
+            <div class="absolute inset-0 grid grid-cols-3 pointer-events-none border border-white/5">
+                <div class="border-r border-white/10 flex items-end justify-center pb-4 text-[7px] text-white/20 uppercase tracking-widest font-black">Concepto</div>
+                <div class="border-r border-white/10 flex items-end justify-center pb-4 text-[7px] text-emerald-500/40 uppercase tracking-widest font-black">Tipo (TV/E)</div>
+                <div class="flex items-end justify-center pb-4 text-[7px] text-white/20 uppercase tracking-widest font-black">Cuantía</div>
+            </div>
+        </div>
+
+        <div class="flex justify-center -mt-16 relative z-20">
+            <button id="capture-btn" class="w-20 h-20 rounded-full glass border-4 border-white/5 p-1 active:scale-90 transition-all shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+                <div class="w-full h-full bg-white rounded-full flex items-center justify-center">
+                    <i class="fas fa-bolt text-black text-xl"></i>
+                </div>
+            </button>
+        </div>
+
+        <section id="summary-cards" class="grid grid-cols-2 gap-4 opacity-0 transition-opacity duration-700">
+            <div class="glass p-5 rounded-[2rem] border-l-4 border-blue-500 shadow-xl shadow-blue-500/5">
+                <p class="text-[10px] uppercase font-black text-blue-400 tracking-widest mb-1">Total TV</p>
+                <p id="total-tv" class="text-2xl font-black text-white">0,00 €</p>
+            </div>
+            <div class="glass p-5 rounded-[2rem] border-l-4 border-orange-500 shadow-xl shadow-orange-500/5">
+                <p class="text-[10px] uppercase font-black text-orange-400 tracking-widest mb-1">Total E</p>
+                <p id="total-e" class="text-2xl font-black text-white">0,00 €</p>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="flex items-center justify-between px-2">
+                <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Registros en Memoria</h2>
+                <button onclick="clearResults()" class="text-[10px] text-red-500/50 font-black uppercase tracking-widest">Reiniciar</button>
+            </div>
+
+            <div class="glass rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-white/[0.04] text-gray-500 text-[8px] uppercase tracking-widest">
+                            <th class="p-5 font-black">Concepto</th>
+                            <th class="p-5 font-black text-center">Tipo</th>
+                            <th class="p-5 font-black text-right">Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr id="empty-row">
+                            <td colspan="3" class="p-20 text-center text-gray-700 italic font-medium">Alinee la nota con las guías superiores</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const cameraFrame = document.getElementById('camera-frame');
+        const tableBody = document.getElementById('table-body');
+        const summarySection = document.getElementById('summary-cards');
+        const shutterSound = document.getElementById('shutter-sound');
+        const btnPdf = document.getElementById('btn-pdf');
+        const btnCsv = document.getElementById('btn-csv');
+
+        let dataRows = [];
+        let zoomLevel = 1;
+
+        // 1. Control de Zoom Digital
+        function adjustZoom(val) {
+            zoomLevel = Math.max(1, Math.min(4, zoomLevel + val));
+            video.style.transform = `scale(${zoomLevel})`;
+        }
+
+        // 2. Inicializar Cámara (Prioridad Trasera)
+        async function startCamera() {
+            const constraints = [
+                { video: { facingMode: "environment", focusMode: "continuous" } },
+                { video: true }
+            ];
+            for (let c of constraints) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia(c);
+                    video.srcObject = stream;
+                    return;
+                } catch (e) {}
+            }
+        }
+
+        // 3. Captura y Simulación de OCR Avanzado
+        function capture() {
+            shutterSound.currentTime = 0;
+            shutterSound.play();
+            if (navigator.vibrate) navigator.vibrate(50);
+            
+            cameraFrame.classList.add('scanning');
+            
+            // Flash visual
+            const flash = document.createElement('div');
+            flash.className = "absolute inset-0 bg-white z-50 animate-pulse";
+            cameraFrame.appendChild(flash);
+            setTimeout(() => flash.remove(), 250);
+
+            // Simulación de lectura de las 3 columnas
+            setTimeout(() => {
+                cameraFrame.classList.remove('scanning');
+                
+                const id = dataRows.length + 1;
+                const mockData = [
+                    { concepto: `Nota ${id}A`, tipo: "TV", valor: (Math.random()*50 + 10).toFixed(2) },
+                    { concepto: `Nota ${id}B`, tipo: "E", valor: (Math.random()*20 + 5).toFixed(2) }
+                ];
+                
+                mockData.forEach(d => dataRows.push({
+                    concepto: d.concepto,
+                    tipo: d.tipo,
+                    valor: parseFloat(d.valor)
+                }));
+                
+                render();
+            }, 1200);
+        }
+
+        // 4. Renderizado y Cálculos
+        function render() {
+            if (dataRows.length > 0) {
+                document.getElementById('empty-row').classList.add('hidden');
+                summarySection.style.opacity = "1";
+                btnPdf.classList.remove('hidden');
+                btnCsv.classList.remove('hidden');
+            }
+
+            tableBody.innerHTML = '';
+            let sTV = 0, sE = 0;
+
+            dataRows.forEach((row, i) => {
+                if (row.tipo === "TV") sTV += row.valor;
+                else sE += row.valor;
+
+                const tr = document.createElement('tr');
+                tr.className = "border-t border-white/5 animate-row bg-white/[0.01]";
+                tr.innerHTML = `
+                    <td class="p-5"><input type="text" value="${row.concepto}" onchange="dataRows[${i}].concepto=this.value; calculate();" class="w-full"></td>
+                    <td class="p-5 text-center">
+                        <select onchange="dataRows[${i}].tipo=this.value; calculate();" class="font-black text-[10px] ${row.tipo === 'TV' ? 'text-blue-400' : 'text-orange-400'}">
+                            <option value="TV" ${row.tipo === 'TV' ? 'selected' : ''}>TV</option>
+                            <option value="E" ${row.tipo === 'E' ? 'selected' : ''}>E</option>
+                        </select>
+                    </td>
+                    <td class="p-5 text-right font-mono font-bold text-white tracking-tighter">
+                        <input type="number" step="0.01" value="${row.valor}" onchange="dataRows[${i}].valor=parseFloat(this.value); calculate();" class="text-right w-20">€
+                    </td>
+                `;
+                tableBody.prepend(tr);
+            });
+            calculate();
+        }
+
+        function calculate() {
+            let sTV = 0, sE = 0;
+            dataRows.forEach(r => {
+                if (r.tipo === "TV") sTV += r.valor;
+                else sE += r.valor;
+            });
+            document.getElementById('total-tv').innerText = sTV.toLocaleString('es-ES', {minimumFractionDigits: 2}) + " €";
+            document.getElementById('total-e').innerText = sE.toLocaleString('es-ES', {minimumFractionDigits: 2}) + " €";
+        }
+
+        // 5. Exportación PDF
+        btnPdf.addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFont("helvetica", "bold");
+            doc.text("REPORTE SMARTSCAN PRO", 14, 20);
+            
+            const rows = dataRows.map(r => [r.concepto, r.tipo, r.valor.toFixed(2) + " €"]);
+            const sTV = dataRows.filter(r => r.tipo === "TV").reduce((s, r) => s + r.valor, 0);
+            const sE = dataRows.filter(r => r.tipo === "E").reduce((s, r) => s + r.valor, 0);
+
+            doc.autoTable({
+                head: [['Concepto', 'Tipo', 'Cuantía']],
+                body: rows,
+                startY: 30,
+                headStyles: { fillColor: [16, 185, 129] }
+            });
+
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.text(`TOTAL TV: ${sTV.toFixed(2)} EUR`, 14, finalY);
+            doc.text(`TOTAL E: ${sE.toFixed(2)} EUR`, 14, finalY + 7);
+            doc.save("Reporte_SmartScan.pdf");
+        });
+
+        // 6. Exportación CSV
+        btnCsv.addEventListener('click', () => {
+            let csv = "Concepto;Tipo;Cuantia\n";
+            dataRows.forEach(r => csv += `${r.concepto};${r.tipo};${r.valor.toFixed(2).replace('.',',')}€\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'Datos_SmartScan.csv'; a.click();
+        });
+
+        function clearResults() {
+            dataRows = [];
+            tableBody.innerHTML = '<tr id="empty-row"><td colspan="3" class="p-20 text-center text-gray-700 italic font-medium">Alinee la nota con las guías superiores</td></tr>';
+            summarySection.style.opacity = "0";
+            btnPdf.classList.add('hidden');
+            btnCsv.classList.add('hidden');
+        }
+
+        captureBtn.addEventListener('click', capture);
+        window.addEventListener('load', startCamera);
+    </script>
+</body>
+</html>
