@@ -1,18 +1,65 @@
-// Inicializar mapa
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
 
-const map = L.map('map', {
-    center: [40.4168, -3.7038],
-    zoom: 15
-});
+header {
+  background: #111827;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #1f2937;
+}
 
-// Capa base oscura compatible con el diseño
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap & CARTO',
-    subdomains: 'abcd',
-    maxZoom: 19
-}).addTo(map);
+header h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
 
-// Forzar recalculo tamaño tras carga
-setTimeout(() => {
-    map.invalidateSize();
-}, 200);
+.container {
+  display: flex;
+  height: calc(100vh - 70px);
+}
+
+.panel {
+  width: 280px;
+  padding: 1.5rem;
+  background: #111827;
+  border-right: 1px solid #1f2937;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+select, button {
+  padding: 8px;
+  background: #1f2937;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 4px;
+}
+
+button {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #334155;
+}
+
+#map {
+  flex: 1;
+  height: 100%;
+}
+
+.version {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+  font-size: 0.75rem;
+  color: #475569;
+  opacity: 0.7;
+}
