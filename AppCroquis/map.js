@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", function () {
+
 // ===============================
 // INICIALIZACIÓN
 // ===============================
@@ -22,36 +24,7 @@ const catastroLayer = L.tileLayer.wms(
     }
 );
 
-const standardLayer = L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-);
-
-const grayscaleLayer = L.tileLayer(
-    "https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
-);
-
-const satelliteLayer = L.tileLayer.wms(
-    "https://www.ign.es/wms-inspire/pnoa-ma?", {
-        layers: "OI.OrthoimageCoverage",
-        format: "image/jpeg",
-        version: "1.3.0"
-    }
-);
-
 currentLayer = catastroLayer.addTo(map);
-
-document.getElementById("mapSelector").addEventListener("change", function (e) {
-    map.removeLayer(currentLayer);
-
-    switch (e.target.value) {
-        case "catastro": currentLayer = catastroLayer; break;
-        case "standard": currentLayer = standardLayer; break;
-        case "grayscale": currentLayer = grayscaleLayer; break;
-        case "satellite": currentLayer = satelliteLayer; break;
-    }
-
-    currentLayer.addTo(map);
-});
 
 // ===============================
 // DIBUJO RECTÁNGULO
@@ -84,7 +57,11 @@ map.on(L.Draw.Event.CREATED, function (event) {
 // EXPORTACIÓN
 // ===============================
 
-document.getElementById("generateBtn").addEventListener("click", async function () {
+const generateBtn = document.getElementById("generateBtn");
+
+generateBtn.addEventListener("click", async function () {
+
+    console.log("Botón pulsado");
 
     if (!selectedRectangle) {
         alert("Debe dibujar un rectángulo primero.");
@@ -155,4 +132,6 @@ document.getElementById("generateBtn").addEventListener("click", async function 
     };
 
     reader.readAsDataURL(blob);
+});
+
 });
