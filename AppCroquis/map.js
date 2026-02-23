@@ -5,9 +5,7 @@ const map = L.map('map', {
 
 let currentLayer;
 
-// --- CAPAS DISPONIBLES ---
-
-// 1️⃣ Catastro oficial (WMS)
+// 1️⃣ CATASTRO OFICIAL
 const catastroLayer = L.tileLayer.wms(
     "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?", {
         layers: "Catastro",
@@ -18,35 +16,37 @@ const catastroLayer = L.tileLayer.wms(
     }
 );
 
-// 2️⃣ Estándar color
+// 2️⃣ ESTÁNDAR COLOR
 const standardLayer = L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution: "OpenStreetMap"
+        attribution: "© OpenStreetMap"
     }
 );
 
-// 3️⃣ Escala de grises
+// 3️⃣ TÉCNICO (ESCALA DE GRISES REAL)
 const grayscaleLayer = L.tileLayer(
-    "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png", {
+    "https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution: "Stadia Maps"
+        attribution: "© OpenStreetMap (Grayscale)"
     }
 );
 
-// 4️⃣ Satélite
-const satelliteLayer = L.tileLayer(
-    "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
-        maxZoom: 17,
-        attribution: "OpenTopoMap"
+// 4️⃣ SATÉLITE REAL (ORTOFOTO PNOA - IGN)
+const satelliteLayer = L.tileLayer.wms(
+    "https://www.ign.es/wms-inspire/pnoa-ma?", {
+        layers: "OI.OrthoimageCoverage",
+        format: "image/jpeg",
+        transparent: false,
+        version: "1.3.0",
+        attribution: "Instituto Geográfico Nacional"
     }
 );
 
-// Añadir por defecto Catastro
+// Capa por defecto
 currentLayer = catastroLayer.addTo(map);
 
-// --- CAMBIO DINÁMICO DE CAPA ---
-
+// Cambio dinámico
 document.getElementById("mapSelector").addEventListener("change", function (e) {
 
     map.removeLayer(currentLayer);
@@ -69,7 +69,7 @@ document.getElementById("mapSelector").addEventListener("change", function (e) {
     currentLayer.addTo(map);
 });
 
-// Ajuste de tamaño
+// Ajuste tamaño
 setTimeout(function () {
     map.invalidateSize();
 }, 200);
