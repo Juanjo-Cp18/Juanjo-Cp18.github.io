@@ -15,7 +15,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.45';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.46';
             document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
         })();
     </script>
@@ -156,6 +156,8 @@
                         <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla inici'.
                         </li>
                     </ul>
+                    <p><i>Nota: Si moveu el mapa manualment, premeu el botó «Centrar Mapa» (🎯) perquè s'adapti de nou a
+                            la navegació.</i></p>
 
                     <hr>
 
@@ -170,6 +172,8 @@
                         <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
                             inicio'.</li>
                     </ul>
+                    <p><i>Nota: Si mueve el mapa manualmente, pulse el botón «Centrar Mapa» (🎯) para que se adapte de
+                            nuevo a la navegación.</i></p>
                 </div>
             </div>
             <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
@@ -206,7 +210,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versió: 1.45</div>
+    <div id="version-label">Versió: 1.46</div>
 
 
 
@@ -233,7 +237,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.45';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.46';
             const scripts = ['./rules.js', './overlays.js', './app.js'];
             scripts.forEach(src => {
                 document.write('<script src="' + src + '?v=' + v + '"><\/script>');

@@ -21,7 +21,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.45';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.46';
             document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
         })();
     </script>
@@ -48,18 +48,30 @@
     <!-- Top Right Actions Wrapper -->
     <div id="top-right-controls">
         <!-- UI Toggle Button -->
-        <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos">👁️</button>
+        <div class="control-wrapper">
+            <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos">👁️</button>
+            <span class="control-label">Ocultar</span>
+        </div>
 
         <!-- Refresh Rule Button -->
-        <button id="refresh-btn" title="Refrescar Senyals" onclick="refreshRules()"
-            style="background-color: #4CAF50;">🔄</button>
+        <div class="control-wrapper">
+            <button id="refresh-btn" title="Refrescar Senyals" onclick="refreshRules()"
+                style="background-color: #4CAF50;">🔄</button>
+            <span class="control-label">Actualitzar</span>
+        </div>
 
         <!-- Help Button -->
-        <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
-            style="background-color: #2196F3;">❓</button>
+        <div class="control-wrapper">
+            <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
+                style="background-color: #2196F3;">❓</button>
+            <span class="control-label">Ajuda</span>
+        </div>
 
         <!-- Center Map Button -->
-        <button id="center-btn" title="Centrar Mapa" onclick="centerMap()">🎯</button>
+        <div class="control-wrapper">
+            <button id="center-btn" title="Centrar Mapa" onclick="centerMap()">🎯</button>
+            <span class="control-label">Centrar</span>
+        </div>
     </div>
 
     <!-- GPS Status (Top Center) -->
@@ -109,6 +121,8 @@
                         <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla inici'.
                         </li>
                     </ul>
+                    <p><i>Nota: Si moveu el mapa manualment, premeu el botó «Centrar Mapa» (🎯) perquè s'adapti de nou a
+                            la navegació.</i></p>
 
                     <hr>
 
@@ -123,6 +137,8 @@
                         <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
                             inicio'.</li>
                     </ul>
+                    <p><i>Nota: Si mueve el mapa manualmente, pulse el botón «Centrar Mapa» (🎯) para que se adapte de
+                            nuevo a la navegación.</i></p>
                 </div>
             </div>
             <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
@@ -146,7 +162,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versió: 1.45</div>
+    <div id="version-label">Versió: 1.46</div>
 
 
 
@@ -172,7 +188,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.45';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.46';
             const scripts = ['./rules.js', './overlays.js', './app.js'];
             scripts.forEach(src => {
                 document.write('<script src="' + src + '?v=' + v + '"><\/script>');
