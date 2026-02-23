@@ -9,6 +9,6 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     maxZoom: 19
 }).addTo(map);
 
-setTimeout(() => {
+setTimeout(function () {
     map.invalidateSize();
 }, 200);

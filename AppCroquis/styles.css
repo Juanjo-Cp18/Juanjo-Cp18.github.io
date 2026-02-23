@@ -2,20 +2,21 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: #0b1220;
+  color: #f1f5f9; /* más brillo */
 }
 
 header {
-  background: #111827;
+  background: #0f172a;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid #1e293b;
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 500;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #ffffff;
 }
 
 .container {
@@ -26,24 +27,30 @@ header h1 {
 .panel {
   width: 280px;
   padding: 1.5rem;
-  background: #111827;
-  border-right: 1px solid #1f2937;
+  background: #0f172a;
+  border-right: 1px solid #1e293b;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+}
+
+label {
+  font-size: 0.9rem;
+  color: #e2e8f0;
 }
 
 select, button {
   padding: 8px;
-  background: #1f2937;
-  color: #e2e8f0;
+  background: #1e293b;
+  color: #ffffff;
   border: 1px solid #334155;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 button {
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
 button:hover {
@@ -57,9 +64,9 @@ button:hover {
 
 .version {
   position: fixed;
-  bottom: 8px;
-  left: 12px;
-  font-size: 0.75rem;
-  color: #475569;
-  opacity: 0.7;
+  bottom: 10px;
+  left: 14px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  opacity: 0.8;
 }
