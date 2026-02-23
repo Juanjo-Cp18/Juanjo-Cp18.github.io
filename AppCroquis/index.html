@@ -5,49 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Generador de Croquis Catastral</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <!-- Leaflet Draw -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
-  <header>
-    <h1>Generador de Croquis</h1>
-  </header>
+<header>
+  <h1>Generador de Croquis</h1>
+</header>
 
-  <div class="container">
+<div class="container">
 
-    <aside class="panel">
+  <aside class="panel">
 
-      <label>Tipo de mapa:</label>
-      <select id="mapSelector">
-        <option value="catastro" selected>Catastro (oficial)</option>
-        <option value="standard">Estándar (color)</option>
-        <option value="grayscale">Técnico (escala de grises)</option>
-        <option value="satellite">Satélite (fotografía)</option>
-      </select>
+    <label>Tipo de mapa:</label>
+    <select id="mapSelector">
+      <option value="catastro" selected>Catastro (oficial)</option>
+      <option value="standard">Estándar (color)</option>
+      <option value="grayscale">Técnico (escala de grises)</option>
+      <option value="satellite">Satélite (fotografía)</option>
+    </select>
 
-      <label>Escala:</label>
-      <select id="scale">
-        <option value="100">1:100</option>
-        <option value="200" selected>1:200</option>
-        <option value="250">1:250</option>
-        <option value="500">1:500</option>
-        <option value="1000">1:1000</option>
-      </select>
+    <label>Escala:</label>
+    <select id="scale">
+      <option value="100">1:100</option>
+      <option value="200" selected>1:200</option>
+      <option value="250">1:250</option>
+      <option value="500">1:500</option>
+      <option value="1000">1:1000</option>
+    </select>
 
-      <button id="generateBtn">Generar SVG</button>
+    <button id="generateBtn">Generar SVG</button>
 
-    </aside>
+  </aside>
 
-    <main id="map"></main>
+  <main id="map"></main>
 
-  </div>
+</div>
 
-  <div class="version">Versión: 1.4</div>
+<div class="version">Versión: 1.5</div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="map.js"></script>
-  <script src="scaling.js"></script>
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="map.js"></script>
+<script src="scaling.js"></script>
 
 </body>
 </html>
