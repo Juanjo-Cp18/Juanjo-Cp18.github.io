@@ -1,17 +1,18 @@
+// ===============================
+// INICIALIZACIÓN MAPA
+// ===============================
+
 const map = L.map('map', {
     center: [40.4168, -3.7038],
     zoom: 16
 });
 
 let currentLayer;
-let drawnItems = new L.FeatureGroup();
-map.addLayer(drawnItems);
+let selectedLayer;
 
-let selectedLayer = null;
-
-/* ===========================
-   CAPAS BASE
-=========================== */
+// ===============================
+// CAPAS
+// ===============================
 
 const catastroLayer = L.tileLayer.wms(
     "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?", {
@@ -34,42 +35,32 @@ const satelliteLayer = L.tileLayer.wms(
     "https://www.ign.es/wms-inspire/pnoa-ma?", {
         layers: "OI.OrthoimageCoverage",
         format: "image/jpeg",
-        transparent: false,
         version: "1.3.0"
     }
 );
 
 currentLayer = catastroLayer.addTo(map);
 
-/* ===========================
-   CAMBIO DE CAPA
-=========================== */
-
 document.getElementById("mapSelector").addEventListener("change", function (e) {
 
     map.removeLayer(currentLayer);
 
     switch (e.target.value) {
-        case "catastro":
-            currentLayer = catastroLayer;
-            break;
-        case "standard":
-            currentLayer = standardLayer;
-            break;
-        case "grayscale":
-            currentLayer = grayscaleLayer;
-            break;
-        case "satellite":
-            currentLayer = satelliteLayer;
-            break;
+        case "catastro": currentLayer = catastroLayer; break;
+        case "standard": currentLayer = standardLayer; break;
+        case "grayscale": currentLayer = grayscaleLayer; break;
+        case "satellite": currentLayer = satelliteLayer; break;
     }
 
     currentLayer.addTo(map);
 });
 
-/* ===========================
-   HERRAMIENTA DE DIBUJO
-=========================== */
+// ===============================
+// DIBUJO
+// ===============================
+
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
 
 const drawControl = new L.Control.Draw({
     draw: {
@@ -78,39 +69,22 @@ const drawControl = new L.Control.Draw({
         circle: false,
         marker: false,
         circlemarker: false,
-        polyline: {
-            shapeOptions: {
-                color: '#ff0000',
-                weight: 4
-            }
-        }
+        polyline: true
     },
-    edit: {
-        featureGroup: drawnItems
-    }
+    edit: { featureGroup: drawnItems }
 });
 
 map.addControl(drawControl);
 
 map.on(L.Draw.Event.CREATED, function (event) {
-
     drawnItems.clearLayers();
     selectedLayer = event.layer;
     drawnItems.addLayer(selectedLayer);
-
-    const latlngs = selectedLayer.getLatLngs();
-    let totalDistance = 0;
-
-    for (let i = 0; i < latlngs.length - 1; i++) {
-        totalDistance += latlngs[i].distanceTo(latlngs[i + 1]);
-    }
-
-    alert("Longitud del tramo: " + totalDistance.toFixed(2) + " metros");
 });
 
-/* ===========================
-   GENERAR SVG
-=========================== */
+// ===============================
+// EXPORTACIÓN CORREGIDA
+// ===============================
 
 document.getElementById("generateBtn").addEventListener("click", async function () {
 
@@ -122,66 +96,94 @@ document.getElementById("generateBtn").addEventListener("click", async function 
     const scale = parseInt(document.getElementById("scale").value);
     const latlngs = selectedLayer.getLatLngs();
 
-    // Punto origen
-    const origin = latlngs[0];
+    let minLat = Infinity, maxLat = -Infinity;
+    let minLng = Infinity, maxLng = -Infinity;
 
-    let svgPath = "";
-    let minX = Infinity;
-    let minY = Infinity;
-
-    let coords = [];
-
-    for (let i = 0; i < latlngs.length; i++) {
-
-        const dx = origin.distanceTo([origin.lat, latlngs[i].lng]);
-        const dy = origin.distanceTo([latlngs[i].lat, origin.lng]);
-
-        const xMeters = latlngs[i].lng >= origin.lng ? dx : -dx;
-        const yMeters = latlngs[i].lat >= origin.lat ? -dy : dy;
-
-        const xMM = (xMeters / scale) * 1000;
-        const yMM = (yMeters / scale) * 1000;
-
-        coords.push({x: xMM, y: yMM});
-
-        minX = Math.min(minX, xMM);
-        minY = Math.min(minY, yMM);
-    }
-
-    // Normalizar coordenadas
-    coords = coords.map(p => ({
-        x: p.x - minX + 100,
-        y: p.y - minY + 100
-    }));
-
-    coords.forEach((p, index) => {
-        if (index === 0) {
-            svgPath += `M ${p.x} ${p.y} `;
-        } else {
-            svgPath += `L ${p.x} ${p.y} `;
-        }
+    latlngs.forEach(p => {
+        minLat = Math.min(minLat, p.lat);
+        maxLat = Math.max(maxLat, p.lat);
+        minLng = Math.min(minLng, p.lng);
+        maxLng = Math.max(maxLng, p.lng);
     });
 
-    const svgContent = `
-<svg xmlns="http://www.w3.org/2000/svg" width="297mm" height="210mm" viewBox="0 0 297 210">
-    <g id="TRAMO_MAPA">
-        <path d="${svgPath}" stroke="black" stroke-width="0.8" fill="none"/>
-    </g>
-</svg>
-`;
+    const centerLat = (minLat + maxLat) / 2;
+    const centerLng = (minLng + maxLng) / 2;
 
-    const blob = new Blob([svgContent], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
+    const usableWidthMM = 277;
+    const usableHeightMM = 190;
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "croquis_tramo.svg";
-    a.click();
+    const halfWidthMeters = (usableWidthMM / 1000) * scale / 2;
+    const halfHeightMeters = (usableHeightMM / 1000) * scale / 2;
 
-    URL.revokeObjectURL(url);
+    const metersPerDegreeLat = 111320;
+    const metersPerDegreeLng = 111320 * Math.cos(centerLat * Math.PI / 180);
+
+    const deltaLat = halfHeightMeters / metersPerDegreeLat;
+    const deltaLng = halfWidthMeters / metersPerDegreeLng;
+
+    const minLatFinal = centerLat - deltaLat;
+    const maxLatFinal = centerLat + deltaLat;
+    const minLngFinal = centerLng - deltaLng;
+    const maxLngFinal = centerLng + deltaLng;
+
+    const widthPx = 1400;
+    const heightPx = Math.round(widthPx * (usableHeightMM / usableWidthMM));
+
+    const wmsUrl =
+        "https://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?" +
+        "SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap" +
+        "&LAYERS=Catastro" +
+        "&FORMAT=image/png" +
+        "&SRS=EPSG:4326" +
+        "&BBOX=" + minLngFinal + "," + minLatFinal + "," + maxLngFinal + "," + maxLatFinal +
+        "&WIDTH=" + widthPx +
+        "&HEIGHT=" + heightPx;
+
+    const imageResponse = await fetch(wmsUrl);
+    const blob = await imageResponse.blob();
+
+    const reader = new FileReader();
+
+    reader.onloadend = async function () {
+
+        const base64data = reader.result;
+
+        // Cargar plantilla real
+        const templateResponse = await fetch("PLANIFICADOR.svg");
+        const templateText = await templateResponse.text();
+
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(templateText, "image/svg+xml");
+
+        const svgElement = xmlDoc.documentElement;
+
+        // Crear grupo contenedor
+        const g = xmlDoc.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("id", "MAPA_GENERADO");
+
+        const image = xmlDoc.createElementNS("http://www.w3.org/2000/svg", "image");
+        image.setAttributeNS(null, "href", base64data);
+        image.setAttribute("x", "10");
+        image.setAttribute("y", "10");
+        image.setAttribute("width", "277");
+        image.setAttribute("height", "190");
+
+        g.appendChild(image);
+        svgElement.appendChild(g);
+
+        const serializer = new XMLSerializer();
+        const finalSvg = serializer.serializeToString(xmlDoc);
+
+        const finalBlob = new Blob([finalSvg], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(finalBlob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "croquis_catastral.svg";
+        a.click();
+
+        URL.revokeObjectURL(url);
+    };
+
+    reader.readAsDataURL(blob);
 });
-
-// Ajuste tamaño
-setTimeout(function () {
-    map.invalidateSize();
-}, 200);
