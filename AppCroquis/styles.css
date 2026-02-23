@@ -3,7 +3,7 @@ html, body {
   margin: 0;
   font-family: "Segoe UI", Arial, sans-serif;
   background: #0b1220;
-  color: #f1f5f9; /* más brillo */
+  color: #f1f5f9;
 }
 
 header {
@@ -64,9 +64,10 @@ button:hover {
 
 .version {
   position: fixed;
-  bottom: 10px;
-  left: 14px;
-  font-size: 0.8rem;
-  color: #94a3b8;
-  opacity: 0.8;
+  bottom: 14px;
+  left: 18px;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  opacity: 0.9;
+  font-weight: 500;
 }
