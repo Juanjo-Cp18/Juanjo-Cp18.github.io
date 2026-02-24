@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SmartScan Pro - Edición Total</title>
+    <title>SmartScan Pro - v1.1</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,281 +12,225 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e5e5; overflow-x: hidden; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        
-        /* Animación de escaneo */
-        .scanning-line { 
-            position: absolute; width: 100%; height: 4px; background: #10b981; 
-            box-shadow: 0 0 20px #10b981; z-index: 20; top: 0; display: none;
-        }
-        .is-scanning .scanning-line { display: block; animation: scan 2s infinite linear; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .scanning-bar { position: absolute; width: 100%; height: 2px; background: #10b981; top: 0; display: none; z-index: 50; box-shadow: 0 0 15px #10b981; }
+        .is-scanning .scanning-bar { display: block; animation: scan 2s infinite linear; }
         @keyframes scan { from { top: 0%; } to { top: 100%; } }
-
-        /* Estilos de tabla e inputs */
-        input { background: transparent; border: none; color: inherit; width: 100%; outline: none; }
-        input:focus { color: #10b981; }
-        select { background: transparent; border: none; color: inherit; outline: none; cursor: pointer; }
-        
-        .loading-overlay { display: none; }
-        .is-processing .loading-overlay { display: flex; }
-        
-        .delete-btn { color: #ef4444; opacity: 0.4; transition: opacity 0.2s; }
-        .delete-btn:hover { opacity: 1; }
-        
-        video { transition: transform 0.3s ease; }
+        input { background: transparent; border: none; color: inherit; width: 100%; outline: none; padding: 2px; }
+        input:focus { background: rgba(16, 185, 129, 0.1); border-radius: 4px; }
+        footer { margin-top: auto; padding: 20px; text-align: center; font-size: 10px; color: #475569; letter-spacing: 2px; }
     </style>
 </head>
-<body class="pb-28">
+<body class="min-h-screen flex flex-col">
 
-    <audio id="shutter-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
-    <header class="p-6 pt-10 sticky top-0 z-30 bg-[#0a0a0a]/90 backdrop-blur-md flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-black tracking-tighter uppercase italic">Smart<span class="text-emerald-500">Scanner</span></h1>
-            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em]">Data Precision v3.0</p>
-        </div>
+    <header class="p-6 flex justify-between items-center sticky top-0 z-40 bg-[#0f172a]/80 backdrop-blur-md">
+        <h1 class="text-xl font-black italic text-emerald-500">SMART SCAN</h1>
         <div class="flex gap-2">
-            <button id="btn-pdf" class="hidden glass p-2 px-4 rounded-full text-red-400 text-[10px] font-bold border-red-500/20 active:scale-90 transition-transform">
-                <i class="fas fa-file-pdf mr-1"></i> PDF
-            </button>
-            <button id="btn-csv" class="hidden glass p-2 px-4 rounded-full text-emerald-400 text-[10px] font-bold border-emerald-500/20 active:scale-90 transition-transform">
-                <i class="fas fa-file-csv mr-1"></i> CSV
-            </button>
+            <button id="btn-pdf" class="hidden glass px-4 py-2 rounded-full text-xs font-bold text-red-400 border-red-500/30 active:scale-95">PDF</button>
+            <button id="btn-csv" class="hidden glass px-4 py-2 rounded-full text-xs font-bold text-emerald-400 border-emerald-500/30 active:scale-95">CSV</button>
         </div>
     </header>
 
-    <main class="px-4 space-y-6">
-        <div id="camera-container" class="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black">
+    <main class="px-4 space-y-6 flex-1">
+        <div id="camera-box" class="relative aspect-video rounded-3xl overflow-hidden border-2 border-emerald-500/20 bg-black">
             <video id="video" class="w-full h-full object-cover" autoplay playsinline muted></video>
-            <div class="scanning-line"></div>
+            <div class="scanning-bar"></div>
             
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4">
-                <button onclick="changeZoom(0.2)" class="w-12 h-12 glass rounded-full flex items-center justify-center shadow-xl"><i class="fas fa-plus"></i></button>
-                <button onclick="changeZoom(-0.2)" class="w-12 h-12 glass rounded-full flex items-center justify-center shadow-xl"><i class="fas fa-minus"></i></button>
-            </div>
-
-            <div class="loading-overlay absolute inset-0 bg-black/70 flex-col items-center justify-center z-50">
-                <div class="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p class="text-xs font-black text-emerald-500 tracking-widest animate-pulse">ANALIZANDO TEXTO...</p>
+            <div id="loader" class="absolute inset-0 bg-black/80 hidden flex-col items-center justify-center z-[60]">
+                <div class="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p id="status-text" class="mt-4 text-[10px] font-bold tracking-widest text-emerald-500 uppercase">Analizando...</p>
             </div>
         </div>
 
-        <div class="flex justify-center -mt-16 relative z-20">
-            <button id="capture-btn" class="w-20 h-20 rounded-full glass border-4 border-white/10 p-1 active:scale-90 transition-all shadow-2xl shadow-emerald-500/20">
-                <div class="w-full h-full bg-white rounded-full flex items-center justify-center">
-                    <i class="fas fa-expand text-black text-xl"></i>
-                </div>
+        <div class="flex justify-center gap-4 -mt-12 relative z-30">
+            <button id="capture-btn" title="Escanear" class="w-16 h-16 rounded-full bg-emerald-500 text-slate-900 shadow-xl flex items-center justify-center active:scale-90 transition-transform">
+                <i class="fas fa-camera text-xl"></i>
+            </button>
+            <button onclick="addRowManual()" title="Añadir Manual" class="w-16 h-16 rounded-full glass text-emerald-500 shadow-xl flex items-center justify-center active:scale-90 transition-transform">
+                <i class="fas fa-plus text-xl"></i>
             </button>
         </div>
 
-        <section id="summary" class="hidden grid grid-cols-2 gap-3 animate-row">
-            <div class="glass p-5 rounded-3xl border-l-4 border-blue-500 shadow-lg shadow-blue-500/5">
-                <span class="text-[10px] font-black text-blue-400 block mb-1 tracking-widest">TOTAL TV</span>
-                <span id="total-tv" class="text-2xl font-black">0,00 €</span>
+        <section id="summary" class="grid grid-cols-2 gap-3 opacity-0 transition-opacity">
+            <div class="glass p-4 rounded-2xl border-l-4 border-blue-500">
+                <span class="text-[9px] font-bold text-blue-400 block uppercase tracking-widest">Total TV</span>
+                <span id="total-tv" class="text-xl font-black text-white">0,00 €</span>
             </div>
-            <div class="glass p-5 rounded-3xl border-l-4 border-orange-500 shadow-lg shadow-orange-500/5">
-                <span class="text-[10px] font-black text-orange-400 block mb-1 tracking-widest">TOTAL E</span>
-                <span id="total-e" class="text-2xl font-black">0,00 €</span>
+            <div class="glass p-4 rounded-2xl border-l-4 border-orange-500">
+                <span class="text-[9px] font-bold text-orange-400 block uppercase tracking-widest">Total E</span>
+                <span id="total-e" class="text-xl font-black text-white">0,00 €</span>
             </div>
         </section>
 
-        <div class="glass rounded-[2rem] overflow-hidden mb-10 shadow-2xl">
-            <div class="p-4 flex justify-between items-center border-b border-white/5 bg-white/5">
-                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Registros Detectados</span>
-                <button onclick="clearAll()" class="text-[9px] text-red-500/60 font-bold uppercase">Limpiar Todo</button>
-            </div>
-            <table class="w-full text-xs text-left border-collapse">
-                <thead class="text-[8px] text-gray-500 uppercase tracking-widest bg-white/[0.02]">
+        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-10">
+            <table class="w-full text-[11px] text-left">
+                <thead class="bg-white/5 text-slate-500 text-[8px] uppercase tracking-widest">
                     <tr>
-                        <th class="p-4">Concepto</th>
-                        <th class="p-4 text-center">Tipo</th>
-                        <th class="p-4 text-right">Cuantía</th>
-                        <th class="p-4 text-center w-10"></th>
+                        <th class="p-4 font-bold">Concepto</th>
+                        <th class="p-4 text-center font-bold">Tipo</th>
+                        <th class="p-4 text-right font-bold">€</th>
+                        <th class="p-4 w-8"></th>
                     </tr>
                 </thead>
-                <tbody id="table-body">
-                    <tr id="empty-row"><td colspan="4" class="p-16 text-center text-gray-700 italic font-medium">Capture una nota para empezar</td></tr>
+                <tbody id="tbody">
+                    <tr id="placeholder"><td colspan="4" class="p-10 text-center text-slate-600 italic">Captura o añade una fila para empezar</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
-    <canvas id="hidden-canvas" class="hidden"></canvas>
+    <footer>
+        <p class="font-bold uppercase tracking-[0.4em]">Versión 1.1</p>
+    </footer>
+
+    <canvas id="canvas" class="hidden"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('hidden-canvas');
-        const tableBody = document.getElementById('table-body');
         const captureBtn = document.getElementById('capture-btn');
-        const container = document.getElementById('camera-container');
-
+        const loader = document.getElementById('loader');
+        const statusText = document.getElementById('status-text');
         let dataRows = [];
-        let zoom = 1;
 
-        // 1. Control de Zoom
-        function changeZoom(v) {
-            zoom = Math.max(1, Math.min(3, zoom + v));
-            video.style.transform = `scale(${zoom})`;
-        }
-
-        // 2. Inicializar Cámara
-        async function initCamera() {
+        async function start() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                    video: { facingMode: "environment", width: { ideal: 1280 } } 
                 });
                 video.srcObject = stream;
-            } catch (e) {
-                alert("Error al acceder a la cámara trasera.");
-            }
+            } catch (e) { console.error("Error cámara:", e); }
         }
 
-        // 3. Proceso de OCR Real
-        async function runOCR() {
-            container.classList.add('is-scanning', 'is-processing');
-            document.getElementById('shutter-sound').play();
-
-            // Capturar frame actual
+        async function process() {
+            loader.classList.remove('hidden');
+            document.getElementById('camera-box').classList.add('is-scanning');
+            
+            const canvas = document.getElementById('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
+            
+            // Mejora de contraste para manuscrito
+            ctx.filter = "grayscale(1) contrast(1.4) brightness(1.1)";
             ctx.drawImage(video, 0, 0);
 
             try {
-                // Tesseract analiza la imagen
-                const { data: { text } } = await Tesseract.recognize(canvas, 'spa', {
-                    logger: m => console.log(m.status + ": " + Math.round(m.progress * 100) + "%")
+                const result = await Tesseract.recognize(canvas, 'spa', {
+                    logger: m => { if(m.status === 'recognizing text') statusText.innerText = `Lote: ${Math.round(m.progress * 100)}%`; }
                 });
-                parseOCRText(text);
-            } catch (err) {
-                alert("Error procesando la imagen.");
+                parseText(result.data.text);
+            } catch (e) {
+                alert("Error de lectura. Prueba con más luz.");
             } finally {
-                container.classList.remove('is-scanning', 'is-processing');
+                loader.classList.add('hidden');
+                document.getElementById('camera-box').classList.remove('is-scanning');
             }
         }
 
-        // 4. Lógica de Segmentación de Columnas
-        function parseOCRText(rawText) {
-            const lines = rawText.split('\n');
-            
+        function parseText(text) {
+            const lines = text.split('\n');
+            let dataFound = false;
+
             lines.forEach(line => {
-                if (line.trim().length < 4) return;
+                const cleanedLine = line.trim();
+                if (cleanedLine.length < 3) return;
 
-                // Regex mejorado: Busca cualquier texto seguido de TV o E, y luego números.
-                const regex = /^(.*?)\s+(TV|E|Tv|e)\s+(\d+[,.]?\d*)/i;
-                const match = line.match(regex);
+                const amountMatch = cleanedLine.match(/(\d+[,.]?\d*)/);
+                const amount = amountMatch ? parseFloat(amountMatch[0].replace(',', '.')) : 0;
+                
+                let type = "TV";
+                if (cleanedLine.toUpperCase().includes(" E ") || cleanedLine.toUpperCase().endsWith(" E")) type = "E";
 
-                if (match) {
-                    dataRows.push({
-                        concepto: match[1].trim(),
-                        tipo: match[2].toUpperCase().replace('TV', 'TV').replace('E', 'E'),
-                        valor: parseFloat(match[3].replace(',', '.'))
-                    });
+                let concept = cleanedLine.replace(amountMatch ? amountMatch[0] : '', '').replace(/ TV | E /i, '').trim();
+
+                if (concept || amount > 0) {
+                    dataRows.push({ concepto: concept || "Concepto escaneado", tipo: type, valor: amount });
+                    dataFound = true;
                 }
             });
+            if(!dataFound) { addRowManual(); } // Fila vacía si falla para no dejar al usuario sin nada
             render();
         }
 
-        // 5. Renderizado e Interactividad
-        function render() {
-            if (dataRows.length === 0) {
-                tableBody.innerHTML = '<tr id="empty-row"><td colspan="4" class="p-16 text-center text-gray-700 italic">Capture una nota para empezar</td></tr>';
-                document.getElementById('summary').classList.add('hidden');
-                document.getElementById('btn-pdf').classList.add('hidden');
-                document.getElementById('btn-csv').classList.add('hidden');
-                return;
-            }
+        function addRowManual() {
+            dataRows.push({ concepto: "", tipo: "TV", valor: 0 });
+            render();
+        }
 
-            document.getElementById('summary').classList.remove('hidden');
-            document.getElementById('btn-pdf').classList.remove('hidden');
-            document.getElementById('btn-csv').classList.remove('hidden');
+        function render() {
+            const tbody = document.getElementById('tbody');
+            if (dataRows.length > 0) {
+                document.getElementById('summary').style.opacity = "1";
+                document.getElementById('btn-pdf').classList.remove('hidden');
+                document.getElementById('btn-csv').classList.remove('hidden');
+            }
             
-            tableBody.innerHTML = '';
+            tbody.innerHTML = '';
             let sTV = 0, sE = 0;
 
             dataRows.forEach((row, i) => {
-                if (row.tipo === 'TV') sTV += row.valor;
-                else sE += row.valor;
+                if (row.tipo === "TV") sTV += row.valor; else sE += row.valor;
 
                 const tr = document.createElement('tr');
-                tr.className = "border-t border-white/5 bg-white/[0.01]";
+                tr.className = "border-t border-white/5 bg-white/[0.02]";
                 tr.innerHTML = `
-                    <td class="p-4"><input type="text" value="${row.concepto}" onchange="updateData(${i}, 'concepto', this.value)"></td>
+                    <td class="p-4"><input type="text" value="${row.concepto}" onchange="updateRow(${i}, 'concepto', this.value)" placeholder="Escribe aquí..."></td>
                     <td class="p-4 text-center">
-                        <select onchange="updateData(${i}, 'tipo', this.value)" class="font-bold ${row.tipo === 'TV' ? 'text-blue-400' : 'text-orange-400'}">
+                        <select onchange="updateRow(${i}, 'tipo', this.value)" class="font-bold ${row.tipo === 'TV' ? 'text-blue-400' : 'text-orange-400'}">
                             <option value="TV" ${row.tipo === 'TV' ? 'selected' : ''}>TV</option>
                             <option value="E" ${row.tipo === 'E' ? 'selected' : ''}>E</option>
                         </select>
                     </td>
-                    <td class="p-4 text-right font-mono font-bold">
-                        <input type="number" step="0.01" value="${row.valor}" onchange="updateData(${i}, 'valor', this.value)" class="text-right w-16">€
+                    <td class="p-4 text-right">
+                        <input type="number" step="0.01" class="text-right font-mono font-bold" value="${row.valor}" onchange="updateRow(${i}, 'valor', this.value)">
                     </td>
-                    <td class="p-4 text-center">
-                        <button onclick="deleteRow(${i})" class="delete-btn active:scale-75 transition-transform">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </td>
+                    <td class="p-4 text-center text-red-500/50 hover:text-red-500 transition-colors" onclick="removeRow(${i})"><i class="fas fa-trash-alt"></i></td>
                 `;
-                tableBody.appendChild(tr);
+                tbody.appendChild(tr);
             });
 
-            document.getElementById('total-tv').innerText = sTV.toLocaleString('es-ES', {minimumFractionDigits: 2}) + ' €';
-            document.getElementById('total-e').innerText = sE.toLocaleString('es-ES', {minimumFractionDigits: 2}) + ' €';
+            document.getElementById('total-tv').innerText = sTV.toLocaleString('es-ES', {minimumFractionDigits: 2}) + " €";
+            document.getElementById('total-e').innerText = sE.toLocaleString('es-ES', {minimumFractionDigits: 2}) + " €";
         }
 
-        // 6. Funciones de Edición y Borrado
-        function updateData(index, field, value) {
-            if (field === 'valor') dataRows[index][field] = parseFloat(value) || 0;
-            else dataRows[index][field] = value;
+        function updateRow(i, field, val) {
+            dataRows[i][field] = field === 'valor' ? (parseFloat(val) || 0) : val;
             render();
         }
 
-        function deleteRow(index) {
-            if (confirm("¿Eliminar esta fila?")) {
-                dataRows.splice(index, 1);
-                render();
-            }
+        function removeRow(i) {
+            dataRows.splice(i, 1);
+            render();
         }
 
-        function clearAll() {
-            if (confirm("¿Borrar todos los datos capturados?")) {
-                dataRows = [];
-                render();
-            }
-        }
-
-        // 7. Exportación
         document.getElementById('btn-pdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             doc.setFontSize(18);
-            doc.text("REGISTRO DE NOTAS - SMARTSCAN", 14, 20);
-            
-            const tableItems = dataRows.map(r => [r.concepto, r.tipo, r.valor.toFixed(2).replace('.',',') + ' €']);
+            doc.text("Reporte SmartScan v1.1", 14, 20);
             doc.autoTable({
                 head: [['Concepto', 'Tipo', 'Cuantía']],
-                body: tableItems,
+                body: dataRows.map(r => [r.concepto, r.tipo, r.valor.toFixed(2) + " €"]),
                 startY: 30,
-                theme: 'grid',
-                headStyles: { fillColor: [16, 185, 129] }
+                theme: 'striped'
             });
-            doc.save(`Notas_${new Date().toLocaleDateString()}.pdf`);
+            doc.save(`SmartScan_v1.1_${new Date().getTime()}.pdf`);
         });
 
         document.getElementById('btn-csv').addEventListener('click', () => {
             let csv = "Concepto;Tipo;Cuantia\n";
             dataRows.forEach(r => csv += `${r.concepto};${r.tipo};${r.valor.toFixed(2).replace('.',',')}€\n`);
-            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = "SmartScan_Export.csv";
             link.click();
         });
 
-        captureBtn.addEventListener('click', runOCR);
-        window.onload = initCamera;
+        captureBtn.addEventListener('click', process);
+        window.onload = start;
     </script>
 </body>
 </html>
