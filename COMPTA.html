@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SmartScan Pro - OCR REAL</title>
+    <title>SmartScan Pro - Edición Total</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -13,90 +13,111 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e5e5; }
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #e5e5e5; overflow-x: hidden; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        
+        /* Animación de escaneo */
         .scanning-line { 
             position: absolute; width: 100%; height: 4px; background: #10b981; 
-            box-shadow: 0 0 15px #10b981; z-index: 20; top: 0; display: none;
+            box-shadow: 0 0 20px #10b981; z-index: 20; top: 0; display: none;
         }
         .is-scanning .scanning-line { display: block; animation: scan 2s infinite linear; }
         @keyframes scan { from { top: 0%; } to { top: 100%; } }
-        #video-canvas { display: none; } /* Canvas oculto para procesar foto */
-        .loading-spinner { display: none; }
-        .is-processing .loading-spinner { display: flex; }
+
+        /* Estilos de tabla e inputs */
+        input { background: transparent; border: none; color: inherit; width: 100%; outline: none; }
+        input:focus { color: #10b981; }
+        select { background: transparent; border: none; color: inherit; outline: none; cursor: pointer; }
+        
+        .loading-overlay { display: none; }
+        .is-processing .loading-overlay { display: flex; }
+        
+        .delete-btn { color: #ef4444; opacity: 0.4; transition: opacity 0.2s; }
+        .delete-btn:hover { opacity: 1; }
+        
+        video { transition: transform 0.3s ease; }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-28">
 
     <audio id="shutter-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
     <header class="p-6 pt-10 sticky top-0 z-30 bg-[#0a0a0a]/90 backdrop-blur-md flex justify-between items-center">
         <div>
-            <h1 class="text-xl font-black tracking-tighter uppercase">Smart<span class="text-emerald-500 italic">Scanner</span></h1>
-            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Modo Lectura Real de Columnas</p>
+            <h1 class="text-xl font-black tracking-tighter uppercase italic">Smart<span class="text-emerald-500">Scanner</span></h1>
+            <p class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em]">Data Precision v3.0</p>
         </div>
         <div class="flex gap-2">
-            <button id="btn-pdf" class="hidden glass p-2 px-4 rounded-full text-red-400 text-[10px] font-bold border-red-500/20">PDF</button>
-            <button id="btn-csv" class="hidden glass p-2 px-4 rounded-full text-emerald-400 text-[10px] font-bold border-emerald-500/20">CSV</button>
+            <button id="btn-pdf" class="hidden glass p-2 px-4 rounded-full text-red-400 text-[10px] font-bold border-red-500/20 active:scale-90 transition-transform">
+                <i class="fas fa-file-pdf mr-1"></i> PDF
+            </button>
+            <button id="btn-csv" class="hidden glass p-2 px-4 rounded-full text-emerald-400 text-[10px] font-bold border-emerald-500/20 active:scale-90 transition-transform">
+                <i class="fas fa-file-csv mr-1"></i> CSV
+            </button>
         </div>
     </header>
 
     <main class="px-4 space-y-6">
-        <div id="camera-container" class="relative aspect-[3/4] rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl bg-black">
+        <div id="camera-container" class="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-black">
             <video id="video" class="w-full h-full object-cover" autoplay playsinline muted></video>
             <div class="scanning-line"></div>
             
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3">
-                <button onclick="changeZoom(0.2)" class="w-10 h-10 glass rounded-full flex items-center justify-center"><i class="fas fa-plus"></i></button>
-                <button onclick="changeZoom(-0.2)" class="w-10 h-10 glass rounded-full flex items-center justify-center"><i class="fas fa-minus"></i></button>
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4">
+                <button onclick="changeZoom(0.2)" class="w-12 h-12 glass rounded-full flex items-center justify-center shadow-xl"><i class="fas fa-plus"></i></button>
+                <button onclick="changeZoom(-0.2)" class="w-12 h-12 glass rounded-full flex items-center justify-center shadow-xl"><i class="fas fa-minus"></i></button>
             </div>
 
-            <div class="loading-spinner absolute inset-0 bg-black/60 flex-col items-center justify-center z-50">
-                <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <p class="text-[10px] font-bold text-emerald-500">PROCESANDO ESCRITURA...</p>
+            <div class="loading-overlay absolute inset-0 bg-black/70 flex-col items-center justify-center z-50">
+                <div class="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-xs font-black text-emerald-500 tracking-widest animate-pulse">ANALIZANDO TEXTO...</p>
             </div>
         </div>
 
-        <div class="flex justify-center -mt-14 relative z-20">
-            <button id="capture-btn" class="w-20 h-20 rounded-full glass border-4 border-white/10 p-1 active:scale-90 transition-transform shadow-2xl">
+        <div class="flex justify-center -mt-16 relative z-20">
+            <button id="capture-btn" class="w-20 h-20 rounded-full glass border-4 border-white/10 p-1 active:scale-90 transition-all shadow-2xl shadow-emerald-500/20">
                 <div class="w-full h-full bg-white rounded-full flex items-center justify-center">
                     <i class="fas fa-expand text-black text-xl"></i>
                 </div>
             </button>
         </div>
 
-        <section id="summary" class="hidden grid grid-cols-2 gap-3">
-            <div class="glass p-4 rounded-2xl border-l-4 border-blue-500">
-                <span class="text-[9px] font-bold text-blue-400 block mb-1">TOTAL TV</span>
-                <span id="total-tv" class="text-xl font-black">0,00 €</span>
+        <section id="summary" class="hidden grid grid-cols-2 gap-3 animate-row">
+            <div class="glass p-5 rounded-3xl border-l-4 border-blue-500 shadow-lg shadow-blue-500/5">
+                <span class="text-[10px] font-black text-blue-400 block mb-1 tracking-widest">TOTAL TV</span>
+                <span id="total-tv" class="text-2xl font-black">0,00 €</span>
             </div>
-            <div class="glass p-4 rounded-2xl border-l-4 border-orange-500">
-                <span class="text-[9px] font-bold text-orange-400 block mb-1">TOTAL E</span>
-                <span id="total-e" class="text-xl font-black">0,00 €</span>
+            <div class="glass p-5 rounded-3xl border-l-4 border-orange-500 shadow-lg shadow-orange-500/5">
+                <span class="text-[10px] font-black text-orange-400 block mb-1 tracking-widest">TOTAL E</span>
+                <span id="total-e" class="text-2xl font-black">0,00 €</span>
             </div>
         </section>
 
-        <div class="glass rounded-[1.5rem] overflow-hidden">
-            <table class="w-full text-[11px] text-left">
-                <thead class="bg-white/5 text-gray-500 uppercase text-[8px] tracking-widest">
+        <div class="glass rounded-[2rem] overflow-hidden mb-10 shadow-2xl">
+            <div class="p-4 flex justify-between items-center border-b border-white/5 bg-white/5">
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Registros Detectados</span>
+                <button onclick="clearAll()" class="text-[9px] text-red-500/60 font-bold uppercase">Limpiar Todo</button>
+            </div>
+            <table class="w-full text-xs text-left border-collapse">
+                <thead class="text-[8px] text-gray-500 uppercase tracking-widest bg-white/[0.02]">
                     <tr>
-                        <th class="p-4">Concepto Completo</th>
+                        <th class="p-4">Concepto</th>
                         <th class="p-4 text-center">Tipo</th>
                         <th class="p-4 text-right">Cuantía</th>
+                        <th class="p-4 text-center w-10"></th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <tr><td colspan="3" class="p-10 text-center text-gray-600 italic">Sin datos capturados</td></tr>
+                    <tr id="empty-row"><td colspan="4" class="p-16 text-center text-gray-700 italic font-medium">Capture una nota para empezar</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
-    <canvas id="video-canvas"></canvas>
+    <canvas id="hidden-canvas" class="hidden"></canvas>
 
     <script>
         const video = document.getElementById('video');
-        const canvas = document.getElementById('video-canvas');
+        const canvas = document.getElementById('hidden-canvas');
         const tableBody = document.getElementById('table-body');
         const captureBtn = document.getElementById('capture-btn');
         const container = document.getElementById('camera-container');
@@ -104,67 +125,84 @@
         let dataRows = [];
         let zoom = 1;
 
+        // 1. Control de Zoom
         function changeZoom(v) {
             zoom = Math.max(1, Math.min(3, zoom + v));
             video.style.transform = `scale(${zoom})`;
         }
 
-        async function init() {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "environment", width: 1280 } 
-            });
-            video.srcObject = stream;
+        // 2. Inicializar Cámara
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } } 
+                });
+                video.srcObject = stream;
+            } catch (e) {
+                alert("Error al acceder a la cámara trasera.");
+            }
         }
 
-        async function performOCR() {
+        // 3. Proceso de OCR Real
+        async function runOCR() {
             container.classList.add('is-scanning', 'is-processing');
             document.getElementById('shutter-sound').play();
 
-            // Dibujar frame actual en el canvas
+            // Capturar frame actual
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
 
-            // Iniciar Tesseract
-            const { data: { text } } = await Tesseract.recognize(canvas, 'spa', {
-                logger: m => console.log(m)
-            });
-
-            processText(text);
+            try {
+                // Tesseract analiza la imagen
+                const { data: { text } } = await Tesseract.recognize(canvas, 'spa', {
+                    logger: m => console.log(m.status + ": " + Math.round(m.progress * 100) + "%")
+                });
+                parseOCRText(text);
+            } catch (err) {
+                alert("Error procesando la imagen.");
+            } finally {
+                container.classList.remove('is-scanning', 'is-processing');
+            }
         }
 
-        function processText(rawText) {
+        // 4. Lógica de Segmentación de Columnas
+        function parseOCRText(rawText) {
             const lines = rawText.split('\n');
             
             lines.forEach(line => {
-                if (line.trim().length < 3) return;
+                if (line.trim().length < 4) return;
 
-                // Buscamos "TV" o "E" (con espacios alrededor o al final)
-                // Formato esperado: [Nombre/Anotacion] [TV|E] [Numero]
-                const regex = /(.*?)\s+(TV|E)\s+(\d+[,.]?\d*)/i;
+                // Regex mejorado: Busca cualquier texto seguido de TV o E, y luego números.
+                const regex = /^(.*?)\s+(TV|E|Tv|e)\s+(\d+[,.]?\d*)/i;
                 const match = line.match(regex);
 
                 if (match) {
                     dataRows.push({
-                        concepto: match[1].trim(), // Captura TODO lo que hay antes de TV/E
-                        tipo: match[2].toUpperCase(),
+                        concepto: match[1].trim(),
+                        tipo: match[2].toUpperCase().replace('TV', 'TV').replace('E', 'E'),
                         valor: parseFloat(match[3].replace(',', '.'))
                     });
                 }
             });
-
-            renderTable();
-            container.classList.remove('is-scanning', 'is-processing');
+            render();
         }
 
-        function renderTable() {
-            if (dataRows.length === 0) return;
-            
+        // 5. Renderizado e Interactividad
+        function render() {
+            if (dataRows.length === 0) {
+                tableBody.innerHTML = '<tr id="empty-row"><td colspan="4" class="p-16 text-center text-gray-700 italic">Capture una nota para empezar</td></tr>';
+                document.getElementById('summary').classList.add('hidden');
+                document.getElementById('btn-pdf').classList.add('hidden');
+                document.getElementById('btn-csv').classList.add('hidden');
+                return;
+            }
+
             document.getElementById('summary').classList.remove('hidden');
             document.getElementById('btn-pdf').classList.remove('hidden');
             document.getElementById('btn-csv').classList.remove('hidden');
-
+            
             tableBody.innerHTML = '';
             let sTV = 0, sE = 0;
 
@@ -172,53 +210,83 @@
                 if (row.tipo === 'TV') sTV += row.valor;
                 else sE += row.valor;
 
-                tableBody.innerHTML += `
-                    <tr class="border-t border-white/5">
-                        <td class="p-4 font-medium">${row.concepto}</td>
-                        <td class="p-4 text-center"><span class="px-2 py-1 rounded bg-white/5 text-[9px]">${row.tipo}</span></td>
-                        <td class="p-4 text-right font-mono">${row.valor.toFixed(2).replace('.',',')}€</td>
-                    </tr>
+                const tr = document.createElement('tr');
+                tr.className = "border-t border-white/5 bg-white/[0.01]";
+                tr.innerHTML = `
+                    <td class="p-4"><input type="text" value="${row.concepto}" onchange="updateData(${i}, 'concepto', this.value)"></td>
+                    <td class="p-4 text-center">
+                        <select onchange="updateData(${i}, 'tipo', this.value)" class="font-bold ${row.tipo === 'TV' ? 'text-blue-400' : 'text-orange-400'}">
+                            <option value="TV" ${row.tipo === 'TV' ? 'selected' : ''}>TV</option>
+                            <option value="E" ${row.tipo === 'E' ? 'selected' : ''}>E</option>
+                        </select>
+                    </td>
+                    <td class="p-4 text-right font-mono font-bold">
+                        <input type="number" step="0.01" value="${row.valor}" onchange="updateData(${i}, 'valor', this.value)" class="text-right w-16">€
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteRow(${i})" class="delete-btn active:scale-75 transition-transform">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
                 `;
+                tableBody.appendChild(tr);
             });
 
-            document.getElementById('total-tv').innerText = sTV.toFixed(2).replace('.',',') + ' €';
-            document.getElementById('total-e').innerText = sE.toFixed(2).replace('.',',') + ' €';
+            document.getElementById('total-tv').innerText = sTV.toLocaleString('es-ES', {minimumFractionDigits: 2}) + ' €';
+            document.getElementById('total-e').innerText = sE.toLocaleString('es-ES', {minimumFractionDigits: 2}) + ' €';
         }
 
-        // EXPORTAR PDF
+        // 6. Funciones de Edición y Borrado
+        function updateData(index, field, value) {
+            if (field === 'valor') dataRows[index][field] = parseFloat(value) || 0;
+            else dataRows[index][field] = value;
+            render();
+        }
+
+        function deleteRow(index) {
+            if (confirm("¿Eliminar esta fila?")) {
+                dataRows.splice(index, 1);
+                render();
+            }
+        }
+
+        function clearAll() {
+            if (confirm("¿Borrar todos los datos capturados?")) {
+                dataRows = [];
+                render();
+            }
+        }
+
+        // 7. Exportación
         document.getElementById('btn-pdf').addEventListener('click', () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("REGISTRO DE NOTAS - SMARTSCAN", 14, 15);
+            doc.setFontSize(18);
+            doc.text("REGISTRO DE NOTAS - SMARTSCAN", 14, 20);
             
-            const body = dataRows.map(r => [r.concepto, r.tipo, r.valor.toFixed(2) + '€']);
+            const tableItems = dataRows.map(r => [r.concepto, r.tipo, r.valor.toFixed(2).replace('.',',') + ' €']);
             doc.autoTable({
                 head: [['Concepto', 'Tipo', 'Cuantía']],
-                body: body,
-                startY: 25
+                body: tableItems,
+                startY: 30,
+                theme: 'grid',
+                headStyles: { fillColor: [16, 185, 129] }
             });
-            doc.save("notas.pdf");
+            doc.save(`Notas_${new Date().toLocaleDateString()}.pdf`);
         });
 
-        // EXPORTAR CSV
         document.getElementById('btn-csv').addEventListener('click', () => {
             let csv = "Concepto;Tipo;Cuantia\n";
             dataRows.forEach(r => csv += `${r.concepto};${r.tipo};${r.valor.toFixed(2).replace('.',',')}€\n`);
-            const blob = new Blob([csv], { type: 'text/csv' });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = "notas.csv";
+            link.download = "SmartScan_Export.csv";
             link.click();
         });
 
-        function clearResults() {
-            dataRows = [];
-            renderTable();
-            tableBody.innerHTML = '<tr><td colspan="3" class="p-10 text-center text-gray-600 italic">Sin datos</td></tr>';
-        }
-
-        captureBtn.addEventListener('click', performOCR);
-        window.onload = init;
+        captureBtn.addEventListener('click', runOCR);
+        window.onload = initCamera;
     </script>
 </body>
 </html>
