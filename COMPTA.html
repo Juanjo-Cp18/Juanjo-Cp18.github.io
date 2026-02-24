@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>SmartScan Pro - v2.4</title>
+<title>SmartScan Pro - v3.0</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -12,22 +12,19 @@
 <style>
 body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f1f5f9; }
 .glass { background: rgba(15,23,42,0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
-.row-item:nth-child(even) { background: rgba(255,255,255,0.03); }
 footer { padding: 20px; text-align: center; font-size: 10px; color: #475569; font-weight: 900; letter-spacing: 5px; }
 </style>
 </head>
 
 <body class="min-h-screen flex flex-col">
 
-<header class="p-5 sticky top-0 bg-[#020617]/95 border-b border-emerald-500/20 flex justify-between items-center">
-<div>
+<header class="p-5 bg-[#020617]/95 border-b border-emerald-500/20">
 <h1 class="text-xl font-black text-emerald-500 italic">
-SMARTSCAN <span class="text-white text-sm not-italic">2.4</span>
+SMARTSCAN <span class="text-white text-sm not-italic">3.0</span>
 </h1>
-<p id="status" class="text-[10px] text-emerald-500/60 font-bold uppercase">
-OCR Profesional Inicializado
+<p class="text-[10px] text-emerald-500/60 font-bold uppercase">
+OCR Estructurado por Columnas
 </p>
-</div>
 </header>
 
 <main class="p-4 space-y-4 flex-1">
@@ -51,6 +48,7 @@ class="w-24 h-24 rounded-full bg-emerald-500 text-slate-950 flex items-center ju
 <thead class="bg-emerald-500/10 text-emerald-500 text-[9px] uppercase font-black">
 <tr>
 <th class="p-4">Concepto</th>
+<th class="p-4 text-center">Tipo</th>
 <th class="p-4 text-right">Importe</th>
 </tr>
 </thead>
@@ -60,7 +58,7 @@ class="w-24 h-24 rounded-full bg-emerald-500 text-slate-950 flex items-center ju
 
 </main>
 
-<footer>VERSIÓN 2.4</footer>
+<footer>VERSIÓN 3.0</footer>
 <canvas id="canvas" class="hidden"></canvas>
 
 <script>
@@ -70,83 +68,90 @@ const canvas = document.getElementById('canvas');
 const loader = document.getElementById('loader');
 const captureBtn = document.getElementById('capture-btn');
 
-let rows = [];
 let worker;
+let rows = [];
 
-async function initCamera(){
+async function init(){
+
 const stream = await navigator.mediaDevices.getUserMedia({
 video:{facingMode:"environment", width:1920}
 });
 video.srcObject = stream;
-}
 
-async function initOCR(){
-
-worker = await Tesseract.createWorker({
-logger: m => console.log(m)
-});
-
+worker = await Tesseract.createWorker();
 await worker.loadLanguage('spa');
 await worker.initialize('spa');
-await worker.setParameters({
-tessedit_pageseg_mode: 6
-});
+await worker.setParameters({ tessedit_pageseg_mode: 6 });
 
-console.log("OCR listo");
 }
 
 async function process(){
 
 loader.classList.remove('hidden');
+rows = [];
 
 const ctx = canvas.getContext('2d');
 canvas.width = video.videoWidth;
 canvas.height = video.videoHeight;
-
-ctx.filter = "contrast(1.8) grayscale(1) brightness(1.1)";
+ctx.filter = "contrast(1.8) grayscale(1)";
 ctx.drawImage(video,0,0);
 
-const { data } = await worker.recognize(canvas);
+const width = canvas.width;
+const height = canvas.height;
 
-console.log("TEXTO DETECTADO:");
-console.log(data.text);
+// DIVIDIR EN 3 COLUMNAS (ajustable)
+const col1 = { x:0, w: width*0.55 };
+const col2 = { x: width*0.55, w: width*0.15 };
+const col3 = { x: width*0.70, w: width*0.30 };
 
-if(!data.text || data.text.trim().length < 3){
-alert("No se detectó texto");
-loader.classList.add('hidden');
-return;
+async function readColumn(col){
+
+const temp = document.createElement("canvas");
+temp.width = col.w;
+temp.height = height;
+
+const tctx = temp.getContext("2d");
+tctx.drawImage(canvas, col.x, 0, col.w, height, 0, 0, col.w, height);
+
+const { data } = await worker.recognize(temp);
+return data.text.split("\n").map(l=>l.trim()).filter(l=>l.length>0);
+
 }
 
-rows = [];
+const conceptos = await readColumn(col1);
+const tipos = await readColumn(col2);
+const importes = await readColumn(col3);
 
-const lines = data.text.split("\n");
+const maxRows = Math.max(conceptos.length, tipos.length, importes.length);
 
-lines.forEach(line=>{
+for(let i=0;i<maxRows;i++){
 
-let clean = line.trim();
-if(clean.length < 4) return;
+let concepto = conceptos[i] || "";
+let tipo = (tipos[i] || "").toUpperCase();
+let importeRaw = importes[i] || "";
 
-const match = clean.match(/(\d{1,4}([.,]\d{1,2})?)\s*$/);
-if(!match) return;
+if(!/^(TV|E)$/.test(tipo)) continue;
 
-const value = parseFloat(match[1].replace(",","."));
-if(isNaN(value) || value<=0) return;
+const match = importeRaw.match(/\d{1,4}([.,]\d{2})/);
+if(!match) continue;
 
-let concept = clean.replace(match[0],"").trim();
-if(concept.length<2) return;
+const valor = parseFloat(match[0].replace(",","."));
+if(isNaN(valor)) continue;
 
 rows.push({
-concepto: concept,
-valor: value
+concepto: concepto,
+tipo: tipo,
+valor: valor
 });
 
-});
+}
 
 render();
 loader.classList.add('hidden');
 }
 
 function render(){
+
 const tbody=document.getElementById('tbody');
 tbody.innerHTML="";
 
@@ -154,18 +159,16 @@ rows.forEach(r=>{
 const tr=document.createElement('tr');
 tr.innerHTML=`
 <td class="p-4">${r.concepto}</td>
+<td class="p-4 text-center">${r.tipo}</td>
 <td class="p-4 text-right">${r.valor.toFixed(2)}€</td>
 `;
 tbody.appendChild(tr);
 });
+
 }
 
 captureBtn.onclick=process;
-
-window.onload = async ()=>{
-await initCamera();
-await initOCR();
-};
+window.onload=init;
 
 </script>
 
