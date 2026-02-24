@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>SmartScan Pro - v2.2</title>
+<title>SmartScan Pro - v2.4</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -21,13 +21,12 @@ footer { padding: 20px; text-align: center; font-size: 10px; color: #475569; fon
 
 <header class="p-5 sticky top-0 bg-[#020617]/95 border-b border-emerald-500/20 flex justify-between items-center">
 <div>
-<h1 class="text-xl font-black text-emerald-500 italic">SMARTSCAN <span class="text-white text-sm not-italic">2.2</span></h1>
-<p id="status" class="text-[10px] text-emerald-500/60 font-bold uppercase">Modo Inteligente Adaptativo</p>
-</div>
-<div class="flex gap-2">
-<button onclick="cleanEmpty()" class="glass px-3 py-2 rounded-xl text-orange-400"><i class="fas fa-broom"></i></button>
-<button onclick="clearAll()" class="glass px-3 py-2 rounded-xl text-red-400"><i class="fas fa-trash"></i></button>
-<button id="btn-csv" class="hidden glass px-3 py-2 rounded-xl text-[10px] font-black text-emerald-400">EXCEL</button>
+<h1 class="text-xl font-black text-emerald-500 italic">
+SMARTSCAN <span class="text-white text-sm not-italic">2.4</span>
+</h1>
+<p id="status" class="text-[10px] text-emerald-500/60 font-bold uppercase">
+OCR Profesional Inicializado
+</p>
 </div>
 </header>
 
@@ -40,12 +39,10 @@ footer { padding: 20px; text-align: center; font-size: 10px; color: #475569; fon
 </div>
 </div>
 
-<div class="flex justify-center gap-6 py-2">
-<button id="capture-btn" class="w-24 h-24 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center active:scale-90 transition-all">
+<div class="flex justify-center py-4">
+<button id="capture-btn"
+class="w-24 h-24 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center active:scale-90 transition-all">
 <i class="fas fa-expand text-3xl"></i>
-</button>
-<button onclick="addRow()" class="w-16 h-16 rounded-full glass flex items-center justify-center mt-4 active:scale-90">
-<i class="fas fa-keyboard text-xl"></i>
 </button>
 </div>
 
@@ -54,9 +51,7 @@ footer { padding: 20px; text-align: center; font-size: 10px; color: #475569; fon
 <thead class="bg-emerald-500/10 text-emerald-500 text-[9px] uppercase font-black">
 <tr>
 <th class="p-4">Concepto</th>
-<th class="p-4 text-center">Tipo</th>
 <th class="p-4 text-right">Importe</th>
-<th class="p-4 w-8"></th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
@@ -65,21 +60,39 @@ footer { padding: 20px; text-align: center; font-size: 10px; color: #475569; fon
 
 </main>
 
-<footer>VERSIÓN 2.2</footer>
+<footer>VERSIÓN 2.4</footer>
 <canvas id="canvas" class="hidden"></canvas>
 
 <script>
+
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const loader = document.getElementById('loader');
 const captureBtn = document.getElementById('capture-btn');
 
-let rows = JSON.parse(localStorage.getItem('smart_v22')) || [];
+let rows = [];
+let worker;
 
-async function init(){
-const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment", width:1920}});
+async function initCamera(){
+const stream = await navigator.mediaDevices.getUserMedia({
+video:{facingMode:"environment", width:1920}
+});
 video.srcObject = stream;
-render();
+}
+
+async function initOCR(){
+
+worker = await Tesseract.createWorker({
+logger: m => console.log(m)
+});
+
+await worker.loadLanguage('spa');
+await worker.initialize('spa');
+await worker.setParameters({
+tessedit_pageseg_mode: 6
+});
+
+console.log("OCR listo");
 }
 
 async function process(){
@@ -90,150 +103,70 @@ const ctx = canvas.getContext('2d');
 canvas.width = video.videoWidth;
 canvas.height = video.videoHeight;
 
-// Filtro adaptable (funciona bien tanto en lisa como cuadrícula)
-ctx.filter = "contrast(2.4) grayscale(1) brightness(1.15)";
+ctx.filter = "contrast(1.8) grayscale(1) brightness(1.1)";
 ctx.drawImage(video,0,0);
 
-try{
+const { data } = await worker.recognize(canvas);
 
-// OCR con información de posición
-const { data } = await Tesseract.recognize(canvas,'spa+eng',{
-logger:m=>console.log(m)
-});
+console.log("TEXTO DETECTADO:");
+console.log(data.text);
 
-// Agrupar por líneas reales usando bounding boxes
-let linesMap = {};
-
-data.words.forEach(word=>{
-const y = Math.round(word.bbox.y0/20)*20; // agrupa verticalmente
-if(!linesMap[y]) linesMap[y]=[];
-linesMap[y].push(word);
-});
-
-Object.values(linesMap).forEach(lineWords=>{
-
-lineWords.sort((a,b)=>a.bbox.x0-b.bbox.x0);
-
-let conceptParts=[];
-let value=null;
-
-lineWords.forEach(w=>{
-
-let text = w.text.replace(/O/g,"0").replace(/l/g,"1");
-
-if(/^\d{1,4}([.,]\d{1,2})?$/.test(text)){
-value = parseFloat(text.replace(",","."));
-}else{
-conceptParts.push(text);
+if(!data.text || data.text.trim().length < 3){
+alert("No se detectó texto");
+loader.classList.add('hidden');
+return;
 }
 
-});
+rows = [];
 
-if(value && value>0 && conceptParts.join(" ").length>2){
+const lines = data.text.split("\n");
+
+lines.forEach(line=>{
+
+let clean = line.trim();
+if(clean.length < 4) return;
+
+const match = clean.match(/(\d{1,4}([.,]\d{1,2})?)\s*$/);
+if(!match) return;
+
+const value = parseFloat(match[1].replace(",","."));
+if(isNaN(value) || value<=0) return;
+
+let concept = clean.replace(match[0],"").trim();
+if(concept.length<2) return;
 
 rows.push({
-concepto: conceptParts.join(" "),
-tipo: "TV",
+concepto: concept,
 valor: value
 });
 
-}
-
 });
 
-save();
 render();
-
-}catch(e){
-alert("Error OCR");
-}
-
 loader.classList.add('hidden');
 }
 
-function addRow(){
-rows.push({concepto:"",tipo:"TV",valor:0});
-save(); render();
-}
-
-function cleanEmpty(){
-rows = rows.filter(r=>r.valor>0 || r.concepto!=="");
-save(); render();
-}
-
-function clearAll(){
-if(confirm("¿Vaciar lista?")){
-rows=[]; save(); render();
-}
-}
-
-function save(){
-localStorage.setItem('smart_v22',JSON.stringify(rows));
-}
-
 function render(){
-
 const tbody=document.getElementById('tbody');
 tbody.innerHTML="";
-let sTV=0,sE=0;
 
-rows.forEach((r,i)=>{
-
-if(r.tipo==="TV") sTV+=r.valor; else sE+=r.valor;
-
+rows.forEach(r=>{
 const tr=document.createElement('tr');
-tr.className="row-item";
-
 tr.innerHTML=`
-<td class="p-4">
-<input type="text" value="${r.concepto}" onchange="upd(${i},'concepto',this.value)">
-</td>
-<td class="p-4 text-center">
-<select onchange="upd(${i},'tipo',this.value)">
-<option value="TV" ${r.tipo==='TV'?'selected':''}>TV</option>
-<option value="E" ${r.tipo==='E'?'selected':''}>E</option>
-</select>
-</td>
-<td class="p-4 text-right">
-<input type="number" step="0.01" value="${r.valor}" onchange="upd(${i},'valor',this.value)" class="text-right w-20">
-</td>
-<td class="p-2 text-center text-red-500/40" onclick="del(${i})">
-<i class="fas fa-times-circle"></i>
-</td>
+<td class="p-4">${r.concepto}</td>
+<td class="p-4 text-right">${r.valor.toFixed(2)}€</td>
 `;
-
 tbody.appendChild(tr);
 });
-
-document.getElementById('status').innerText=
-`TOTAL TV ${sTV.toFixed(2)}€ | E ${sE.toFixed(2)}€`;
-
 }
-
-function upd(i,f,v){
-rows[i][f]=f==='valor'?parseFloat(v)||0:v;
-save(); render();
-}
-
-function del(i){
-rows.splice(i,1);
-save(); render();
-}
-
-document.getElementById('btn-csv').onclick=()=>{
-let csv="\uFEFFConcepto;Tipo;Importe\n";
-rows.forEach(r=>{
-csv+=`${r.concepto};${r.tipo};${r.valor.toFixed(2).replace('.',',')}\n`;
-});
-const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-const a=document.createElement('a');
-a.href=URL.createObjectURL(blob);
-a.download='SmartScan_v2.2.csv';
-a.click();
-};
 
 captureBtn.onclick=process;
-window.onload=init;
+
+window.onload = async ()=>{
+await initCamera();
+await initOCR();
+};
+
 </script>
 
 </body>
