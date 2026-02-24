@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SmartScan Pro - v1.1</title>
+    <title>SmartScan Pro - v1.3 Precisión</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -13,224 +13,110 @@
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .scanning-bar { position: absolute; width: 100%; height: 2px; background: #10b981; top: 0; display: none; z-index: 50; box-shadow: 0 0 15px #10b981; }
-        .is-scanning .scanning-bar { display: block; animation: scan 2s infinite linear; }
-        @keyframes scan { from { top: 0%; } to { top: 100%; } }
-        input { background: transparent; border: none; color: inherit; width: 100%; outline: none; padding: 2px; }
-        input:focus { background: rgba(16, 185, 129, 0.1); border-radius: 4px; }
-        footer { margin-top: auto; padding: 20px; text-align: center; font-size: 10px; color: #475569; letter-spacing: 2px; }
+        body { font-family: 'Inter', sans-serif; background-color: #020617; color: #f1f5f9; display: flex; flex-direction: column; min-height: 100vh; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        .scan-line { 
+            position: absolute; width: 100%; height: 3px; background: #10b981; 
+            box-shadow: 0 0 20px #10b981; z-index: 50; top: 0; display: none;
+        }
+        .is-scanning .scan-line { display: block; animation: scanMove 2s infinite ease-in-out; }
+        @keyframes scanMove { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        input, select { background: transparent; border: none; color: inherit; outline: none; transition: all 0.2s; width: 100%; }
+        input:focus { color: #10b981; font-weight: bold; border-bottom: 1px solid #10b981; }
+        
+        .row-new { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        footer { padding: 20px; text-align: center; font-size: 11px; color: #475569; letter-spacing: 3px; font-weight: 900; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="flex flex-col">
 
-    <header class="p-6 flex justify-between items-center sticky top-0 z-40 bg-[#0f172a]/80 backdrop-blur-md">
-        <h1 class="text-xl font-black italic text-emerald-500">SMART SCAN</h1>
+    <audio id="shutter-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <header class="p-6 flex justify-between items-center sticky top-0 z-40 bg-[#020617]/90 backdrop-blur-md">
+        <div>
+            <h1 class="text-xl font-black italic text-emerald-500 tracking-tighter">SMART SCAN <span class="text-white">PRO</span></h1>
+            <div class="h-1 w-full bg-emerald-500/20 rounded-full mt-1 overflow-hidden">
+                <div id="progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-300"></div>
+            </div>
+        </div>
         <div class="flex gap-2">
-            <button id="btn-pdf" class="hidden glass px-4 py-2 rounded-full text-xs font-bold text-red-400 border-red-500/30 active:scale-95">PDF</button>
-            <button id="btn-csv" class="hidden glass px-4 py-2 rounded-full text-xs font-bold text-emerald-400 border-emerald-500/30 active:scale-95">CSV</button>
+            <button id="btn-pdf" class="hidden glass px-3 py-1.5 rounded-full text-[10px] font-black text-red-400 border-red-500/30 uppercase active:scale-95">PDF</button>
+            <button id="btn-csv" class="hidden glass px-3 py-1.5 rounded-full text-[10px] font-black text-emerald-400 border-emerald-500/30 uppercase active:scale-95">CSV</button>
         </div>
     </header>
 
     <main class="px-4 space-y-6 flex-1">
-        <div id="camera-box" class="relative aspect-video rounded-3xl overflow-hidden border-2 border-emerald-500/20 bg-black">
+        <div id="camera-box" class="relative aspect-[4/5] rounded-[2rem] overflow-hidden border-2 border-emerald-500/10 bg-black shadow-inner">
             <video id="video" class="w-full h-full object-cover" autoplay playsinline muted></video>
-            <div class="scanning-bar"></div>
+            <div class="scan-line"></div>
             
-            <div id="loader" class="absolute inset-0 bg-black/80 hidden flex-col items-center justify-center z-[60]">
-                <div class="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                <p id="status-text" class="mt-4 text-[10px] font-bold tracking-widest text-emerald-500 uppercase">Analizando...</p>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <div class="w-10/12 h-32 border-2 border-emerald-500/60 rounded-xl bg-emerald-500/5 relative">
+                    <div class="absolute -top-5 left-2 text-[9px] font-black text-emerald-400 uppercase tracking-widest bg-black/60 px-2 py-0.5 rounded">Centrar línea aquí</div>
+                    <div class="absolute -left-1 -top-1 w-4 h-4 border-t-2 border-l-2 border-emerald-500"></div>
+                    <div class="absolute -right-1 -top-1 w-4 h-4 border-t-2 border-r-2 border-emerald-500"></div>
+                    <div class="absolute -left-1 -bottom-1 w-4 h-4 border-b-2 border-l-2 border-emerald-500"></div>
+                    <div class="absolute -right-1 -bottom-1 w-4 h-4 border-b-2 border-r-2 border-emerald-500"></div>
+                </div>
+            </div>
+
+            <div id="loader" class="absolute inset-0 bg-slate-950/90 hidden flex-col items-center justify-center z-[60]">
+                <div class="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                <p id="status-text" class="mt-4 text-[10px] font-black tracking-[0.2em] text-emerald-500 uppercase">Analizando...</p>
             </div>
         </div>
 
-        <div class="flex justify-center gap-4 -mt-12 relative z-30">
-            <button id="capture-btn" title="Escanear" class="w-16 h-16 rounded-full bg-emerald-500 text-slate-900 shadow-xl flex items-center justify-center active:scale-90 transition-transform">
-                <i class="fas fa-camera text-xl"></i>
+        <div class="flex justify-center gap-6 -mt-16 relative z-30">
+            <button id="capture-btn" class="w-20 h-20 rounded-full bg-emerald-500 text-slate-950 shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center active:scale-90 transition-all border-4 border-slate-900">
+                <i class="fas fa-camera text-2xl"></i>
             </button>
-            <button onclick="addRowManual()" title="Añadir Manual" class="w-16 h-16 rounded-full glass text-emerald-500 shadow-xl flex items-center justify-center active:scale-90 transition-transform">
-                <i class="fas fa-plus text-xl"></i>
+            <button onclick="addRowManual()" class="w-14 h-14 rounded-full glass text-emerald-500 shadow-xl flex items-center justify-center mt-3 active:scale-90 transition-all border border-emerald-500/20">
+                <i class="fas fa-plus"></i>
             </button>
         </div>
 
-        <section id="summary" class="grid grid-cols-2 gap-3 opacity-0 transition-opacity">
-            <div class="glass p-4 rounded-2xl border-l-4 border-blue-500">
-                <span class="text-[9px] font-bold text-blue-400 block uppercase tracking-widest">Total TV</span>
-                <span id="total-tv" class="text-xl font-black text-white">0,00 €</span>
+        <section id="summary" class="grid grid-cols-2 gap-4 opacity-0 transition-all duration-500">
+            <div class="glass p-4 rounded-3xl border-l-4 border-blue-500">
+                <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Total TV</span>
+                <p id="total-tv" class="text-2xl font-black text-white">0,00 €</p>
             </div>
-            <div class="glass p-4 rounded-2xl border-l-4 border-orange-500">
-                <span class="text-[9px] font-bold text-orange-400 block uppercase tracking-widest">Total E</span>
-                <span id="total-e" class="text-xl font-black text-white">0,00 €</span>
+            <div class="glass p-4 rounded-3xl border-l-4 border-orange-500">
+                <span class="text-[9px] font-black text-orange-400 uppercase tracking-widest">Total E</span>
+                <p id="total-e" class="text-2xl font-black text-white">0,00 €</p>
             </div>
         </section>
 
-        <div class="glass rounded-3xl overflow-hidden shadow-2xl mb-10">
+        <div class="glass rounded-[2rem] overflow-hidden shadow-2xl mb-6">
             <table class="w-full text-[11px] text-left">
-                <thead class="bg-white/5 text-slate-500 text-[8px] uppercase tracking-widest">
+                <thead class="bg-emerald-500/5 text-slate-500 text-[8px] font-black uppercase tracking-[0.2em]">
                     <tr>
-                        <th class="p-4 font-bold">Concepto</th>
-                        <th class="p-4 text-center font-bold">Tipo</th>
-                        <th class="p-4 text-right font-bold">€</th>
+                        <th class="p-4">Concepto</th>
+                        <th class="p-4 text-center">Tipo</th>
+                        <th class="p-4 text-right">Valor</th>
                         <th class="p-4 w-8"></th>
                     </tr>
                 </thead>
                 <tbody id="tbody">
-                    <tr id="placeholder"><td colspan="4" class="p-10 text-center text-slate-600 italic">Captura o añade una fila para empezar</td></tr>
+                    <tr id="placeholder"><td colspan="4" class="p-10 text-center text-slate-600 italic font-medium">Sitúa la línea a leer en el recuadro superior</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
     <footer>
-        <p class="font-bold uppercase tracking-[0.4em]">Versión 1.1</p>
+        <p class="uppercase tracking-[0.4em] text-emerald-500/40">Versión 1.3</p>
     </footer>
 
-    <canvas id="canvas" class="hidden"></canvas>
+    <canvas id="procCanvas" class="hidden"></canvas>
 
     <script>
         const video = document.getElementById('video');
+        const procCanvas = document.getElementById('procCanvas');
         const captureBtn = document.getElementById('capture-btn');
         const loader = document.getElementById('loader');
         const statusText = document.getElementById('status-text');
-        let dataRows = [];
-
-        async function start() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: { ideal: 1280 } } 
-                });
-                video.srcObject = stream;
-            } catch (e) { console.error("Error cámara:", e); }
-        }
-
-        async function process() {
-            loader.classList.remove('hidden');
-            document.getElementById('camera-box').classList.add('is-scanning');
-            
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            
-            // Mejora de contraste para manuscrito
-            ctx.filter = "grayscale(1) contrast(1.4) brightness(1.1)";
-            ctx.drawImage(video, 0, 0);
-
-            try {
-                const result = await Tesseract.recognize(canvas, 'spa', {
-                    logger: m => { if(m.status === 'recognizing text') statusText.innerText = `Lote: ${Math.round(m.progress * 100)}%`; }
-                });
-                parseText(result.data.text);
-            } catch (e) {
-                alert("Error de lectura. Prueba con más luz.");
-            } finally {
-                loader.classList.add('hidden');
-                document.getElementById('camera-box').classList.remove('is-scanning');
-            }
-        }
-
-        function parseText(text) {
-            const lines = text.split('\n');
-            let dataFound = false;
-
-            lines.forEach(line => {
-                const cleanedLine = line.trim();
-                if (cleanedLine.length < 3) return;
-
-                const amountMatch = cleanedLine.match(/(\d+[,.]?\d*)/);
-                const amount = amountMatch ? parseFloat(amountMatch[0].replace(',', '.')) : 0;
-                
-                let type = "TV";
-                if (cleanedLine.toUpperCase().includes(" E ") || cleanedLine.toUpperCase().endsWith(" E")) type = "E";
-
-                let concept = cleanedLine.replace(amountMatch ? amountMatch[0] : '', '').replace(/ TV | E /i, '').trim();
-
-                if (concept || amount > 0) {
-                    dataRows.push({ concepto: concept || "Concepto escaneado", tipo: type, valor: amount });
-                    dataFound = true;
-                }
-            });
-            if(!dataFound) { addRowManual(); } // Fila vacía si falla para no dejar al usuario sin nada
-            render();
-        }
-
-        function addRowManual() {
-            dataRows.push({ concepto: "", tipo: "TV", valor: 0 });
-            render();
-        }
-
-        function render() {
-            const tbody = document.getElementById('tbody');
-            if (dataRows.length > 0) {
-                document.getElementById('summary').style.opacity = "1";
-                document.getElementById('btn-pdf').classList.remove('hidden');
-                document.getElementById('btn-csv').classList.remove('hidden');
-            }
-            
-            tbody.innerHTML = '';
-            let sTV = 0, sE = 0;
-
-            dataRows.forEach((row, i) => {
-                if (row.tipo === "TV") sTV += row.valor; else sE += row.valor;
-
-                const tr = document.createElement('tr');
-                tr.className = "border-t border-white/5 bg-white/[0.02]";
-                tr.innerHTML = `
-                    <td class="p-4"><input type="text" value="${row.concepto}" onchange="updateRow(${i}, 'concepto', this.value)" placeholder="Escribe aquí..."></td>
-                    <td class="p-4 text-center">
-                        <select onchange="updateRow(${i}, 'tipo', this.value)" class="font-bold ${row.tipo === 'TV' ? 'text-blue-400' : 'text-orange-400'}">
-                            <option value="TV" ${row.tipo === 'TV' ? 'selected' : ''}>TV</option>
-                            <option value="E" ${row.tipo === 'E' ? 'selected' : ''}>E</option>
-                        </select>
-                    </td>
-                    <td class="p-4 text-right">
-                        <input type="number" step="0.01" class="text-right font-mono font-bold" value="${row.valor}" onchange="updateRow(${i}, 'valor', this.value)">
-                    </td>
-                    <td class="p-4 text-center text-red-500/50 hover:text-red-500 transition-colors" onclick="removeRow(${i})"><i class="fas fa-trash-alt"></i></td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('total-tv').innerText = sTV.toLocaleString('es-ES', {minimumFractionDigits: 2}) + " €";
-            document.getElementById('total-e').innerText = sE.toLocaleString('es-ES', {minimumFractionDigits: 2}) + " €";
-        }
-
-        function updateRow(i, field, val) {
-            dataRows[i][field] = field === 'valor' ? (parseFloat(val) || 0) : val;
-            render();
-        }
-
-        function removeRow(i) {
-            dataRows.splice(i, 1);
-            render();
-        }
-
-        document.getElementById('btn-pdf').addEventListener('click', () => {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(18);
-            doc.text("Reporte SmartScan v1.1", 14, 20);
-            doc.autoTable({
-                head: [['Concepto', 'Tipo', 'Cuantía']],
-                body: dataRows.map(r => [r.concepto, r.tipo, r.valor.toFixed(2) + " €"]),
-                startY: 30,
-                theme: 'striped'
-            });
-            doc.save(`SmartScan_v1.1_${new Date().getTime()}.pdf`);
-        });
-
-        document.getElementById('btn-csv').addEventListener('click', () => {
-            let csv = "Concepto;Tipo;Cuantia\n";
-            dataRows.forEach(r => csv += `${r.concepto};${r.tipo};${r.valor.toFixed(2).replace('.',',')}€\n`);
-            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = "SmartScan_Export.csv";
-            link.click();
-        });
-
-        captureBtn.addEventListener('click', process);
-        window.onload = start;
-    </script>
-</body>
-</html>
+        const progressBar = document.getElementById
