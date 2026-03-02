@@ -29,6 +29,7 @@ let noSleepAudio = null; // Audio fallback (Web Audio API)
 let gpsHeartbeat = Date.now();
 let gpsRetryCount = 0;
 let gpsStartTime = Date.now();
+let lastInteractionTime = 0; // Tracks last manual map touch
 let informedAboutPrecision = false;
 let consecutiveTimeouts = 0;
 let allowCoarseLocation = false;
@@ -1171,6 +1172,19 @@ function onLocationFound(e) {
         if (zoom < 16) zoom = 18;
 
         map.setView(userMarker.getLatLng(), zoom);
+    } else {
+        // Intelligent Auto-Center Logic
+        const now = Date.now();
+        const inactiveTime = now - lastInteractionTime;
+        const speed = e.speed || 0; // Speed in m/s from Geolocation API
+
+        // Condition 1: Long inactivity (15 seconds)
+        // Condition 2: Movement detected (Speed > 1.5 m/s) + some inactivity (3 seconds)
+        if (inactiveTime > 15000 || (speed > 1.5 && inactiveTime > 3000)) {
+            isMapCentered = true;
+            console.log("📍 Autocentrado recuperado automáticamente (Inactividad/Movimiento)");
+            map.setView(userMarker.getLatLng(), map.getZoom());
+        }
     }
 
 
@@ -1203,6 +1217,7 @@ function handleMapDrag() {
     // This prevents "dislocation" if the user touches the screen before the first fix
     if (isMapCentered && hasReceivedFirstGPS) {
         isMapCentered = false;
+        lastInteractionTime = Date.now();
         console.log("📍 Navegación manual activada (Autocentrado pausado)");
     }
 }

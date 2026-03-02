@@ -21,7 +21,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.47';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.48';
             document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
         })();
     </script>
@@ -116,8 +116,8 @@
                         <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla inici'.
                         </li>
                     </ul>
-                    <p><i>Nota: Si moveu el mapa manualment, premeu el botó «Centrar Mapa» (🎯) perquè s'adapti de nou a
-                            la navegació.</i></p>
+                    <p><i>Nota: El mapa se centra automàticament després d'uns segons d'inactivitat o en iniciar la
+                            marxa. També podeu prémer el botó «Centrar Mapa» (🎯) en qualsevol moment.</i></p>
 
                     <hr>
 
@@ -132,8 +132,8 @@
                         <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
                             inicio'.</li>
                     </ul>
-                    <p><i>Nota: Si mueve el mapa manualmente, pulse el botón «Centrar Mapa» (🎯) para que se adapte de
-                            nuevo a la navegación.</i></p>
+                    <p><i>Nota: El mapa se centra automáticamente tras unos segundos de inactividad o al iniciar la
+                            marcha. También puede pulsar el botón «Centrar Mapa» (🎯) en cualquier momento.</i></p>
                 </div>
             </div>
             <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
@@ -157,7 +157,7 @@
     </div>
 
     <!-- Version Info -->
-    <div id="version-label">Versió: 1.47</div>
+    <div id="version-label">Versió: 1.48</div>
 
 
 
@@ -183,7 +183,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '1.46';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.48';
             const scripts = ['./rules.js', './overlays.js', './app.js'];
             scripts.forEach(src => {
                 document.write('<script src="' + src + '?v=' + v + '"><\/script>');
