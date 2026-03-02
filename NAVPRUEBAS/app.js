@@ -33,9 +33,10 @@ let lastInteractionTime = 0; // Tracks last manual map touch
 let informedAboutPrecision = false;
 let consecutiveTimeouts = 0;
 let allowCoarseLocation = false;
-let isOverlayMode = false; // New mode to add visual arrows that cover map arrows
 let mapOverlays = []; // Array of objects: {id, lat, lng, angle}
 let overlayMarkers = [];
+let lastMovementLatLng = null; // Store previous LatLng for bearing calculation
+let smoothHeading = 0; // The calculated bearing to use for rotation
 
 // --- Initialization ---
 async function init() {
@@ -1163,8 +1164,32 @@ function onLocationFound(e) {
         consecutiveTimeouts = 0;
     }
 
+    // --- Manual Heading Calculation (Bearing from movement) ---
+    const currentLatLng = L.latLng(e.latlng.lat, e.latlng.lng);
+    let headingToUse = e.heading || 0;
+
+    if (lastMovementLatLng) {
+        const dist = getDistance(lastMovementLatLng.lat, lastMovementLatLng.lng, currentLatLng.lat, currentLatLng.lng);
+
+        // Update heading only if moved significantly (> 2 meters) to avoid jitter
+        if (dist > 2) {
+            const calculatedBearing = calculateBearing(
+                lastMovementLatLng.lat, lastMovementLatLng.lng,
+                currentLatLng.lat, currentLatLng.lng
+            );
+            smoothHeading = calculatedBearing;
+            lastMovementLatLng = currentLatLng;
+            console.log(`🧭 Rumbo calculado: ${Math.round(smoothHeading)}º (${Math.round(dist)}m)`);
+        }
+        headingToUse = smoothHeading;
+    } else {
+        lastMovementLatLng = currentLatLng;
+        if (e.heading) smoothHeading = e.heading;
+        headingToUse = smoothHeading;
+    }
+
     // Update user marker
-    updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
+    updateUserPosition(currentLatLng, headingToUse, accuracy);
 
     if (isMapCentered) {
         // Navigation Zoom 18
