@@ -1264,8 +1264,9 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     currentHeading = heading;
 
     // 1. Rotate arrow icon
-    // If Map is rotation-driven, arrow icon rotation is 0 (relative to rotated map)
-    const iconRotation = isMapCentered ? 0 : heading;
+    // Arrow icon rotation is independent of map rotation (Leaflet handles marker layering)
+    // By always using heading, it points "Up" when map is rotated by -heading.
+    const iconRotation = heading;
 
     const rotatedIcon = L.divIcon({
         className: 'car-marker',
@@ -1782,18 +1783,32 @@ function moveSimulated(direction) {
     if (!isSimulating) return;
     isMapCentered = true; // Always center when moving in simulation
 
-    // Smaller step size for smooth continuous movement (~3-4 metres in degrees)
+    // Movement step (~4 meters) and Rotation step
     const step = 0.00004;
-    const diagStep = step * 0.707; // Maintain consistent speed on diagonals
+    const turnStep = 15;
 
-    if (direction === 'up') { simLat += step; simHeading = 0; }
-    if (direction === 'down') { simLat -= step; simHeading = 180; }
-    if (direction === 'right') { simLng += step; simHeading = 90; }
-    if (direction === 'left') { simLng -= step; simHeading = 270; }
-    if (direction === 'up-left') { simLat += diagStep; simLng -= diagStep; simHeading = 315; }
-    if (direction === 'up-right') { simLat += diagStep; simLng += diagStep; simHeading = 45; }
-    if (direction === 'down-left') { simLat -= diagStep; simLng -= diagStep; simHeading = 225; }
-    if (direction === 'down-right') { simLat -= diagStep; simLng += diagStep; simHeading = 135; }
+    // 1. Handle Steering (Turning)
+    if (direction.includes('left')) {
+        simHeading = (simHeading - turnStep + 360) % 360;
+    } else if (direction.includes('right')) {
+        simHeading = (simHeading + turnStep) % 360;
+    }
+
+    // 2. Handle Movement (Forward/Backward)
+    let moveDist = 0;
+    if (direction.includes('up')) {
+        moveDist = step;
+    } else if (direction.includes('down')) {
+        moveDist = -step;
+    }
+
+    // 3. Update Position based on Heading
+    // Heading 0 is North, 90 is East
+    if (moveDist !== 0) {
+        const rad = simHeading * (Math.PI / 180);
+        simLat += moveDist * Math.cos(rad);
+        simLng += moveDist * Math.sin(rad);
+    }
 
     const latlng = L.latLng(simLat, simLng);
 
