@@ -8,11 +8,17 @@ html {
 }
 
 #map {
-    height: 100%;
-    width: 100%;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    /* 200vmax ensures coverage even when rotated at any angle on any screen aspect ratio */
+    height: 200vmax;
+    width: 200vmax;
     z-index: 1;
     transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     transform-origin: center center;
+    /* Default transform to keep it centered */
+    transform: translate(-50%, -50%) rotate(0deg);
 }
 
 /* Custom Marker Styling */

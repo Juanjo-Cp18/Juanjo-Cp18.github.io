@@ -1252,7 +1252,7 @@ function handleMapDrag() {
         // Immediate Map Reset to North-Up
         const mapElement = document.getElementById('map');
         if (mapElement) {
-            mapElement.style.transform = 'rotate(0deg)';
+            mapElement.style.transform = 'translate(-50%, -50%) rotate(0deg)';
         }
     }
 }
@@ -1313,15 +1313,26 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     const mapElement = document.getElementById('map');
     if (mapElement) {
         if (isMapCentered) {
-            mapElement.style.transform = `rotate(${-heading}deg)`;
+            mapElement.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
         } else {
             // Only force 0 if it's not already 0 to avoid unnecessary DOM updates
-            if (mapElement.style.transform !== 'rotate(0deg)') {
-                mapElement.style.transform = 'rotate(0deg)';
+            if (mapElement.style.transform !== 'translate(-50%, -50%) rotate(0deg)') {
+                mapElement.style.transform = 'translate(-50%, -50%) rotate(0deg)';
             }
         }
     }
 }
+
+// Window Resize / Orientation Change Handler (v1.53)
+window.addEventListener('resize', () => {
+    if (map) {
+        map.invalidateSize();
+        console.log("📏 Mapa redimensionado por cambio de ventana/orientación");
+        if (isMapCentered && userMarker) {
+            map.setView(userMarker.getLatLng(), map.getZoom());
+        }
+    }
+});
 
 function onLocationError(e) {
     console.warn("GPS Error Raw:", e);
