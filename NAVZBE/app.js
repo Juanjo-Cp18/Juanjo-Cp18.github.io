@@ -29,12 +29,14 @@ let noSleepAudio = null; // Audio fallback (Web Audio API)
 let gpsHeartbeat = Date.now();
 let gpsRetryCount = 0;
 let gpsStartTime = Date.now();
+let lastInteractionTime = 0; // Tracks last manual map touch
 let informedAboutPrecision = false;
 let consecutiveTimeouts = 0;
 let allowCoarseLocation = false;
-let isOverlayMode = false; // New mode to add visual arrows that cover map arrows
 let mapOverlays = []; // Array of objects: {id, lat, lng, angle}
 let overlayMarkers = [];
+let lastMovementLatLng = null; // Store previous LatLng for bearing calculation
+let smoothHeading = 0; // The calculated bearing to use for rotation
 
 // --- Initialization ---
 async function init() {
@@ -344,7 +346,7 @@ function showPrecisionAlert() {
     statusPill.style.background = "#d32f2f";
     statusPill.innerHTML = `
         <div style="padding: 10px; line-height: 1.4;">
-            <div id="version-label">Versió: 1.45</div>
+            <div id="version-label">Versió: 1.47</div>
             <strong>⚠️ POSSIBLE ERROR DE PRECISIÓ</strong><br>
             <small>Si el vehicle no es mou, activa-ho així:</small><br>
             <div style="text-align: left; margin-top: 5px; font-size: 11px;">
@@ -1162,15 +1164,56 @@ function onLocationFound(e) {
         consecutiveTimeouts = 0;
     }
 
-    // Update user marker
-    updateUserPosition(L.latLng(e.latlng.lat, e.latlng.lng), e.heading || 0, accuracy);
+    // --- Manual Heading Calculation (Bearing from movement) ---
+    const currentLatLng = L.latLng(e.latlng.lat, e.latlng.lng);
+    let headingToUse = e.heading || 0;
 
+    if (lastMovementLatLng) {
+        const dist = getDistance(lastMovementLatLng.lat, lastMovementLatLng.lng, currentLatLng.lat, currentLatLng.lng);
+
+        // Update heading only if moved significantly (> 2 meters) to avoid jitter
+        if (dist > 2) {
+            const calculatedBearing = calculateBearing(
+                lastMovementLatLng.lat, lastMovementLatLng.lng,
+                currentLatLng.lat, currentLatLng.lng
+            );
+            smoothHeading = calculatedBearing;
+            lastMovementLatLng = currentLatLng;
+            console.log(`🧭 Rumbo calculado: ${Math.round(smoothHeading)}º (${Math.round(dist)}m)`);
+        }
+        headingToUse = smoothHeading;
+    } else {
+        lastMovementLatLng = currentLatLng;
+        if (e.heading) smoothHeading = e.heading;
+        headingToUse = smoothHeading;
+    }
+
+    // Update user marker
+    updateUserPosition(currentLatLng, headingToUse, accuracy);
+
+    // Navigation Zoom 18
     if (isMapCentered) {
-        // Navigation Zoom 18
         let zoom = map.getZoom();
         if (zoom < 16) zoom = 18;
 
         map.setView(userMarker.getLatLng(), zoom);
+
+        // --- Heading Up: Rotate Map (v1.50) ---
+        // Moved to updateUserPosition for simulation support
+    } else {
+        // ... (existing auto-center logic)
+        const now = Date.now();
+        const inactiveTime = now - lastInteractionTime;
+        const speed = e.speed || 0;
+
+        if (inactiveTime > 15000 || (speed > 1.5 && inactiveTime > 3000)) {
+            isMapCentered = true;
+            console.log("📍 Autocentrado recuperado automáticamente (Inactividad/Movimiento)");
+            map.setView(userMarker.getLatLng(), map.getZoom());
+        }
+
+        // Ensure map is upright when not following
+        // Moved to updateUserPosition for simulation support
     }
 
 
@@ -1186,6 +1229,10 @@ function onLocationFound(e) {
     updateAwakeStatus();
 }
 
+// Global flag to track if we have received at least one valid GPS position
+let hasReceivedFirstGPS = false;
+
+
 function centerMap() {
     isMapCentered = true;
     if (userMarker) {
@@ -1195,20 +1242,36 @@ function centerMap() {
 
 // Add map interaction listener to stop auto-centering
 function handleMapDrag() {
-    if (isMapCentered) {
+    // Only deactivate if we already have a stable GPS signal
+    // This prevents "dislocation" if the user touches the screen before the first fix
+    if (isMapCentered && hasReceivedFirstGPS) {
         isMapCentered = false;
-        // Button is now permanent, so no display toggle needed here
+        lastInteractionTime = Date.now();
+        console.log("📍 Navegación manual activada (Autocentrado pausado)");
+
+        // Immediate Map Reset to North-Up
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            mapElement.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+        }
     }
 }
 
 function updateUserPosition(latlng, heading, accuracy = 0) {
+    if (accuracy > 0 && accuracy < 200) {
+        hasReceivedFirstGPS = true;
+    }
     currentHeading = heading;
 
     // 1. Rotate arrow icon
+    // Arrow icon rotation is independent of map rotation (Leaflet handles marker layering)
+    // By always using heading, it points "Up" when map is rotated by -heading.
+    const iconRotation = heading;
+
     const rotatedIcon = L.divIcon({
         className: 'car-marker',
         html: `
-            <div style="transform: rotate(${heading}deg); width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;">
+            <div style="transform: rotate(${iconRotation}deg); width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;">
                 <svg viewBox="0 0 100 100" style="width: 40px; height: 40px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5));">
                     <path d="M50 5 L10 85 L50 70 L90 85 Z" fill="#2196F3" stroke="white" stroke-width="6" stroke-linejoin="round"/>
                 </svg>
@@ -1246,7 +1309,31 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     }
 
     checkProximityToRules(latlng, heading);
+
+    // --- Heading Up: Rotate Map (v1.51) ---
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        if (isMapCentered) {
+            mapElement.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
+        } else {
+            // Only force 0 if it's not already 0 to avoid unnecessary DOM updates
+            if (mapElement.style.transform !== 'translate(-50%, -50%) rotate(0deg)') {
+                mapElement.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+            }
+        }
+    }
 }
+
+// Window Resize / Orientation Change Handler (v1.53)
+window.addEventListener('resize', () => {
+    if (map) {
+        map.invalidateSize();
+        console.log("📏 Mapa redimensionado por cambio de ventana/orientación");
+        if (isMapCentered && userMarker) {
+            map.setView(userMarker.getLatLng(), map.getZoom());
+        }
+    }
+});
 
 function onLocationError(e) {
     console.warn("GPS Error Raw:", e);
@@ -1605,26 +1692,17 @@ document.addEventListener('visibilitychange', () => {
     document.addEventListener(evt, () => requestWakeLock(), { passive: true });
 });
 
-// --- PWA Installation Logic ---
-function checkAndShowInstallPrompt() {
-    // Detect if iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    // Detect if already in standalone mode (desktop or already installed)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-    // Only show on iOS if not already installed
-    if (isIOS && !isStandalone) {
-        // Show after 3 seconds to not be intrusive immediately
-        setTimeout(() => {
-            const prompt = document.getElementById('ios-install-prompt');
-            if (prompt) prompt.classList.remove('hidden');
-        }, 3000);
-    }
+// --- Initial Caution Message ---
+function showInitialCautionPrompt() {
+    // Show always on start to ensure safety message is read
+    setTimeout(() => {
+        const prompt = document.getElementById('initial-caution-prompt');
+        if (prompt) prompt.classList.remove('hidden');
+    }, 1500);
 }
 
-function closeInstallPrompt() {
-    const prompt = document.getElementById('ios-install-prompt');
+function closeCautionPrompt() {
+    const prompt = document.getElementById('initial-caution-prompt');
     if (prompt) prompt.classList.add('hidden');
 }
 
@@ -1646,8 +1724,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
     // e.preventDefault(); // Uncomment if you want to show a custom button instead of browser default
 });
 
-// Call PWA check on init
-checkAndShowInstallPrompt();
+// Call Caution check on init
+showInitialCautionPrompt();
 
 // Start
 init();
@@ -1679,6 +1757,7 @@ function toggleSimulation() {
 
         btn.style.background = '#ff9800';
         btn.title = 'Salir de Simulación';
+        isMapCentered = true; // Force center on start
         document.getElementById('status-pill').innerText = '🎮 Modo Simulació Actiu';
     } else {
         stopSimulated();
@@ -1702,19 +1781,34 @@ function stopSimulated() {
 
 function moveSimulated(direction) {
     if (!isSimulating) return;
+    isMapCentered = true; // Always center when moving in simulation
 
-    // Smaller step size for smooth continuous movement (~3-4 metres in degrees)
+    // Movement step (~4 meters) and Rotation step
     const step = 0.00004;
-    const diagStep = step * 0.707; // Maintain consistent speed on diagonals
+    const turnStep = 15;
 
-    if (direction === 'up') { simLat += step; simHeading = 0; }
-    if (direction === 'down') { simLat -= step; simHeading = 180; }
-    if (direction === 'right') { simLng += step; simHeading = 90; }
-    if (direction === 'left') { simLng -= step; simHeading = 270; }
-    if (direction === 'up-left') { simLat += diagStep; simLng -= diagStep; simHeading = 315; }
-    if (direction === 'up-right') { simLat += diagStep; simLng += diagStep; simHeading = 45; }
-    if (direction === 'down-left') { simLat -= diagStep; simLng -= diagStep; simHeading = 225; }
-    if (direction === 'down-right') { simLat -= diagStep; simLng += diagStep; simHeading = 135; }
+    // 1. Handle Steering (Turning)
+    if (direction.includes('left')) {
+        simHeading = (simHeading - turnStep + 360) % 360;
+    } else if (direction.includes('right')) {
+        simHeading = (simHeading + turnStep) % 360;
+    }
+
+    // 2. Handle Movement (Forward/Backward)
+    let moveDist = 0;
+    if (direction.includes('up')) {
+        moveDist = step;
+    } else if (direction.includes('down')) {
+        moveDist = -step;
+    }
+
+    // 3. Update Position based on Heading
+    // Heading 0 is North, 90 is East
+    if (moveDist !== 0) {
+        const rad = simHeading * (Math.PI / 180);
+        simLat += moveDist * Math.cos(rad);
+        simLng += moveDist * Math.sin(rad);
+    }
 
     const latlng = L.latLng(simLat, simLng);
 
