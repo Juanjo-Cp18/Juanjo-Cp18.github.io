@@ -1191,24 +1191,35 @@ function onLocationFound(e) {
     // Update user marker
     updateUserPosition(currentLatLng, headingToUse, accuracy);
 
+    // Navigation Zoom 18
     if (isMapCentered) {
-        // Navigation Zoom 18
         let zoom = map.getZoom();
         if (zoom < 16) zoom = 18;
 
         map.setView(userMarker.getLatLng(), zoom);
+
+        // --- Heading Up: Rotate Map (v1.50) ---
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            mapElement.style.transform = `rotate(${-heading}deg)`;
+        }
     } else {
-        // Intelligent Auto-Center Logic
+        // ... (existing auto-center logic)
         const now = Date.now();
         const inactiveTime = now - lastInteractionTime;
-        const speed = e.speed || 0; // Speed in m/s from Geolocation API
+        const speed = e.speed || 0;
 
-        // Condition 1: Long inactivity (15 seconds)
-        // Condition 2: Movement detected (Speed > 1.5 m/s) + some inactivity (3 seconds)
         if (inactiveTime > 15000 || (speed > 1.5 && inactiveTime > 3000)) {
             isMapCentered = true;
             console.log("📍 Autocentrado recuperado automáticamente (Inactividad/Movimiento)");
             map.setView(userMarker.getLatLng(), map.getZoom());
+            // Map rotation will apply on next position update
+        }
+
+        // Ensure map is upright when not following
+        const mapElement = document.getElementById('map');
+        if (mapElement && mapElement.style.transform !== 'rotate(0deg)') {
+            mapElement.style.transform = 'rotate(0deg)';
         }
     }
 
@@ -1244,6 +1255,12 @@ function handleMapDrag() {
         isMapCentered = false;
         lastInteractionTime = Date.now();
         console.log("📍 Navegación manual activada (Autocentrado pausado)");
+
+        // Immediate Map Reset to North-Up
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            mapElement.style.transform = 'rotate(0deg)';
+        }
     }
 }
 
@@ -1254,10 +1271,13 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     currentHeading = heading;
 
     // 1. Rotate arrow icon
+    // If Map is rotation-driven, arrow icon rotation is 0 (relative to rotated map)
+    const iconRotation = isMapCentered ? 0 : heading;
+
     const rotatedIcon = L.divIcon({
         className: 'car-marker',
         html: `
-            <div style="transform: rotate(${heading}deg); width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;">
+            <div style="transform: rotate(${iconRotation}deg); width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;">
                 <svg viewBox="0 0 100 100" style="width: 40px; height: 40px; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5));">
                     <path d="M50 5 L10 85 L50 70 L90 85 Z" fill="#2196F3" stroke="white" stroke-width="6" stroke-linejoin="round"/>
                 </svg>
