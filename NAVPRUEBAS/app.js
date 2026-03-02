@@ -1199,10 +1199,7 @@ function onLocationFound(e) {
         map.setView(userMarker.getLatLng(), zoom);
 
         // --- Heading Up: Rotate Map (v1.50) ---
-        const mapElement = document.getElementById('map');
-        if (mapElement) {
-            mapElement.style.transform = `rotate(${-heading}deg)`;
-        }
+        // Moved to updateUserPosition for simulation support
     } else {
         // ... (existing auto-center logic)
         const now = Date.now();
@@ -1213,14 +1210,10 @@ function onLocationFound(e) {
             isMapCentered = true;
             console.log("📍 Autocentrado recuperado automáticamente (Inactividad/Movimiento)");
             map.setView(userMarker.getLatLng(), map.getZoom());
-            // Map rotation will apply on next position update
         }
 
         // Ensure map is upright when not following
-        const mapElement = document.getElementById('map');
-        if (mapElement && mapElement.style.transform !== 'rotate(0deg)') {
-            mapElement.style.transform = 'rotate(0deg)';
-        }
+        // Moved to updateUserPosition for simulation support
     }
 
 
@@ -1315,6 +1308,19 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     }
 
     checkProximityToRules(latlng, heading);
+
+    // --- Heading Up: Rotate Map (v1.51) ---
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        if (isMapCentered) {
+            mapElement.style.transform = `rotate(${-heading}deg)`;
+        } else {
+            // Only force 0 if it's not already 0 to avoid unnecessary DOM updates
+            if (mapElement.style.transform !== 'rotate(0deg)') {
+                mapElement.style.transform = 'rotate(0deg)';
+            }
+        }
+    }
 }
 
 function onLocationError(e) {
@@ -1739,6 +1745,7 @@ function toggleSimulation() {
 
         btn.style.background = '#ff9800';
         btn.title = 'Salir de Simulación';
+        isMapCentered = true; // Force center on start
         document.getElementById('status-pill').innerText = '🎮 Modo Simulació Actiu';
     } else {
         stopSimulated();
@@ -1762,6 +1769,7 @@ function stopSimulated() {
 
 function moveSimulated(direction) {
     if (!isSimulating) return;
+    isMapCentered = true; // Always center when moving in simulation
 
     // Smaller step size for smooth continuous movement (~3-4 metres in degrees)
     const step = 0.00004;
