@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>NavPrototype - Prototipo Navegador</title>
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2196F3">
+
+    <!-- iOS Specific Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NavProto">
+    <link rel="apple-touch-icon" href="./app_icon.svg">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.47';
+            document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
+        })();
+    </script>
+</head>
+
+<body>
+
+    <img id="city-crest" src="./soller_crest.svg" alt="Escudo Sóller">
+    <div id="map"></div>
+
+    <!-- Initial Caution Prompt -->
+    <div id="initial-caution-prompt" class="hidden">
+        <div class="prompt-content">
+            <h3>⚠️ Precaución / ATENCIÓ</h3>
+            <p><b>ESPAÑOL:</b> Este es un prototipo de navegación. Circule con precaución y respete siempre la
+                señalización viaria.</p>
+            <p><b>CATALÀ:</b> Aquest és un prototip de navegació. Circuleu amb precaució i respecteu sempre la
+                senyalització viària.</p>
+            <button onclick="closeCautionPrompt()" class="close-btn">Entendido / Entès</button>
+        </div>
+    </div>
+
+    <!-- Top Right Actions Wrapper -->
+    <div id="top-right-controls">
+
+
+        <!-- Refresh Rule Button -->
+        <div class="control-wrapper">
+            <button id="refresh-btn" title="Refrescar Senyals" onclick="refreshRules()"
+                style="background-color: #4CAF50;">🔄</button>
+            <span class="control-label">Actualitzar</span>
+        </div>
+
+        <!-- Help Button -->
+        <div class="control-wrapper">
+            <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
+                style="background-color: #2196F3;">❓</button>
+            <span class="control-label">Ajuda</span>
+        </div>
+
+        <!-- Center Map Button -->
+        <div class="control-wrapper">
+            <button id="center-btn" title="Centrar Mapa" onclick="centerMap()">🎯</button>
+            <span class="control-label">Centrar</span>
+        </div>
+    </div>
+
+    <!-- GPS Status (Top Center) -->
+    <div id="status-pill">...</div>
+
+    <!-- UI Driver Sidebar (Right Center) -->
+    <div class="controls hidden" id="main-controls">
+        <!-- Other controls could go here if needed -->
+    </div>
+
+    <!-- Simulation Mode (Admin Only) -->
+    <div id="simulation-controls" class="hidden">
+        <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación">🎮</button>
+        <div id="sim-keypad" class="hidden">
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="up-left">↖</button>
+                <button class="sim-btn" data-dir="up">▲</button>
+                <button class="sim-btn" data-dir="up-right">↗</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="left">◀</button>
+                <button onclick="stopSimulated()" style="background:#f44336">✖</button>
+                <button class="sim-btn" data-dir="right">▶</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="down-left">↙</button>
+                <button class="sim-btn" data-dir="down">▼</button>
+                <button class="sim-btn" data-dir="down-right">↘</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden">
+        <div class="modal-content help-content">
+            <div class="help-scroll-area">
+                <div class="help-lang-section">
+                    <h3>ℹ️ Ajuda / Información</h3>
+                    <p><b>CATALÀ</b></p>
+                    <p>Aquest és un prototip de navegació. Pot presentar errors. Cal respectar sempre la senyalització
+                        viària existent. Circuli amb precaució.</p>
+                    <p><b>Requisits:</b> Cal tenir activada la <b>Ubicació</b> del telèfon i la <b>Precisió de la
+                            ubicació</b>.</p>
+                    <p><b>Instal·lació:</b></p>
+                    <ul>
+                        <li><b>iOS (iPhone):</b> Prem 'Compartir' ⎋ i 'Afegir a la pantalla d'inici' ⊞.</li>
+                        <li><b>Android:</b> Prem els tres punts ⋮ i 'Instal·lar aplicació' o 'Afegir a pantalla inici'.
+                        </li>
+                    </ul>
+                    <p><i>Nota: Si moveu el mapa manualment, premeu el botó «Centrar Mapa» (🎯) perquè s'adapti de nou a
+                            la navegació.</i></p>
+
+                    <hr>
+
+                    <p><b>ESPAÑOL</b></p>
+                    <p>Este es un prototipo de navegación. Puede presentar errores. Se debe respetar siempre la
+                        señalización viaria existente. Circule con precaución.</p>
+                    <p><b>Requisitos:</b> Debe estar activada la <b>Ubicación</b> del teléfono y la <b>Precisión de la
+                            ubicación</b>.</p>
+                    <p><b>Instalación:</b></p>
+                    <ul>
+                        <li><b>iOS (iPhone):</b> Pulsa 'Compartir' ⎋ y 'Añadir a la pantalla de inicio' ⊞.</li>
+                        <li><b>Android:</b> Pulsa los tres puntos ⋮ e 'Instalar aplicación' o 'Añadir a pantalla
+                            inicio'.</li>
+                    </ul>
+                    <p><i>Nota: Si mueve el mapa manualmente, pulse el botón «Centrar Mapa» (🎯) para que se adapte de
+                            nuevo a la navegación.</i></p>
+                </div>
+            </div>
+            <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
+        </div>
+    </div>
+    <div id="wrong-way-alert" class="hidden">
+        <div class="alert-content">
+            <div id="alert-icon"></div>
+            <h2 id="alert-title">¡SENTIT CONTRARI!</h2>
+            <p id="alert-message">ATUREU-VOS IMMEDIATAMENT</p>
+            <button onclick="stopAlert()">Aturar Alarma</button>
+        </div>
+    </div>
+
+    <!-- Scrolling Ticker -->
+    <div id="ticker-container">
+        <div id="ticker-text">
+            Reforma circulatòria de Sóller - 27/02/2026 - ASSISTENT DE CIRCULACIÓ - Prototip de navegació, circuli amb
+            precaució.
+        </div>
+    </div>
+
+    <!-- Version Info -->
+    <div id="version-label">Versió: 1.47</div>
+
+
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Global Configuration -->
+    <script>
+        window.isApplicationAdmin = false;
+    </script>
+
+    <!-- Firebase SDK (Lite via CDN) -->
+    <script type="module">
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Driver only needs to read, but adding set for script compatibility
+        window.FirebaseSDK = { initializeApp, getApps, getDatabase, ref, set, onValue };
+
+        // Signal Firebase readiness if app.js is already waiting
+        if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
+    </script>
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.46';
+            const scripts = ['./rules.js', './overlays.js', './app.js'];
+            scripts.forEach(src => {
+                document.write('<script src="' + src + '?v=' + v + '"><\/script>');
+            });
+        })();
+    </script>
+</body>
+
+</html>

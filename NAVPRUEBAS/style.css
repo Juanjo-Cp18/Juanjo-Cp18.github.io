@@ -1,0 +1,648 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+/* Custom Marker Styling */
+.traffic-marker {
+    background: transparent;
+    border: none;
+}
+
+.controls {
+    position: fixed;
+    /* Fixed to viewport so it doesn't disappear on zoom */
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 56px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    padding: 12px 6px;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+    align-items: center;
+}
+
+button {
+    color: white;
+    border: none;
+    min-width: 40px;
+    height: 42px;
+    border-radius: 21px;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    padding: 0 16px;
+    margin: 0;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+    filter: brightness(1.05);
+}
+
+/* Specific styling for circular control buttons (icons only) */
+.controls button,
+#top-right-controls button {
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    border-radius: 23px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+#ui-toggle-btn {
+    background: #ffffff !important;
+    color: #444 !important;
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-shadow: none;
+}
+
+#refresh-btn {
+    background: linear-gradient(135deg, #4CAF50, #45a049) !important;
+    color: white !important;
+}
+
+#center-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2) !important;
+    color: white !important;
+}
+
+button:active {
+    transform: scale(0.9);
+}
+
+.separator {
+    width: 25px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 1px;
+    margin: 2px 0;
+}
+
+#status-pill {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 2000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+#aw-status {
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 11px;
+    margin-left: 5px;
+}
+
+#version-label {
+    position: fixed;
+    bottom: 50px;
+    /* Moved up more to clear ticker */
+    left: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    pointer-events: none;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+}
+
+/* ===== City Crest ===== */
+#city-crest {
+    position: fixed;
+    top: 90px;
+    /* Safely below map controls */
+    left: 12px;
+    width: 42px;
+    height: auto;
+    z-index: 3100;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* ===== Scrolling Ticker ===== */
+#ticker-container {
+    position: fixed;
+    bottom: 12px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    background: rgba(0, 0, 0, 0.3);
+    /* Higher transparency */
+    color: #fff;
+    padding: 10px 0;
+    z-index: 3500;
+    overflow: hidden;
+    white-space: nowrap;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    font-family: -apple-system, system-ui, sans-serif;
+    pointer-events: none;
+}
+
+#ticker-text {
+    display: inline-block;
+    padding-left: 100%;
+    animation: ticker-move 45s linear infinite;
+    /* Slightly slower for better reading */
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+@keyframes ticker-move {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+
+    100% {
+        transform: translate3d(-100%, 0, 0);
+    }
+}
+
+/* Adjustments for Admin Mode */
+.admin-mode #city-crest {
+    top: 110px;
+    /* Clear the admin header + zoom */
+}
+
+.admin-toggle-label {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.3s;
+}
+
+#admin-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Admin Controls */
+.mode-switch {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: bold;
+}
+
+/* Modal Styling */
+#rule-modal,
+#overlay-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+}
+
+.modal-content select,
+.modal-content input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Toggle Switch */
+
+
+/* Wrong Way Alert Overlay */
+#wrong-way-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(220, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    animation: flash-bg 1s infinite;
+}
+
+.alert-content {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 40px;
+    border-radius: 30px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    max-width: 90%;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+#alert-icon {
+    width: 150px;
+    height: 150px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.4));
+}
+
+.alert-content h2 {
+    color: white;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 10px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 1px;
+}
+
+.alert-content p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 30px;
+}
+
+.alert-content button {
+    background-color: white;
+    color: #C00;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 50px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+/* Initial Caution Prompt */
+#initial-caution-prompt {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    color: #333;
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+#ios-install-prompt .prompt-content {
+    text-align: center;
+}
+
+#ios-install-prompt h3 {
+    margin-top: 0;
+    color: #2196F3;
+}
+
+#ios-install-prompt ol {
+    text-align: left;
+    padding-left: 20px;
+    color: #555;
+}
+
+#ios-install-prompt .icon {
+    font-size: 20px;
+    background: #eee;
+    padding: 2px 6px;
+    border-radius: 5px;
+}
+
+#help-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 5000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.help-content {
+    background: white;
+    padding: 0;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    color: #333;
+    animation: modal-pop 0.3s cubic-bezier(0.17, 0.89, 0.32, 1.28);
+}
+
+@keyframes modal-pop {
+    from {
+        transform: scale(0.85);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.help-scroll-area {
+    padding: 25px;
+    overflow-y: auto;
+    flex-grow: 1;
+    text-align: left;
+}
+
+.help-lang-section h3 {
+    margin-top: 0;
+    color: #2196F3;
+    border-bottom: 2px solid #e3f2fd;
+    padding-bottom: 8px;
+    font-size: 20px;
+}
+
+.help-lang-section p {
+    line-height: 1.5;
+    margin: 12px 0;
+}
+
+.help-lang-section hr {
+    margin: 25px 0;
+    border: none;
+    border-top: 1px dashed #ccc;
+}
+
+.help-content .close-btn {
+    margin: 0;
+    border-radius: 0;
+    background: #f5f5f5;
+    color: #666;
+    padding: 18px;
+    font-size: 16px;
+    border-top: 1px solid #eee;
+    width: 100%;
+}
+
+.help-content .close-btn:hover {
+    background: #eeeeee;
+    color: #333;
+}
+
+#ios-install-prompt .close-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-top: 15px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+}
+
+#top-right-controls {
+    position: fixed;
+    /* Use fixed for Safari/iOS compatibility on zoom */
+    top: 15px;
+    right: 15px;
+    z-index: 3500;
+    display: flex;
+    gap: 12px;
+}
+
+.control-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.control-label {
+    font-size: 10px;
+    color: white;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    pointer-events: none;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ===== Simulation Mode (Admin Only) ===== */
+#simulation-controls {
+    position: fixed;
+    bottom: 30px;
+    right: 80px;
+    /* Moved left to avoid overlapping the sidebar controls */
+    z-index: 5000;
+    /* Higher than sidebar controls (3000) and ticker (3500) */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+#sim-toggle-btn {
+    background: #ffc107 !important;
+    color: #333 !important;
+    font-size: 22px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+#sim-keypad {
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 15px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.sim-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+#sim-keypad button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+}
+
+#sim-keypad button:active {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(0.92);
+}
+
+#sim-label {
+    text-align: center;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+@keyframes flash-bg {
+    0% {
+        background-color: rgba(255, 0, 0, 0.95);
+    }
+
+    50% {
+        background-color: rgba(200, 0, 0, 0.95);
+    }
+
+    100% {
+        background-color: rgba(255, 0, 0, 0.95);
+    }
+}
+
+/* Response to Portrait/Narrow overlap - Versión 1.29 */
+@media (max-width: 600px),
+(orientation: portrait) {
+    #top-right-controls {
+        top: 80px;
+        /* Moved much lower to clear everything */
+        right: 12px;
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    #city-crest {
+        top: 80px;
+        left: 12px;
+    }
+
+    .admin-mode #city-crest {
+        top: 120px;
+        /* Even lower in admin mode */
+    }
+
+    .admin-mode #top-right-controls {
+        top: 120px;
+    }
+
+    #status-pill {
+        top: 12px;
+        width: 75%;
+        max-width: 260px;
+        font-size: 10px;
+        padding: 8px 12px;
+        white-space: normal;
+        /* Allow wrap if very long */
+        line-height: 1.2;
+    }
+}
