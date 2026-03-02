@@ -154,6 +154,26 @@ button:active {
     backdrop-filter: blur(2px);
 }
 
+#map-attribution {
+    position: fixed;
+    bottom: 50px;
+    /* Aligned with version label */
+    right: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+#map-attribution a {
+    color: #0078A8;
+    text-decoration: none;
+}
+
 /* ===== City Crest ===== */
 #city-crest {
     position: fixed;

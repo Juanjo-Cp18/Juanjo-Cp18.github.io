@@ -119,7 +119,7 @@ async function init() {
     }
 
     // Initialize map with determined start location
-    map = L.map('map').setView(startView, startZoom);
+    map = L.map('map', { attributionControl: false }).setView(startView, startZoom);
 
     // Show car immediately if we have the location
     if (initialPosition) {
@@ -504,6 +504,7 @@ function toggleUI() {
     const cityCrest = document.getElementById('city-crest');
     const mainControls = document.getElementById('main-controls');
     const simKeypad = document.getElementById('sim-keypad');
+    const mapAttribution = document.getElementById('map-attribution');
 
     buttons.forEach(btn => {
         // Skip buttons inside modals or the simulation keypad to avoid breaking active interactions
@@ -514,6 +515,10 @@ function toggleUI() {
 
     if (cityCrest) {
         cityCrest.style.display = isUIVisible ? '' : 'none';
+    }
+
+    if (mapAttribution) {
+        mapAttribution.style.display = isUIVisible ? '' : 'none';
     }
 
     if (mainControls) {
