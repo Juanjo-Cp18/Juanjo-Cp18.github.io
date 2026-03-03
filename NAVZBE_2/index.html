@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>NavPrototype - Prototipo Navegador</title>
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2196F3">
+
+    <!-- iOS Specific Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NavProto">
+    <link rel="apple-touch-icon" href="./app_icon.svg">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.34';
+            document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
+        })();
+    </script>
+</head>
+
+<body>
+
+    <img id="city-crest" src="./soller_crest.svg" alt="Escudo Sóller">
+    <div id="map"></div>
+
+    <!-- Initial Caution Prompt -->
+    <div id="initial-caution-prompt" class="hidden">
+        <div class="prompt-content">
+            <div class="caution-header">
+                <h3>⚠️ Precaució / Precaución / Caution / Vorsicht / Attention</h3>
+            </div>
+            <div class="municipal-context">
+                <strong>Término Municipal de Sóller</strong>
+            </div>
+            <div class="caution-body">
+                <p>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Flag_of_Catalonia.svg/320px-Flag_of_Catalonia.svg.png"
+                        class="flag-icon" alt="CAT">
+                    <strong>CATALÀ:</strong> Prototip de navegació. Mapa amb <b>ZBE (Zones de Baixes Emissions)</b>,
+                    permeses només a vehicles autoritzats o amb distintiu zero emissions. Circuleu amb precaució.
+                </p>
+                <p>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/320px-Bandera_de_Espa%C3%B1a.svg.png"
+                        class="flag-icon" alt="ESP">
+                    <strong>ESPAÑOL:</strong> Prototipo de navegación. Mapa con <b>ZBE (Zonas de Bajas Emisiones)</b>,
+                    permitidas solo a vehículos autorizados o con distintivo cero emisiones. Circule con precaución.
+                </p>
+                <p>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Flag_of_the_United_Kingdom_%283-5%29.svg/320px-Flag_of_the_United_Kingdom_%283-5%29.svg.png"
+                        class="flag-icon" alt="ENG">
+                    <strong>ENGLISH:</strong> Navigation prototype. Map includes <b>ZBE (Low Emission Zones)</b>,
+                    restricted to authorized or zero-emission vehicles. Drive with caution.
+                </p>
+                <p>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/320px-Flag_of_Germany.svg.png"
+                        class="flag-icon" alt="DE">
+                    <strong>DEUTSCH:</strong> Navigationsprototyp. Karte mit <b>ZBE (Umweltzonen)</b>, nur für
+                    autorisierte oder emissionsfreie Fahrzeuge erlaubt. Bitte vorsichtig fahren.
+                </p>
+                <p>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/320px-Flag_of_France.svg.png"
+                        class="flag-icon" alt="FR">
+                    <strong>FRANÇAIS:</strong> Prototype de navigation. Carte incluant les <b>ZBE (Zones à Faibles
+                        Émissions)</b>, réservées aux véhicules autorisés ou zéro émission. Roulez avec prudence.
+                </p>
+            </div>
+            <button onclick="closeCautionPrompt()" class="close-btn">
+                Entès / Entendido / Understood / Verstanden / Compris
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Right Actions Wrapper -->
+    <div id="top-right-controls">
+
+
+        <!-- Refresh Rule Button -->
+        <div class="control-wrapper">
+            <button id="refresh-btn" title="Actualitzar / Actualizar / Refresh / Aktualisieren / Actualiser"
+                onclick="refreshRules()" style="background-color: #4CAF50;">🔄</button>
+            <span class="control-label">Actualitzar / Actualizar / Refresh / Aktualisieren / Actualiser</span>
+        </div>
+
+        <!-- Help Button -->
+        <div class="control-wrapper">
+            <button id="help-btn" title="Ajuda / Ayuda / Help / Hilfe / Aide" onclick="openHelpModal()"
+                style="background-color: #2196F3;">❓</button>
+            <span class="control-label">Ajuda / Ayuda / Help / Hilfe / Aide</span>
+        </div>
+
+        <!-- Center Map Button -->
+        <div class="control-wrapper">
+            <button id="center-btn" title="Centrar / Centrar / Center / Zentrieren / Centrer"
+                onclick="centerMap()">🎯</button>
+            <span class="control-label">Centrar / Centrar / Center / Zentrieren / Centrer</span>
+        </div>
+    </div>
+
+    <!-- GPS Status (Top Center) -->
+    <div id="status-pill">...</div>
+
+    <!-- UI Driver Sidebar (Right Center) -->
+    <div class="controls hidden" id="main-controls">
+        <!-- Other controls could go here if needed -->
+    </div>
+
+    <!-- Simulation Mode (Admin Only) -->
+    <div id="simulation-controls" class="hidden">
+        <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación">🎮</button>
+        <div id="sim-keypad" class="hidden">
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="up-left">↖</button>
+                <button class="sim-btn" data-dir="up">▲</button>
+                <button class="sim-btn" data-dir="up-right">↗</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="left">◀</button>
+                <button onclick="stopSimulated()" style="background:#f44336">✖</button>
+                <button class="sim-btn" data-dir="right">▶</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="down-left">↙</button>
+                <button class="sim-btn" data-dir="down">▼</button>
+                <button class="sim-btn" data-dir="down-right">↘</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden">
+        <div class="modal-content help-content">
+            <div class="help-scroll-area">
+                <div class="help-lang-section">
+                    <h3>ℹ️ Ajuda / Información / Help / Hilfe / Aide</h3>
+                    <div style="font-size: 13px;">
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Flag_of_Catalonia.svg/320px-Flag_of_Catalonia.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> CATALÀ:</b> Prototip
+                            de navegació. Cal respectar la senyalització i zones <b>ZBE (Zones de Baixes Emissions)</b>.
+                        </p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/320px-Bandera_de_Espa%C3%B1a.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> ESPAÑOL:</b>
+                            Prototipo de navegación. Respete la señalización y zonas <b>ZBE (Zonas de Bajas
+                                Emisiones)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/320px-Flag_of_the_United_Kingdom.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> ENGLISH:</b>
+                            Navigation prototype. Obey all signs and <b>ZBE (Low Emission Zones)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/320px-Flag_of_Germany.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> DEUTSCH:</b>
+                            Navigationsprototip. Beachten Sie Schilder und <b>ZBE (Umweltzonen)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/320px-Flag_of_France.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> FRANÇAIS:</b>
+                            Prototype de navigation. Respectez les signes et zones <b>ZBE (Zones à Faibles
+                                Émissions)</b>.</p>
+                    </div>
+                    <hr>
+                    <div style="font-size: 12px; line-height: 1.4;">
+                        <p><b>Requisits / Requisitos / Requirements:</b><br>
+                            • CAT: Ubicació, Precisió i Connexió a Internet.<br>
+                            • ESP: Ubicación, Precisión y Conexión a Internet.<br>
+                            • ENG: Location, Accuracy and Internet Connection.<br>
+                            • DEU: Standort, Genauigkeit und Internetverbindung.<br>
+                            • FRA: Localisation, Précision et Connexion Internet.
+                        </p>
+                        <p><i><b>Nota / Note / Hinweis:</b><br>
+                                • CAT: El mapa se centra automàticament per inactivitat o en iniciar la marxa. També
+                                podeu prémer 🎯.<br>
+                                • ESP: El mapa se centra automáticamente por inactividad o al iniciar la marcha. También
+                                puede pulsar 🎯.<br>
+                                • ENG: Map auto-centers after inactivity or when moving. You can also press 🎯.<br>
+                                • DEU: Karte zentriert sich automatisch bei Inaktivität oder Fahrtbeginn. Oder 🎯
+                                drücken.<br>
+                                • FRA: Le mapa se centre automatiquement après inactivité ou au démarrage. Ou appuyez
+                                sur
+                                🎯.</i></p>
+                    </div>
+                </div>
+
+
+            </div>
+            <button onclick="closeHelpModal()" class="close-btn" style="margin-top: 15px;">Tancar / Cerrar / Close /
+                Schließen / Fermer</button>
+        </div>
+    </div>
+
+    <div id="wrong-way-alert" class="hidden">
+        <div class="alert-content">
+            <div id="alert-icon"></div>
+            <h2 id="alert-title">¡SENTIT CONTRARI!</h2>
+            <p id="alert-message">ATUREU-VOS IMMEDIATAMENT</p>
+            <button id="stop-alert-btn" onclick="stopAlert()">Aturar Alarma</button>
+        </div>
+    </div>
+
+
+    <!-- Version Info -->
+    <div id="version-label">Versió: 1.33 | © Juanjo Vivas | <a href="mailto:juanjo.vivasm@gmail.com"
+            style="color: inherit; text-decoration: none;">juanjo.vivasm@gmail.com</a></div>
+
+    <!-- Map Attribution -->
+    <div id="map-attribution">
+        &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
+    </div>
+
+
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Global Configuration -->
+    <script>
+        window.isApplicationAdmin = false;
+    </script>
+
+    <!-- Firebase SDK (Lite via CDN) -->
+    <script type="module">
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Driver only needs to read, but adding set for script compatibility
+        window.FirebaseSDK = { initializeApp, getApps, getDatabase, ref, set, onValue };
+
+        // Signal Firebase readiness if app.js is already waiting
+        if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
+    </script>
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.34';
+            const scripts = ['./rules.js', './overlays.js', './app.js'];
+            scripts.forEach(src => {
+                document.write('<script src="' + src + '?v=' + v + '"><\/script>');
+            });
+        })();
+    </script>
+</body>
+
+</html>
