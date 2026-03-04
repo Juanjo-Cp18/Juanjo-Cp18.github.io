@@ -44,7 +44,7 @@ let isSimulating = false;
 let simLat = 39.7663;
 let simLng = 2.7151;
 let simHeading = 0;
-let currentLanguage = 'ca'; // Global language state (v1.34)
+let currentLanguage = 'ca'; // Global language state (v1.38)
 
 
 // --- Initialization ---
@@ -743,8 +743,10 @@ function renderOverlays() {
     overlayMarkers = [];
 
     mapOverlays.forEach(overlay => {
+        const overlayZIndex = (overlay.type === 'line') ? 0 : 300; // Lines lowest, others above (v1.38)
         const marker = L.marker([overlay.lat, overlay.lng], {
-            icon: getOverlayIcon(overlay.angle, overlay.type || 'arrow')
+            icon: getOverlayIcon(overlay.angle, overlay.type || 'arrow'),
+            zIndexOffset: overlayZIndex
         }).addTo(map);
 
         if (isAdminMode) {
@@ -1169,7 +1171,8 @@ function renderRules() {
     // Draw new ones
     trafficRules.forEach(rule => {
         const marker = L.marker([rule.lat, rule.lng], {
-            icon: getRuleIcon(rule.type, rule.angle)
+            icon: getRuleIcon(rule.type, rule.angle),
+            zIndexOffset: 500 // Above overlays/lines, below nav arrow (v1.38)
         })
             .addTo(map);
 
@@ -1390,8 +1393,9 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     if (userMarker) {
         userMarker.setLatLng(latlng);
         userMarker.setIcon(rotatedIcon);
+        userMarker.setZIndexOffset(9999); // Always on top (v1.37)
     } else {
-        userMarker = L.marker(latlng, { icon: rotatedIcon }).addTo(map);
+        userMarker = L.marker(latlng, { icon: rotatedIcon, zIndexOffset: 9999 }).addTo(map);
     }
 
     // 2. Update Accuracy Circle
@@ -1921,6 +1925,17 @@ function openHelpModal() {
 
 function closeHelpModal() {
     const modal = document.getElementById('help-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// --- Mapa Oficial (v1.36) ---
+function openMapImage() {
+    const modal = document.getElementById('map-image-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeMapImage() {
+    const modal = document.getElementById('map-image-modal');
     if (modal) modal.classList.add('hidden');
 }
 
