@@ -44,7 +44,7 @@ let isSimulating = false;
 let simLat = 39.7663;
 let simLng = 2.7151;
 let simHeading = 0;
-let currentLanguage = 'ca'; // Global language state (v1.38)
+let currentLanguage = 'ca'; // Global language state (v1.39)
 
 
 // --- Initialization ---
