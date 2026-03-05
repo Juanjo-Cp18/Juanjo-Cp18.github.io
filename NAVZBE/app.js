@@ -38,6 +38,15 @@ let overlayMarkers = [];
 let lastMovementLatLng = null; // Store previous LatLng for bearing calculation
 let smoothHeading = 0; // The calculated bearing to use for rotation
 
+// --- Missing Declarations ---
+let isOverlayMode = false;
+let isSimulating = false;
+let simLat = 39.7663;
+let simLng = 2.7151;
+let simHeading = 0;
+let currentLanguage = 'ca'; // Global language state (v1.39)
+
+
 // --- Initialization ---
 async function init() {
     let startView = [39.7663, 2.7151]; // Sóller Default
@@ -169,21 +178,7 @@ async function init() {
             } catch (e) { /* silently ignore */ }
         }
     };
-    // Help Modal Listener (v1.27 fix for Safari)
-    const helpBtn = document.getElementById('help-btn');
-    if (helpBtn) {
-        ['click', 'touchstart'].forEach(evt => {
-            helpBtn.addEventListener(evt, (e) => {
-                // Prevent multi-firing on some devices
-                if (e.type === 'touchstart') helpBtn.clickedByTouch = true;
-                if (e.type === 'click' && helpBtn.clickedByTouch) {
-                    helpBtn.clickedByTouch = false;
-                    return;
-                }
-                openHelpModal();
-            }, { passive: true });
-        });
-    }
+
 
     // Reactivate UI states if restored (v1.42)
     if (savedStateJson) {
@@ -391,6 +386,27 @@ function getRuleIcon(type, angle) {
                 </svg>
             </div>
         `;
+    } else if (type === 'zbe') {
+        htmlContent = `
+            <div style="transform: rotate(${angle}deg); width: 22px; height: 22px; display:flex; justify-content:center; align-items:center;">
+                <svg viewBox="0 0 100 100" style="width: 22px; height: 22px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">
+                    <circle cx="50" cy="50" r="48" fill="white" stroke="#C00" stroke-width="8"/>
+                    <text x="50" y="62" font-family="Arial" font-size="32" font-weight="bold" fill="black" text-anchor="middle">ZBE</text>
+                    <path d="M 50 2 L 60 15 L 40 15 Z" fill="#C00" stroke="none"/>
+                </svg>
+            </div>
+        `;
+    } else if (type === 'deadend') {
+        htmlContent = `
+            <div style="transform: rotate(${angle}deg); width: 19px; height: 19px; display:flex; justify-content:center; align-items:center;">
+                <svg viewBox="0 0 100 100" style="width: 19px; height: 19px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5));">
+                    <rect x="5" y="5" width="90" height="90" fill="#0055A4" stroke="white" stroke-width="2"/>
+                    <rect x="35" y="30" width="30" height="65" fill="white"/>
+                    <rect x="20" y="25" width="60" height="15" fill="#C00"/>
+                    <path d="M 50 2 L 60 12 L 40 12 Z" fill="white" stroke="none"/>
+                </svg>
+            </div>
+        `;
     } else {
         htmlContent = `
             <div style="transform: rotate(${angle}deg); width: 15px; height: 15px; display:flex; justify-content:center; align-items:center;">
@@ -410,12 +426,11 @@ function getRuleIcon(type, angle) {
     });
 }
 
-// NEW: Overlay Icon (Designed to cover OSM arrows)
-function getOverlayIcon(angle) {
+// NEW: Overlay Icon (Designed to cover OSM arrows or mark boundaries)
+function getOverlayIcon(angle, type = 'arrow') {
     const zoom = map ? map.getZoom() : 15;
 
     // Dynamic sizing based on zoom level (OpenStreetMap scale)
-    // Minimalist size to match native map arrows
     let size = 8;
     if (zoom <= 13) size = 4;
     else if (zoom === 14) size = 6;
@@ -425,9 +440,55 @@ function getOverlayIcon(angle) {
     else if (zoom === 18) size = 20;
     else if (zoom >= 19) size = 30;
 
-    const iconPadding = size * 0.1;
-    const svgSize = size * 0.75;
+    if (type === 'parking') {
+        const pSize = size * 2; // Doble del tamaño
+        return L.divIcon({
+            className: 'map-overlay-marker',
+            html: `
+                <div style="transform: rotate(${angle}deg); width: ${pSize}px; height: ${pSize}px; background: #2196F3; border-radius: 50%; display: flex; justify-content:center; align-items:center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 2px solid white; position: relative;">
+                    <!-- Indicador de dirección (flecha blanca) -->
+                    <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 14px solid white; filter: drop-shadow(0 0 2px rgba(0,0,0,0.5)); z-index: 10;"></div>
+                    <div class="parking-marker-3d" style="font-size: ${pSize * 0.7}px; color: white; text-shadow: 0 0 4px rgba(0,0,0,0.5); pointer-events: none;">P</div>
+                </div>
+            `,
+            iconSize: [pSize, pSize],
+            iconAnchor: [pSize / 2, pSize / 2]
+        });
+    }
 
+    if (type === 'zbe-large') {
+        const zSize = size * 10; // 10 veces superior
+        return L.divIcon({
+            className: 'map-overlay-marker',
+            html: `
+                <div style="transform: rotate(${angle}deg); width: ${zSize}px; height: ${zSize}px; display: flex; justify-content:center; align-items:center; position: relative;">
+                    <div class="zbe-overlay-text" style="font-size: ${zSize * 0.4}px;">ZBE</div>
+                </div>
+            `,
+            iconSize: [zSize, zSize],
+            iconAnchor: [zSize / 2, zSize / 2]
+        });
+    }
+
+    if (type === 'line') {
+        const width = size * 0.3; // Más estrecha
+        const height = size * 1.5; // Más larga
+        return L.divIcon({
+            className: 'map-overlay-marker',
+            html: `
+                <div style="transform: rotate(${angle}deg); width: ${width}px; height: ${height}px; 
+                     background: linear-gradient(to right, #800000, #ff4c4c, #800000); 
+                     opacity: 0.7; border-radius: 1px; box-shadow: 0 0 3px rgba(0,0,0,0.5); 
+                     border: 1px solid rgba(255,255,255,0.2);">
+                </div>
+            `,
+            iconSize: [width, height],
+            iconAnchor: [width / 2, height / 2]
+        });
+    }
+
+    // Default Arrow
+    const svgSize = size * 0.75;
     return L.divIcon({
         className: 'map-overlay-marker',
         html: `
@@ -447,6 +508,12 @@ let editingRuleId = null;
 // --- Admin Section ---
 function toggleAdminMode() {
     isAdminMode = document.getElementById('admin-mode-toggle').checked;
+
+    // Reset map rotation immediately when entering/leaving admin mode
+    const mapElement = document.getElementById('map');
+    if (mapElement) {
+        mapElement.style.transform = 'translate(-50%, -50%) rotate(0deg)';
+    }
 
     // UI Feedback
     document.body.style.border = isAdminMode ? "3px solid orange" : "none";
@@ -587,8 +654,33 @@ function toggleOverlayMode() {
 
 function updateOverlayAnglePreview() {
     const angle = document.getElementById('overlay-angle').value;
+    const type = document.getElementById('overlay-type').value;
     document.getElementById('overlay-angle-display').innerText = angle;
-    document.getElementById('overlay-angle-arrow').style.transform = `rotate(${angle}deg)`;
+
+    const arrow = document.getElementById('overlay-angle-arrow');
+    const previewContainer = document.getElementById('overlay-angle-preview');
+
+    if (type === 'line') {
+        arrow.style.transform = `rotate(${angle}deg)`;
+        arrow.innerHTML = `
+            <div style="width: 6px; height: 30px; background: linear-gradient(to right, #800000, #ff4c4c, #800000); border-radius: 1px;"></div>
+        `;
+    } else if (type === 'parking') {
+        arrow.style.transform = `rotate(0deg)`; // El parking no rota con el ángulo
+        arrow.innerHTML = `
+            <div style="width: 35px; height: 35px; background: #2196F3; border-radius: 50%; display: flex; justify-content:center; align-items:center; border: 1px solid white;">
+                <div class="parking-marker-3d" style="font-size: 22px; color: white;">P</div>
+            </div>
+        `;
+    } else if (type === 'zbe-large') {
+        arrow.style.transform = `rotate(${angle}deg)`;
+        arrow.innerHTML = `
+            <div style="font-size: 10px; font-weight: bold; border: 1px solid #C00; padding: 1px; color: #C00;">ZBE</div>
+        `;
+    } else {
+        arrow.style.transform = `rotate(${angle}deg)`;
+        arrow.innerHTML = '↑';
+    }
 }
 
 function closeOverlayModal() {
@@ -599,17 +691,22 @@ function closeOverlayModal() {
 
 function saveOverlay() {
     const angle = parseInt(document.getElementById('overlay-angle').value) || 0;
+    const type = document.getElementById('overlay-type').value || 'arrow';
 
     if (editingOverlayId) {
         const idx = mapOverlays.findIndex(o => o.id === editingOverlayId);
-        if (idx !== -1) mapOverlays[idx].angle = angle;
+        if (idx !== -1) {
+            mapOverlays[idx].angle = angle;
+            mapOverlays[idx].type = type;
+        }
     } else {
         if (!tempClickLocation) return;
         mapOverlays.push({
             id: Date.now(),
             lat: tempClickLocation.lat,
             lng: tempClickLocation.lng,
-            angle: angle
+            angle: angle,
+            type: type
         });
     }
 
@@ -626,6 +723,7 @@ function editOverlay(id) {
     editingOverlayId = id;
     tempClickLocation = null;
     document.getElementById('overlay-angle').value = overlay.angle;
+    document.getElementById('overlay-type').value = overlay.type || 'arrow';
     updateOverlayAnglePreview();
     document.getElementById('overlay-modal').classList.remove('hidden');
     map.closePopup();
@@ -645,14 +743,17 @@ function renderOverlays() {
     overlayMarkers = [];
 
     mapOverlays.forEach(overlay => {
+        const overlayZIndex = (overlay.type === 'line') ? 0 : 300; // Lines lowest, others above (v1.38)
         const marker = L.marker([overlay.lat, overlay.lng], {
-            icon: getOverlayIcon(overlay.angle)
+            icon: getOverlayIcon(overlay.angle, overlay.type || 'arrow'),
+            zIndexOffset: overlayZIndex
         }).addTo(map);
 
         if (isAdminMode) {
+            const label = overlay.type === 'line' ? 'Línia de Delimitació' : 'Flecha Visual';
             let popupContent = `
                 <div style="text-align:center;">
-                    <b>Flecha Visual (Capa)</b><br>
+                    <b>${label}</b><br>
                     Rumbo: ${overlay.angle}°
                     <div style="margin-top:10px; display:flex; gap:5px; justify-content:center;">
                         <button onclick="editOverlay(${overlay.id})" style="background:#673AB7; color:white; padding:5px 10px; font-size:12px; border:none; border-radius:3px;">Editar</button>
@@ -816,13 +917,15 @@ function saveRule() {
 
     saveRulesToStorage();
     renderRules();
+    closeModal(); // Close modal immediately to ensure UI responsiveness
 
     // Feedback: Trigger alarm as requested for admin action
-    startAlert();
-    // Stop it automatically after 2 seconds to avoid permanent deafness
-    setTimeout(() => stopAlert(), 2000);
-
-    closeModal();
+    try {
+        startAlert();
+        setTimeout(() => stopAlert(), 2000);
+    } catch (e) {
+        console.warn("Feedback alert skipped:", e);
+    }
 }
 
 function deleteRule(id) {
@@ -1068,7 +1171,8 @@ function renderRules() {
     // Draw new ones
     trafficRules.forEach(rule => {
         const marker = L.marker([rule.lat, rule.lng], {
-            icon: getRuleIcon(rule.type, rule.angle)
+            icon: getRuleIcon(rule.type, rule.angle),
+            zIndexOffset: 500 // Above overlays/lines, below nav arrow (v1.38)
         })
             .addTo(map);
 
@@ -1289,8 +1393,9 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
     if (userMarker) {
         userMarker.setLatLng(latlng);
         userMarker.setIcon(rotatedIcon);
+        userMarker.setZIndexOffset(9999); // Always on top (v1.37)
     } else {
-        userMarker = L.marker(latlng, { icon: rotatedIcon }).addTo(map);
+        userMarker = L.marker(latlng, { icon: rotatedIcon, zIndexOffset: 9999 }).addTo(map);
     }
 
     // 2. Update Accuracy Circle
@@ -1315,13 +1420,14 @@ function updateUserPosition(latlng, heading, accuracy = 0) {
 
     checkProximityToRules(latlng, heading);
 
-    // --- Heading Up: Rotate Map (v1.51) ---
+    // --- Heading Up: Rotate Map (v1.51 / v1.17 Fix) ---
     const mapElement = document.getElementById('map');
     if (mapElement) {
-        if (isMapCentered) {
+        // CRITICAL FIX: Disable map rotation in admin mode to keep click precision
+        if (isMapCentered && !isAdminMode) {
             mapElement.style.transform = `translate(-50%, -50%) rotate(${-heading}deg)`;
         } else {
-            // Only force 0 if it's not already 0 to avoid unnecessary DOM updates
+            // Force North-Up (0deg) if not centered or in Admin Mode
             if (mapElement.style.transform !== 'translate(-50%, -50%) rotate(0deg)') {
                 mapElement.style.transform = 'translate(-50%, -50%) rotate(0deg)';
             }
@@ -1388,18 +1494,23 @@ function checkProximityToRules(userLatLng, userHeading) {
         const ruleLatLng = L.latLng(rule.lat, rule.lng);
         const distance = userLatLng.distanceTo(ruleLatLng);
 
-        // 1. Proximity Check (e.g., 25 meters)
-        if (distance < 25) {
+        // 1. Proximity Check (e.g., 8 meters - triggered when vehicle is basically on the sign)
+        if (distance < 8) {
 
-            if (rule.type === 'forbidden') {
-                // 2. Heading Check for FORBIDDEN
+            if (rule.type === 'forbidden' || rule.type === 'zbe' || rule.type === 'deadend') {
+                // 2. Heading Check for FORBIDDEN / ZBE / DEADEND
                 const angleDiff = Math.abs(userHeading - rule.angle);
                 const normalizedDiff = angleDiff > 180 ? 360 - angleDiff : angleDiff;
 
                 if (normalizedDiff < 45) {
-                    triggeringType = 'forbidden';
-                    triggeringRuleKey = `forbidden_${rule.id}`; // unique per rule
-                    document.getElementById('status-pill').innerText = `⚠️ DIRECCIÓ PROHIBIDA DETECTADA (Rumb ${Math.round(userHeading)}º vs Senyal ${rule.angle}º)`;
+                    triggeringType = rule.type;
+                    triggeringRuleKey = `${rule.type}_${rule.id}`; // unique per rule
+
+                    let label = "DIRECCIÓ PROHIBIDA";
+                    if (rule.type === 'zbe') label = "ZONA BAIXES EMISSIONS";
+                    if (rule.type === 'deadend') label = "CARRER SENSE SORTIDA";
+
+                    document.getElementById('status-pill').innerText = `⚠️ ${label} DETECTADA (Rumb ${Math.round(userHeading)}º vs Senyal ${rule.angle}º)`;
                 }
             }
             else if (rule.type === 'mandatory') {
@@ -1432,6 +1543,7 @@ function checkProximityToRules(userLatLng, userHeading) {
 
 // --- Audio & Visual Alert ---
 let currentAlertKey = null; // Tracks unique key of the currently active alert
+let isAlertDismissed = false; // Prevents the modal from re-appearing for the same encounter
 
 function startAlert(type = 'forbidden', ruleKey = null) {
     const alertDiv = document.getElementById('wrong-way-alert');
@@ -1441,38 +1553,126 @@ function startAlert(type = 'forbidden', ruleKey = null) {
 
     // Update Icon and Message (always, so it reflects the current rule)
     if (alertDiv) {
-        const iconDiv = document.getElementById('alert-icon');
-        const titleH2 = document.getElementById('alert-title');
-        const messageP = document.getElementById('alert-message');
+        try {
+            const iconDiv = document.getElementById('alert-icon');
+            const titleH2 = document.getElementById('alert-title');
+            const messageP = document.getElementById('alert-message');
+            const stopBtn = document.getElementById('stop-alert-btn');
 
-        if (type === 'forbidden') {
-            iconDiv.innerHTML = `
+            if (!iconDiv || !titleH2 || !messageP) {
+                console.error("Missing alert elements");
+            } else {
+                // Translate Stop Button (v1.21) - Show multi-language if no selector
+                if (stopBtn) {
+                    stopBtn.innerText = "Aturar / Detener / Stop / Stoppen / Arrêter";
+                }
+
+                if (type === 'forbidden') {
+                    iconDiv.innerHTML = `
                 <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
                     <circle cx="50" cy="50" r="48" fill="#C00" stroke="white" stroke-width="4"/>
                     <rect x="20" y="42" width="60" height="16" fill="white"/>
                 </svg>
             `;
-            titleH2.innerText = "¡DIRECCIÓ PROHIBIDA!";
-            messageP.innerText = "NO ENTREU EN AQUEST CARRER";
-        } else {
-            iconDiv.innerHTML = `
+                    titleH2.innerHTML = `
+                        <div style="font-size: 0.8em; opacity: 0.9;">¡DIRECCIÓ PROHIBIDA!</div>
+                        <div style="font-size: 0.8em; opacity: 0.9;">¡DIRECCIÓN PROHIBIDA!</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">WRONG WAY!</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">FALSCHE RICHTUNG!</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">SENS INTERDIT!</div>
+                    `;
+                    messageP.innerHTML = `
+                        <div style="margin-bottom: 5px;">• NO ENTREU EN AQUEST CARRER</div>
+                        <div style="margin-bottom: 5px;">• NO ENTRE EN ESTA CALLE</div>
+                        <div style="margin-bottom: 5px;">• DO NOT ENTER THIS STREET</div>
+                        <div style="margin-bottom: 5px;">• DIESE STRASSE NICHT BETRETEN</div>
+                        <div style="margin-bottom: 5px;">• N'ENTREZ PAS DANS CETTE RUE</div>
+                    `;
+                } else if (type === 'zbe') {
+                    iconDiv.innerHTML = `
+                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    <circle cx="50" cy="50" r="48" fill="white" stroke="#C00" stroke-width="8"/>
+                    <text x="50" y="65" font-family="Arial" font-size="35" font-weight="bold" fill="black" text-anchor="middle">ZBE</text>
+                </svg>
+            `;
+                    titleH2.innerHTML = `
+                        <div style="font-size: 0.8em; opacity: 0.9;">¡ZONA DE BAIXES EMISSIONS!</div>
+                        <div style="font-size: 0.8em; opacity: 0.9;">¡ZONA DE BAJAS EMISIONES!</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">LOW EMISSION ZONE</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">UMWELTZONE</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">ZONE À FAIBLES ÉMISSIONS</div>
+                    `;
+                    messageP.innerHTML = `
+                        <div style="margin-bottom: 5px; font-size: 0.9em;">• Permès vehicles amb distintiu <b>Zero Emissions</b> i <b>Autoritzats</b></div>
+                        <div style="margin-bottom: 5px; font-size: 0.9em;">• Permitido vehículos con distintivo <b>Cero Emisiones</b> y <b>Autorizados</b></div>
+                        <div style="margin-bottom: 5px; font-size: 0.8em;">• Only <b>Zero Emissions</b> and <b>Authorized</b> vehicles allowed</div>
+                        <div style="margin-bottom: 5px; font-size: 0.8em;">• Nur <b>Zero-Emissions</b> und <b>Autorisierte</b> Fahrzeuge erlaubt</div>
+                        <div style="margin-bottom: 5px; font-size: 0.8em;">• Uniquement les véhicules <b>Zéro Émission</b> et <b>Autorisés</b></div>
+                    `;
+                } else if (type === 'deadend') {
+                    iconDiv.innerHTML = `
+                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    <rect x="5" y="5" width="90" height="90" fill="#0055A4" stroke="white" stroke-width="4"/>
+                    <rect x="35" y="35" width="30" height="60" fill="white"/>
+                    <rect x="20" y="25" width="60" height="15" fill="#C00"/>
+                </svg>
+            `;
+                    titleH2.innerHTML = `
+                        <div style="font-size: 0.8em; opacity: 0.9;">CARRER SENSE SORTIDA</div>
+                        <div style="font-size: 0.8em; opacity: 0.9;">CALLE SIN SALIDA</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">DEAD END STREET</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">SACKGASSE!</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">IMPASSE!</div>
+                    `;
+                    messageP.innerHTML = `
+                        <div style="margin-bottom: 5px;">• AQUESTA VIA NO TÉ SORTIDA</div>
+                        <div style="margin-bottom: 5px;">• ESTA VÍA NO TIENE SALIDA</div>
+                        <div style="margin-bottom: 5px;">• THIS ROAD HAS NO EXIT</div>
+                        <div style="margin-bottom: 5px;">• DIESE STRASSE HAT KEINEN AUSGANG</div>
+                        <div style="margin-bottom: 5px;">• CETTE ROUTE N'A PAS D'ISSUE</div>
+                    `;
+                } else {
+                    iconDiv.innerHTML = `
                 <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
                     <circle cx="50" cy="50" r="48" fill="#0055A4" stroke="white" stroke-width="4"/>
                     <path d="M50 15 L20 55 L40 55 L40 85 L60 85 L60 55 L80 55 Z" fill="white"/>
                 </svg>
             `;
-            titleH2.innerText = "¡DIRECCIÓ OBLIGATÒRIA!";
-            messageP.innerText = "SEGUIU LA SENYALITZACIÓ";
+                    titleH2.innerHTML = `
+                        <div style="font-size: 0.8em; opacity: 0.9;">¡DIRECCIÓ OBLIGATÒRIA!</div>
+                        <div style="font-size: 0.8em; opacity: 0.9;">¡DIRECCIÓN OBLIGATORIA!</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">MANDATORY DIRECTION</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">VORGESCHRIEBENE FAHRTRICHTUNG</div>
+                        <div style="font-size: 0.7em; opacity: 0.8;">DIRECTION OBLIGATOIRE</div>
+                    `;
+                    messageP.innerHTML = `
+                        <div style="margin-bottom: 5px;">• SEGUIU LA SENYALITZACIÓ</div>
+                        <div style="margin-bottom: 5px;">• SIGA LA SEÑALIZACIÓN</div>
+                        <div style="margin-bottom: 5px;">• FOLLOW THE SIGNAGE</div>
+                        <div style="margin-bottom: 5px;">• FOLGEN SIE DER BESCHILDERUNG</div>
+                        <div style="margin-bottom: 5px;">• SUIVEZ LA SIGNALISATION</div>
+                    `;
+                }
+
+            }
+        } catch (e) {
+            console.error("Error updating alert UI:", e);
         }
 
-        alertDiv.classList.remove('hidden');
+        // --- Intelligent Silence (v1.19) ---
+        // Only show the visual modal if it hasn't been dismissed for this encounter
+        if (!isAlertDismissed) {
+            alertDiv.classList.remove('hidden');
+            alertDiv.style.display = 'flex'; // Force display if hidden class is buggy
+        }
     }
 
-    // If this is a NEW alert encounter (different key), restart the siren
+    // If this is a NEW alert encounter (different key), restart the siren and reset silence state
     if (currentAlertKey !== alertKey) {
         currentAlertKey = alertKey;
+        isAlertDismissed = false; // New encounter: allow the modal to show again
         stopSiren();   // Stop any previous siren first
-        playSiren();   // Start fresh for this new encounter
+        playSiren(type);   // Start fresh for this new encounter (passing type for sound logic)
     }
 }
 
@@ -1481,6 +1681,7 @@ function stopAlert() {
     if (alertDiv && !alertDiv.classList.contains('hidden')) {
         alertDiv.classList.add('hidden');
     }
+    isAlertDismissed = true; // Mark as dismissed for this encounter (v1.19)
     stopSiren(); // Always stop the audio loop when alert is dismissed
 }
 
@@ -1497,17 +1698,12 @@ function toggleWrongWayAlert() {
 // Web Audio API Siren
 let sirenInterval = null; // Handle for the repeating siren loop
 
-async function playSiren() {
+async function playSiren(type = 'forbidden') {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Try to resume AudioContext (required by iOS) - retry up to 5 times automatically
-    for (let attempt = 0; attempt < 5 && audioCtx.state === 'suspended'; attempt++) {
-        try {
-            await audioCtx.resume();
-        } catch (e) { /* silently ignore */ }
-        if (audioCtx.state === 'suspended') {
-            await new Promise(r => setTimeout(r, 300)); // wait 300ms and retry
-        }
+    // Try to resume AudioContext (required by browsers)
+    if (audioCtx.state === 'suspended') {
+        await audioCtx.resume().catch(e => console.warn("Context resume failed:", e));
     }
 
     // Avoid starting multiple loops
@@ -1532,16 +1728,26 @@ async function playSiren() {
         osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.4);
         osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.8);
 
-        gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+        gain.gain.setValueAtTime(1.7, audioCtx.currentTime); // Maximized for PC audibility
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
 
+        // Initial Pulse (The Pitido)
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.8);
+        osc.stop(audioCtx.currentTime + 0.6);
     }
 
-    // Play immediately then repeat every 1.2 seconds
+    // Play the initial beep
     playBeep();
-    sirenInterval = setInterval(playBeep, 1200);
+
+    // If it's ZBE or Dead-end, we ONLY want that first pitido, so stop here
+    if (type === 'zbe' || type === 'deadend') {
+        return;
+    }
+
+    // Otherwise (FORBIDDEN, MANDATORY), proceed with the emergency loop
+    sirenInterval = setInterval(() => {
+        playBeep();
+    }, 1200);
 }
 
 function stopSiren() {
@@ -1722,6 +1928,17 @@ function closeHelpModal() {
     if (modal) modal.classList.add('hidden');
 }
 
+// --- Mapa Oficial (v1.36) ---
+function openMapImage() {
+    const modal = document.getElementById('map-image-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeMapImage() {
+    const modal = document.getElementById('map-image-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
 // Android: The browser handles the prompt automatically if requirements are met,
 // but we can listen to it for future custom buttons.
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -1736,11 +1953,6 @@ showInitialCautionPrompt();
 init();
 
 // ===== Simulation Mode (v1.19) =====
-let isSimulating = false;
-let simLat = null;
-let simLng = null;
-let simHeading = 0;
-
 function toggleSimulation() {
     isSimulating = !isSimulating;
     const keypad = document.getElementById('sim-keypad');

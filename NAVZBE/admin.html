@@ -15,7 +15,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '2.0';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.39';
             document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
         })();
     </script>
@@ -55,11 +55,11 @@
     <div class="controls" id="main-controls">
         <div id="admin-controls">
             <!-- General Map Controls -->
-            <button id="center-btn" title="Centrar Mapa" onclick="centerMap()"
+            <button id="center-btn" title="Centrar / Centrar / Center / Zentrieren / Centrer" onclick="centerMap()"
                 style="background-color: #2196F3;">🎯</button>
             <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos"
                 style="background-color: #fff; color: #444;">👁️</button>
-            <button id="help-btn" title="Ayuda / Ajuda" onclick="openHelpModal()"
+            <button id="help-btn" title="Ajuda / Ayuda / Help / Hilfe / Aide" onclick="openHelpModal()"
                 style="background-color: #2196F3;">❓</button>
 
             <div class="separator"></div>
@@ -67,8 +67,8 @@
             <!-- Admin Logic Controls -->
             <button id="btn-pause-gps" title="Pausar GPS" onclick="toggleAdminGPS()"
                 style="background-color: #607D8B;">📍</button>
-            <button id="refresh-btn" title="Refrescar Senyals" onclick="refreshRules()"
-                style="background-color: #4CAF50;">🔄</button>
+            <button id="refresh-btn" title="Actualitzar / Actualizar / Refresh / Aktualisieren / Actualiser"
+                onclick="refreshRules()" style="background-color: #4CAF50;">🔄</button>
             <button title="Importar OSM" onclick="importOSMRules()" style="background-color: #FF9800;">🌍</button>
             <button title="Cargar rules.js" onclick="resetRulesFromFile()"
                 style="background-color: #9C27B0;">🔄</button>
@@ -76,6 +76,8 @@
             <button title="Borrar Todo" onclick="clearAllRules()" style="background-color: #f44336;">🗑️</button>
             <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación"
                 style="background-color: #ffc107; color: #333;">🎮</button>
+            <button id="test-alert-btn" title="Provar Alerta" onclick="toggleWrongWayAlert()"
+                style="background-color: #f44336; color: white; border: 2px solid white;">🚨</button>
             <div class="separator"></div>
             <button id="overlay-mode-btn" onclick="toggleOverlayMode()" title="Modo Capa Visual (Tapar Flechas)"
                 style="background-color: #673AB7;">🎨</button>
@@ -89,8 +91,20 @@
     <!-- Admin: Overlay Creation Modal -->
     <div id="overlay-modal" class="hidden">
         <div class="modal-content" style="border-top: 5px solid #673AB7;">
-            <h3>Afegir Fletxa Visual</h3>
-            <p><small>Aquesta fletxa només serveix per corregir el mapa visualment. No activarà alarmes.</small></p>
+            <h3>Afegir Capa Visual</h3>
+            <p><small>Aquesta capa només serveix per corregir el mapa visualment. No activarà alarmes.</small></p>
+
+            <div style="margin-bottom: 15px;">
+                <p>Tipus de Capa:</p>
+                <select id="overlay-type" onchange="updateOverlayAnglePreview()"
+                    style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="arrow">⬆️ Flecha (Verd)</option>
+                    <option value="line">📏 Línia (Vermell Metàl·lic)</option>
+                    <option value="parking">🅿️ Pàrquing (Animat)</option>
+                    <option value="zbe-large">🔴 ZBE Gegant (Metal·litzat)</option>
+                </select>
+            </div>
+
             <div class="direction-inputs">
                 <p>Direcció (Rumb): <span id="overlay-angle-display">0</span>°</p>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
@@ -119,6 +133,8 @@
             <select id="rule-type">
                 <option value="forbidden">⛔ Direcció Prohibida</option>
                 <option value="mandatory">⬇️ Direcció Obligatòria</option>
+                <option value="zbe">🔞 Zona Baixes Emissions (ZBE)</option>
+                <option value="deadend">🟦 Carrer sense Sortida</option>
             </select>
             <div class="direction-inputs">
                 <p>Direcció (Rumb): <span id="angle-display">0</span>°</p>
@@ -144,27 +160,52 @@
         <div class="modal-content help-content">
             <div class="help-scroll-area">
                 <div class="help-lang-section">
-                    <h3>ℹ️ Ajuda / Información</h3>
-                    <p><b>CATALÀ</b></p>
-                    <p>Aquest és un prototip de navegació. Pot presentar errors. Cal respectar sempre la senyalització
-                        viària existent. Circuli amb precaució.</p>
-                    <p><b>Requisits:</b> Cal tenir activada la <b>Ubicació</b> del telèfon i la <b>Precisió de la
-                            ubicació</b>.</p>
-                    <p><i>Nota: El mapa es centra automàticament després d'uns segons d'inactivitat o en iniciar la
-                            marxa. També podeu prémer el botó «Centrar Mapa» (🎯) en qualsevol moment.</i></p>
-
+                    <h3>ℹ️ Ajuda / Información / Help / Hilfe / Aide</h3>
+                    <div style="font-size: 13px;">
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Flag_of_Catalonia.svg/320px-Flag_of_Catalonia.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> CATALÀ:</b> Prototip
+                            de navegació. Cal respectar la senyalització i zones <b>ZBE (Zones de Baixes Emissions)</b>.
+                        </p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/320px-Bandera_de_Espa%C3%B1a.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> ESPAÑOL:</b>
+                            Prototipo de navegación. Respete la señalización y zonas <b>ZBE (Zonas de Bajas
+                                Emisiones)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/320px-Flag_of_the_United_Kingdom.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> ENGLISH:</b>
+                            Navigation prototype. Obey all signs and <b>ZBE (Low Emission Zones)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/320px-Flag_of_Germany.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> DEUTSCH:</b>
+                            Navigationsprototip. Beachten Sie Schilder und <b>ZBE (Umweltzonen)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/320px-Flag_of_France.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> FRANÇAIS:</b>
+                            Prototype de navigation. Respectez les signes e zones <b>ZBE (Zones à Faibles
+                                Émissions)</b>.</p>
+                    </div>
                     <hr>
-
-                    <p><b>ESPAÑOL</b></p>
-                    <p>Este es un prototipo de navegación. Puede presentar errores. Se debe respetar siempre la
-                        señalización viaria existente. Circule con precaución.</p>
-                    <p><b>Requisitos:</b> Debe estar activada la <b>Ubicación</b> del teléfono y la <b>Precisión de la
-                            ubicación</b>.</p>
-                    <p><i>Nota: El mapa se centra automáticamente tras unos segundos de inactividad o al iniciar la
-                            marcha. También puede pulsar el botón «Centrar Mapa» (🎯) en cualquier momento.</i></p>
+                    <div style="font-size: 12px; line-height: 1.4;">
+                        <p><b>Requisits / Requisitos / Requirements:</b><br>
+                            • CAT: Ubicació, Precisió i Connexió a Internet.<br>
+                            • ESP: Ubicación, Precisión y Conexión a Internet.<br>
+                            • ENG: Location, Accuracy and Internet Connection.<br>
+                            • DEU: Standort, Genauigkeit und Internetverbindung.<br>
+                            • FRA: Localisation, Précision et Connexion Internet.
+                        </p>
+                        <p><i><b>Nota / Note / Hinweis:</b><br>
+                                • CAT: El mapa se centra automàticament per inactivitat o en iniciar la marxa. També
+                                podeu prémer 🎯.<br>
+                                • ESP: El mapa se centra automáticamente por inactividad o al iniciar la marcha. También
+                                puede pulsar 🎯.<br>
+                                • ENG: Map auto-centers after inactivity or when moving. You can also press 🎯.<br>
+                                • DEU: Karte zentriert sich automáticamente bei Inaktivität oder Fahrtbeginn. Oder 🎯
+                                drücken.<br>
+                                • FRA: Le mapa se centre automáticamente après inactivité ou au démarrage. Ou appuyez
+                                sur
+                                🎯.</i></p>
+                    </div>
                 </div>
+                <button onclick="closeHelpModal()" class="close-btn" style="margin-top: 15px;">Tancar / Cerrar / Close /
+                    Schließen / Fermer</button>
             </div>
-            <button onclick="closeHelpModal()" class="close-btn">Tancar / Cerrar</button>
         </div>
     </div>
 
@@ -189,16 +230,8 @@
         </div>
     </div>
 
-    <!-- Scrolling Ticker -->
-    <div id="ticker-container">
-        <div id="ticker-text">
-            Reforma circulatòria de Sóller - 27/02/2026 - ASSISTENT DE CIRCULACIÓ - Prototip de navegació, circuli amb
-            precaució.
-        </div>
-    </div>
 
-    <!-- Version Info -->
-    <div id="version-label">Versió: 2.0</div>
+
 
 
 
@@ -223,9 +256,21 @@
     </script>
 
 
+    <div id="wrong-way-alert" class="hidden">
+        <div class="alert-content">
+            <div id="alert-icon"></div>
+            <h2 id="alert-title">¡SENTIT CONTRARI!</h2>
+            <p id="alert-message">ATUREU-VOS IMMEDIATAMENT</p>
+            <button id="stop-alert-btn" onclick="stopAlert()">Aturar Alarma</button>
+        </div>
+    </div>
+
+    <div id="version-label">Versió: 1.40 | © Juanjo Vivas | <a href="mailto:juanjo.vivasm@gmail.com"
+            style="color: inherit; text-decoration: none;">juanjo.vivasm@gmail.com</a></div>
+
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '2.0';
+            const v = new URLSearchParams(window.location.search).get('v') || '1.35';
             const scripts = ['./rules.js', './overlays.js', './app.js'];
             scripts.forEach(src => {
                 document.write('<script src="' + src + '?v=' + v + '"><\/script>');
