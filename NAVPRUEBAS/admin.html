@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>NavAdmin - Gestión de Tráfico</title>
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#FF9800">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.39';
+            document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
+        })();
+    </script>
+
+    <style>
+        /* Admin specific adjustments */
+        .admin-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 152, 0, 0.9);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 3000;
+            pointer-events: none;
+        }
+
+        .controls {
+            background: rgba(255, 152, 0, 0.25) !important;
+        }
+    </style>
+</head>
+
+<body class="admin-mode">
+    <div class="admin-header">MODE ADMINISTRADOR</div>
+    <img id="city-crest" src="./soller_crest.svg" alt="Escudo Sóller">
+    <div id="map"></div>
+
+    <!-- GPS Status (Top Center) -->
+    <div id="status-pill">...</div>
+
+    <!-- UI Controls Sidebar (Unified Admin Panel) -->
+    <div class="controls" id="main-controls">
+        <div id="admin-controls">
+            <!-- General Map Controls -->
+            <button id="center-btn" title="Centrar / Centrar / Center / Zentrieren / Centrer" onclick="centerMap()"
+                style="background-color: #2196F3;">🎯</button>
+            <button id="ui-toggle-btn" onclick="toggleUI()" title="Ocultar Iconos"
+                style="background-color: #fff; color: #444;">👁️</button>
+            <button id="help-btn" title="Ajuda / Ayuda / Help / Hilfe / Aide" onclick="openHelpModal()"
+                style="background-color: #2196F3;">❓</button>
+
+            <div class="separator"></div>
+
+            <!-- Admin Logic Controls -->
+            <button id="btn-pause-gps" title="Pausar GPS" onclick="toggleAdminGPS()"
+                style="background-color: #607D8B;">📍</button>
+            <button id="refresh-btn" title="Actualitzar / Actualizar / Refresh / Aktualisieren / Actualiser"
+                onclick="refreshRules()" style="background-color: #4CAF50;">🔄</button>
+            <button title="Importar OSM" onclick="importOSMRules()" style="background-color: #FF9800;">🌍</button>
+            <button title="Cargar rules.js" onclick="resetRulesFromFile()"
+                style="background-color: #9C27B0;">🔄</button>
+            <button title="Descargar Config" onclick="downloadConfig()" style="background-color: #2196F3;">💾</button>
+            <button title="Borrar Todo" onclick="clearAllRules()" style="background-color: #f44336;">🗑️</button>
+            <button id="sim-toggle-btn" onclick="toggleSimulation()" title="Modo Simulación"
+                style="background-color: #ffc107; color: #333;">🎮</button>
+            <button id="test-alert-btn" title="Provar Alerta" onclick="toggleWrongWayAlert()"
+                style="background-color: #f44336; color: white; border: 2px solid white;">🚨</button>
+            <div class="separator"></div>
+            <button id="overlay-mode-btn" onclick="toggleOverlayMode()" title="Modo Capa Visual (Tapar Flechas)"
+                style="background-color: #673AB7;">🎨</button>
+            <button title="Recargar overlays.js" onclick="resetOverlaysFromFile()"
+                style="background-color: #4b2c85;">🔄</button>
+            <button title="Descargar Overlays" onclick="downloadOverlaysConfig()"
+                style="background-color: #5e35b1;">💾</button>
+        </div>
+    </div>
+
+    <!-- Admin: Overlay Creation Modal -->
+    <div id="overlay-modal" class="hidden">
+        <div class="modal-content" style="border-top: 5px solid #673AB7;">
+            <h3>Afegir Capa Visual</h3>
+            <p><small>Aquesta capa només serveix per corregir el mapa visualment. No activarà alarmes.</small></p>
+
+            <div style="margin-bottom: 15px;">
+                <p>Tipus de Capa:</p>
+                <select id="overlay-type" onchange="updateOverlayAnglePreview()"
+                    style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="arrow">⬆️ Flecha (Verd)</option>
+                    <option value="line">📏 Línia (Vermell Metàl·lic)</option>
+                    <option value="parking">🅿️ Pàrquing (Animat)</option>
+                    <option value="zbe-large">🔴 ZBE Gegant (Metal·litzat)</option>
+                </select>
+            </div>
+
+            <div class="direction-inputs">
+                <p>Direcció (Rumb): <span id="overlay-angle-display">0</span>°</p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <input type="range" id="overlay-angle" min="0" max="360" value="0"
+                        oninput="updateOverlayAnglePreview()">
+                    <div id="overlay-angle-preview"
+                        style="width: 35px; height: 35px; border: 2px solid #673AB7; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: #fff;">
+                        <div id="overlay-angle-arrow"
+                            style="font-size: 24px; font-weight: bold; transform-origin: center; color: #673AB7;">
+                            ↑
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="saveOverlay()" style="background-color: #673AB7;">✅ Col·locar</button>
+                <button onclick="closeOverlayModal()" style="background-color: #777;">❌ Cancel·lar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin: Rule Creation Modal -->
+    <div id="rule-modal" class="hidden">
+        <div class="modal-content">
+            <h3>Afegir Regla de Trànsit</h3>
+            <select id="rule-type">
+                <option value="forbidden">⛔ Direcció Prohibida</option>
+                <option value="mandatory">⬇️ Direcció Obligatòria</option>
+                <option value="zbe">🔞 Zona Baixes Emissions (ZBE)</option>
+                <option value="deadend">🟦 Carrer sense Sortida</option>
+            </select>
+            <div class="direction-inputs">
+                <p>Direcció (Rumb): <span id="angle-display">0</span>°</p>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <input type="range" id="rule-angle" min="0" max="360" value="0" oninput="updateAnglePreview()">
+                    <div id="angle-preview"
+                        style="width: 30px; height: 30px; border: 2px solid #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; background: #eee;">
+                        <div id="angle-arrow" style="font-size: 20px; font-weight: bold; transform-origin: center;">
+                            ⬆️
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="saveRule()" style="background-color: #4CAF50;">✅ Desar</button>
+                <button onclick="closeModal()" style="background-color: #777;">❌ Cancel·lar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="hidden">
+        <div class="modal-content help-content">
+            <div class="help-scroll-area">
+                <div class="help-lang-section">
+                    <h3>ℹ️ Ajuda / Información / Help / Hilfe / Aide</h3>
+                    <div style="font-size: 13px;">
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Flag_of_Catalonia.svg/320px-Flag_of_Catalonia.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> CATALÀ:</b> Prototip
+                            de navegació. Cal respectar la senyalització i zones <b>ZBE (Zones de Baixes Emissions)</b>.
+                        </p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/320px-Bandera_de_Espa%C3%B1a.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> ESPAÑOL:</b>
+                            Prototipo de navegación. Respete la señalización y zonas <b>ZBE (Zonas de Bajas
+                                Emisiones)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Flag_of_the_United_Kingdom.svg/320px-Flag_of_the_United_Kingdom.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> ENGLISH:</b>
+                            Navigation prototype. Obey all signs and <b>ZBE (Low Emission Zones)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/320px-Flag_of_Germany.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> DEUTSCH:</b>
+                            Navigationsprototip. Beachten Sie Schilder und <b>ZBE (Umweltzonen)</b>.</p>
+                        <p><b><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Flag_of_France.svg/320px-Flag_of_France.svg.png"
+                                    width="15" style="vertical-align: middle; margin-right: 5px;"> FRANÇAIS:</b>
+                            Prototype de navigation. Respectez les signes e zones <b>ZBE (Zones à Faibles
+                                Émissions)</b>.</p>
+                    </div>
+                    <hr>
+                    <div style="font-size: 12px; line-height: 1.4;">
+                        <p><b>Requisits / Requisitos / Requirements:</b><br>
+                            • CAT: Ubicació, Precisió i Connexió a Internet.<br>
+                            • ESP: Ubicación, Precisión y Conexión a Internet.<br>
+                            • ENG: Location, Accuracy and Internet Connection.<br>
+                            • DEU: Standort, Genauigkeit und Internetverbindung.<br>
+                            • FRA: Localisation, Précision et Connexion Internet.
+                        </p>
+                        <p><i><b>Nota / Note / Hinweis:</b><br>
+                                • CAT: El mapa se centra automàticament per inactivitat o en iniciar la marxa. També
+                                podeu prémer 🎯.<br>
+                                • ESP: El mapa se centra automáticamente por inactividad o al iniciar la marcha. También
+                                puede pulsar 🎯.<br>
+                                • ENG: Map auto-centers after inactivity or when moving. You can also press 🎯.<br>
+                                • DEU: Karte zentriert sich automáticamente bei Inaktivität oder Fahrtbeginn. Oder 🎯
+                                drücken.<br>
+                                • FRA: Le mapa se centre automáticamente après inactivité ou au démarrage. Ou appuyez
+                                sur
+                                🎯.</i></p>
+                    </div>
+                </div>
+                <button onclick="closeHelpModal()" class="close-btn" style="margin-top: 15px;">Tancar / Cerrar / Close /
+                    Schließen / Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Keypad (Separate from toggle) -->
+    <div id="simulation-controls" class="hidden">
+        <div id="sim-keypad" class="hidden">
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="up-left">↖</button>
+                <button class="sim-btn" data-dir="up">▲</button>
+                <button class="sim-btn" data-dir="up-right">↗</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="left">◀</button>
+                <button onclick="stopSimulated()" style="background:#f44336">✖</button>
+                <button class="sim-btn" data-dir="right">▶</button>
+            </div>
+            <div class="sim-row">
+                <button class="sim-btn" data-dir="down-left">↙</button>
+                <button class="sim-btn" data-dir="down">▼</button>
+                <button class="sim-btn" data-dir="down-right">↘</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Global Configuration -->
+    <script>
+        window.isApplicationAdmin = true;
+    </script>
+
+    <!-- Firebase SDK (Lite via CDN) -->
+    <script type="module">
+        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // This will be accessible from app.js once loaded
+        window.FirebaseSDK = { initializeApp, getApps, getDatabase, ref, set, onValue };
+
+        // Signal Firebase readiness if app.js is already waiting
+        if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
+    </script>
+
+
+    <div id="wrong-way-alert" class="hidden">
+        <div class="alert-content">
+            <div id="alert-icon"></div>
+            <h2 id="alert-title">¡SENTIT CONTRARI!</h2>
+            <p id="alert-message">ATUREU-VOS IMMEDIATAMENT</p>
+            <button id="stop-alert-btn" onclick="stopAlert()">Aturar Alarma</button>
+        </div>
+    </div>
+
+    <div id="version-label">Versió: 1.40 | © Juanjo Vivas | <a href="mailto:juanjo.vivasm@gmail.com"
+            style="color: inherit; text-decoration: none;">juanjo.vivasm@gmail.com</a></div>
+
+    <script>
+        (function () {
+            const v = new URLSearchParams(window.location.search).get('v') || '1.35';
+            const scripts = ['./rules.js', './overlays.js', './app.js'];
+            scripts.forEach(src => {
+                document.write('<script src="' + src + '?v=' + v + '"><\/script>');
+            });
+        })();
+    </script>
+</body>
+
+</html>
