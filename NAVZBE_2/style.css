@@ -784,6 +784,30 @@ button:active {
     }
 }
 
+/* Landscape: adaptar aviso inicial y permitir scroll completo (v1.72) */
+@media (orientation: landscape) {
+    #initial-caution-prompt {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: none;
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        border-radius: 0;
+        padding: 16px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+
+    #initial-caution-prompt .caution-body {
+        max-height: none;
+        padding-right: 4px;
+    }
+}
+
 /* Landscape: scrollable nav buttons column (v1.36) */
 @media (orientation: landscape) and (max-height: 500px) {
     #top-right-controls {
