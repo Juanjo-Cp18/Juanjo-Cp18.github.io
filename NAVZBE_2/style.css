@@ -436,7 +436,7 @@ button:active {
     padding: 30px;
     border-radius: 28px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    z-index: 10000;
+    z-index: 16000;
     color: #1a1a1a;
     border: 1px solid rgba(255, 255, 255, 0.6);
     animation: modal-slide-in 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -784,6 +784,19 @@ button:active {
     }
 }
 
+/* Portrait con poca altura: asegurar scroll completo del aviso inicial (v1.72) */
+@media (orientation: portrait) and (max-height: 600px) {
+    #initial-caution-prompt {
+        bottom: 10px;
+        max-height: calc(100vh - 20px);
+        overflow-y: auto;
+    }
+
+    #initial-caution-prompt .caution-body {
+        max-height: none;
+    }
+}
+
 /* Landscape: adaptar aviso inicial y permitir scroll completo (v1.72) */
 @media (orientation: landscape) {
     #initial-caution-prompt {
@@ -805,6 +818,7 @@ button:active {
     #initial-caution-prompt .caution-body {
         max-height: none;
         padding-right: 4px;
+        overflow-y: visible;
     }
 }
 
