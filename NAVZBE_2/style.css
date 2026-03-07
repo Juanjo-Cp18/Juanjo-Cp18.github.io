@@ -390,6 +390,9 @@ button:active {
     width: 80%;
     max-width: 300px;
     text-align: center;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 .modal-content select,
@@ -641,6 +644,9 @@ button:active {
     width: 500px;
     box-shadow: 0 0 50px rgba(255, 23, 68, 0.4);
     animation: pulse-alert 2s infinite;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
 @keyframes pulse-alert {
