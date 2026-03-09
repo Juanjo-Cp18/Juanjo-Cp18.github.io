@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Astro-Mates 1.9</title>
+<style>
+:root {
+    --bg-space: #1e293b;
+    --panel-bg: rgba(30, 41, 59, 0.9);
+    --neon-cyan: #22d3ee;
+    --neon-purple: #a5b4fc;
+    --neon-yellow: #fbbf24;
+    --text-light: #f8fafc;
+    --error: #fb7185;
+    --success: #34d399;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translate(-50%, -50%) scale(0); }
+    10%, 90% { transform: translate(-52%, -50%) scale(1.2); }
+    20%, 80% { transform: translate(-48%, -50%) scale(1.2); }
+    30%, 50%, 70% { transform: translate(-52%, -52%) scale(1.2); }
+    40%, 60% { transform: translate(-48%, -48%) scale(1.2); }
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(-45deg, #1e293b, #334155, #2e3b4e, #1e293b);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    color: var(--text-light);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+#background-objects {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; overflow: hidden; pointer-events: none;
+}
+
+.space-obj { position: absolute; opacity: 0.5; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+
+@keyframes flyDiagonal {
+    from { transform: translate(-10%, 110vh) rotate(-45deg); }
+    to { transform: translate(110%, -10vh) rotate(-45deg); }
+}
+@keyframes driftHorizontal {
+    from { transform: translateX(-10%) translateY(0); }
+    to { transform: translateX(110%) translateY(10vh); }
+}
+@keyframes tumble {
+    0% { transform: translateY(-10vh) rotate(0deg); }
+    100% { transform: translateY(110vh) rotate(360deg); }
+}
+
+/* PANTALLA INICIAL */
+#pantalla-usuari {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 40px 20px; height: 100vh; box-sizing: border-box;
+    overflow-y: auto; position: relative; z-index: 10;
+}
+
+h1 { font-size: 3rem; color: var(--neon-cyan); text-shadow: 0 0 15px rgba(34, 211, 238, 0.5); margin-bottom: 20px; }
+
+.input-group {
+    background: var(--panel-bg); padding: 10px; border-radius: 20px;
+    border: 2px solid var(--neon-purple); margin-bottom: 30px;
+    display: flex; backdrop-filter: blur(5px);
+}
+
+#nou-nom { background: transparent; border: none; color: white; padding: 10px; font-size: 1.1rem; outline: none; width: 200px; text-transform: uppercase; }
+
+#llista-perfils { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; width: 100%; max-width: 600px; margin-bottom: 20px; }
+
+.perfil-card {
+    background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px; width: 110px; padding: 15px; cursor: pointer;
+    text-align: center; position: relative; transition: 0.2s; backdrop-filter: blur(5px);
+}
+.perfil-card:hover { border-color: var(--neon-cyan); transform: scale(1.05); }
+
+.btn-eliminar {
+    position: absolute; top: -5px; right: -5px; background: var(--error);
+    color: white; width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; z-index: 20;
+}
+
+.footer-tag {
+    position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.5);
+    padding: 5px 12px; border-radius: 10px; font-family: monospace; font-size: 0.8rem; color: var(--neon-cyan); z-index: 100;
+}
+
+/* JOC */
+#joc { display: none; flex-direction: column; height: 100vh; position: relative; z-index: 10; }
+
+#barra-superior {
+    background: rgba(15, 23, 42, 0.85); padding: 10px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--neon-purple); backdrop-filter: blur(5px);
+}
+
+.stats-group { display: flex; gap: 20px; align-items: center; }
+.stats-val { color: var(--neon-yellow); font-weight: bold; }
+
+#zona-central { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
+
+#operacio { font-size: 6rem; font-weight: 900; text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+
+canvas { background: white; border: 6px solid var(--neon-purple); border-radius: 25px; touch-action: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+
+button {
+    background: var(--neon-purple); color: #1e293b; border: none; border-radius: 15px;
+    padding: 12px 25px; font-weight: bold; cursor: pointer; text-transform: uppercase;
+}
+button.success { background: var(--success); color: white; }
+button.danger { background: var(--error); color: white; }
+
+/* FEEDBACK VISUAL */
+#feedback-visual {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+    font-size: 150px; z-index: 10000; pointer-events: none;
+}
+
+.animar-logro { transition: 0.5s cubic-bezier(0.17, 0.89, 0.32, 1.4); transform: translate(-50%, -50%) scale(1.5) !important; }
+.animar-error { animation: shake 0.6s ease-in-out; }
+
+#cartell {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+    background: var(--neon-yellow); color: #000; padding: 30px 60px;
+    border-radius: 30px; font-size: 3rem; font-weight: 900; z-index: 9000; transition: 0.4s; pointer-events: none; text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div id="background-objects"></div>
+<div id="feedback-visual">🏆</div>
+<div id="cartell"></div>
+<div class="footer-tag">Versió: 1.9 © Juanjo Vivas</div>
+
+<div id="pantalla-usuari">
+    <h1>🚀 ASTRO-MATES</h1>
+    <div class="input-group">
+        <input id="nou-nom" placeholder="EL TEU NOM..." autocomplete="off">
+        <button onclick="crearUsuari()">AFEGIR</button>
+    </div>
+    <div id="llista-perfils"></div>
+    <div style="background: var(--panel-bg); padding: 20px; border-radius: 20px; width: 300px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px);">
+        <h3 style="margin: 0 0 15px 0; color:var(--neon-yellow); font-size: 0.8rem; text-align: center; letter-spacing: 2px;">🏆 RÀNQUING D'EXPLORADORS</h3>
+        <div id="ranking"></div>
+    </div>
+    <button onclick="borrarTot()" style="margin-top: 40px; background: transparent; color: rgba(255,255,255,0.3); border: none; font-size: 0.7rem;">ESBORRAR TOTES LES DADES</button>
+</div>
+
+<div id="joc">
+    <div id="barra-superior">
+        <div class="stats-group">
+            <span id="usuari-actiu" style="color:var(--neon-cyan); font-weight:bold;"></span>
+            <div id="medalles-barra" style="font-size: 1.4rem;"></div>
+        </div>
+        <div class="stats-group">
+            <div>NIVELL: <span id="nivell-num" class="stats-val">1</span></div>
+            <div>⭐ <span id="estrelles-num" class="stats-val">0</span></div>
+            <div id="vidas_display"></div>
+            <button onclick="sortir()" style="padding: 5px 12px; font-size: 0.7rem;">SORTIR</button>
+        </div>
+    </div>
+    <div id="zona-central">
+        <div id="operacio"></div>
+        <div style="position: relative;">
+            <canvas id="canvas_joc" width="550" height="280"></canvas>
+            <div id="api-feedback" style="position: absolute; bottom: -35px; width: 100%; text-align: center; color: var(--neon-cyan); font-weight: bold; font-size: 0.8rem; text-transform: uppercase;"></div>
+        </div>
+        <div style="display:flex; gap: 20px; margin-top: 25px;">
+            <button onclick="netejar()" class="danger">ESBORRAR</button>
+            <button onclick="comprovar()" class="success">COMPROVAR</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let usuarios = {};
+try {
+    const data = localStorage.getItem("mates_users");
+    if(data) usuarios = JSON.parse(data);
+} catch(e) { usuarios = {}; }
+
+let usuariActiu = null;
+let nivell = 1, estrelles = 0, medalles = [], resposta = 0, intents = 0;
+let canvas, ctx, dib = false, traces = [], actual = [], audioCtx = null;
+
+window.onload = function() {
+    canvas = document.getElementById('canvas_joc');
+    if(canvas) {
+        ctx = canvas.getContext('2d');
+        ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#1e293b";
+        setupDrawingEvents();
+    }
+    renderPerfils();
+    initBackgroundObjects();
+};
+
+function initBackgroundObjects() {
+    const container = document.getElementById('background-objects');
+    const types = [
+        { emoji: '🚀', anim: 'flyDiagonal', size: 30, speed: 15 },
+        { emoji: '🛸', anim: 'driftHorizontal', size: 40, speed: 25 },
+        { emoji: '☄️', anim: 'tumble', size: 25, speed: 20 }
+    ];
+    for (let i = 0; i < 15; i++) createObject(container, types);
+}
+
+function createObject(container, types) {
+    const el = document.createElement('div');
+    const type = types[Math.floor(Math.random() * types.length)];
+    el.className = 'space-obj'; el.innerText = type.emoji;
+    el.style.fontSize = (type.size + Math.random()*15) + 'px';
+    el.style.top = Math.random()*100 + 'vh'; el.style.left = Math.random()*100 + 'vw';
+    el.style.animation = `${type.anim} ${type.speed + Math.random()*10}s linear ${Math.random()*-30}s infinite`;
+    container.appendChild(el);
+}
+
+function so(freq, dur = 0.4){
+    try {
+        if(!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.frequency.value = freq; o.connect(g); g.connect(audioCtx.destination);
+        o.start(); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur); o.stop(audioCtx.currentTime + dur);
+    } catch(e) {}
+}
+
+function soLogro() { [440, 554, 659].forEach((f, i) => setTimeout(() => so(f, 0.5), i * 150)); }
+function soError() { so(150, 0.3); setTimeout(() => so(100, 0.5), 150); }
+
+function mostrarFeedback(emoji, esError = false) {
+    const el = document.getElementById("feedback-visual");
+    el.innerText = emoji; el.className = ""; 
+    void el.offsetWidth;
+    el.className = esError ? "animar-error" : "animar-logro";
+    setTimeout(() => { el.className = ""; el.style.transform = "translate(-50%, -50%) scale(0)"; }, 1500);
+}
+
+function crearUsuari(){
+    const input = document.getElementById("nou-nom");
+    let nom = input.value.trim().toUpperCase();
+    if(!nom) return;
+    if(usuarios[nom]) { alert("Aquest explorador ja existeix!"); return; }
+    usuarios[nom] = { nivel: 1, estrelles: 0, medalles: [] };
+    localStorage.setItem("mates_users", JSON.stringify(usuarios));
+    input.value = ""; renderPerfils();
+}
+
+function eliminarUsuari(event, nom){
+    event.stopPropagation();
+    if(confirm(`Vols eliminar l'explorador ${nom}?`)){
+        delete usuarios[nom];
+        localStorage.setItem("mates_users", JSON.stringify(usuarios));
+        renderPerfils();
+    }
+}
+
+function renderPerfils(){
+    let c = document.getElementById("llista-perfils");
+    c.innerHTML = "";
+    for(let n in usuarios){
+        let div = document.createElement("div"); div.className = "perfil-card";
+        div.innerHTML = `<div class="btn-eliminar" onclick="eliminarUsuari(event, '${n}')">✕</div><span style="font-size:2.5rem">👨‍🚀</span><div style="font-size:0.8rem; font-weight:bold">${n}</div>`;
+        div.onclick = () => seleccionar(n); c.appendChild(div);
+    }
+    renderRanking();
+}
+
+function renderRanking(){
+    let r = document.getElementById("ranking");
+    let arr = Object.keys(usuarios).map(n => ({n, s: usuarios[n].estrelles || 0})).sort((a,b) => b.s - a.s);
+    r.innerHTML = arr.length > 0 ? "" : "<div style='opacity:0.5; font-size:0.8rem; text-align:center;'>Sense exploradors</div>";
+    arr.slice(0,5).forEach((u,i) => {
+        r.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin:5px 0;"><span>${i+1}. ${u.n}</span><span>${u.s} ⭐</span></div>`;
+    });
+}
+
+function seleccionar(n){
+    usuariActiu = n; let u = usuarios[n];
+    nivell = u.nivel || 1; estrelles = u.estrelles || 0; medalles = u.medalles || []; intents = 0;
+    document.getElementById("pantalla-usuari").style.display = "none";
+    document.getElementById("joc").style.display = "flex";
+    document.getElementById("usuari-actiu").innerText = "👨‍🚀 " + n;
+    actualitzar(); novaOperacio();
+}
+
+async function comprovar(){
+    if(traces.length === 0) return;
+    document.getElementById("api-feedback").innerText = "📡 ANALITZANT...";
+    try {
+        let r = await fetch("https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8", {
+            method: "POST", headers: { "Content-Type": "application/json" }, 
+            body: JSON.stringify({options: "enable_pre_space", requests: [{writing_guide: { writing_area_width: canvas.width, writing_area_height: canvas.height }, ink: traces.map(t => [t.map(p => p[0]), t.map(p => p[1])]), language: "ca"}]})
+        });
+        let res = await r.json();
+        let llegit = (res && res[1] && res[1][0] && res[1][0][1]) ? res[1][0][1][0] : "";
+        llegit = llegit.replace(/[^0-9]/g,'');
+        
+        if(llegit !== "" && parseInt(llegit) === resposta){
+            so(600); estrelles++;
+            if(estrelles % 5 === 0) {
+                nivell++; soLogro();
+                let m = nivell >= 20 ? "💎" : (nivell >= 15 ? "🥇" : (nivell >= 10 ? "🥈" : "🥉"));
+                if(!medalles.includes(m)) medalles.push(m);
+                mostrarFeedback(nivell % 2 === 0 ? "🚀" : "🏆");
+                cartell("🏅 NIVELL " + nivell);
+            } else { cartell("MOLT BÉ!"); }
+            intents = 0; guardar(); actualitzar(); setTimeout(novaOperacio, 1500);
+        } else {
+            soError(); intents++;
+            mostrarFeedback(Math.random() > 0.5 ? "💥" : "👾", true);
+            if(intents >= 3){
+                cartell("ERA EL " + resposta); intents = 0;
+                setTimeout(novaOperacio, 2000);
+            } else { cartell("GAIREBÉ!"); }
+            actualitzar();
+        }
+    } catch(e) { document.getElementById("api-feedback").innerText = "ERROR DE CONNEXIÓ"; }
+    netejar();
+}
+
+function novaOperacio(){
+    document.getElementById("api-feedback").innerText = "";
+    let max = nivell > 5 ? 20 : 10;
+    let tipus = (nivell >= 3 && Math.random() > 0.5) ? "-" : "+";
+    let a = Math.floor(Math.random() * (max + 1)), b = Math.floor(Math.random() * (max + 1));
+    if(tipus === "-") { if(b > a) [a, b] = [b, a]; resposta = a - b; }
+    else { resposta = a + b; }
+    document.getElementById("operacio").innerText = `${a} ${tipus} ${b} = ?`;
+    netejar();
+}
+
+function netejar(){ if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); traces = []; }
+function guardar(){ if(usuariActiu){ usuarios[usuariActiu] = { nivel:nivell, estrelles:estrelles, medalles:medalles }; localStorage.setItem("mates_users", JSON.stringify(usuarios)); } }
+function actualitzar(){
+    document.getElementById("nivell-num").innerText = nivell;
+    document.getElementById("estrelles-num").innerText = estrelles;
+    document.getElementById("medalles-barra").innerText = medalles.join("");
+    document.getElementById("vidas_display").innerText = "❤️".repeat(3 - intents) + "🖤".repeat(intents);
+}
+function cartell(t){
+    let c = document.getElementById("cartell"); c.innerText = t;
+    c.style.transform = "translate(-50%,-50%) scale(1)";
+    setTimeout(() => c.style.transform = "translate(-50%,-50%) scale(0)", 2000);
+}
+function setupDrawingEvents() {
+    const start = (e) => { e.preventDefault(); dib = true; actual = []; let p = pos(e.touches ? e.touches[0] : e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+    const move = (e) => { if (!dib) return; let p = pos(e.touches ? e.touches[0] : e); ctx.lineTo(p.x, p.y); ctx.stroke(); actual.push([Math.round(p.x), Math.round(p.y)]); };
+    const stop = () => { if (dib) traces.push(actual); dib = false; };
+    canvas.addEventListener("mousedown", start); canvas.addEventListener("mousemove", move); window.addEventListener("mouseup", stop);
+    canvas.addEventListener("touchstart", start, {passive: false}); canvas.addEventListener("touchmove", move, {passive: false}); window.addEventListener("touchend", stop);
+}
+function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+}
+function borrarTot(){ if(confirm("Segur que vols esborrar TOTES les dades?")) { localStorage.clear(); location.reload(); } }
+function sortir(){ location.reload(); }
+</script>
+</body>
+</html>
