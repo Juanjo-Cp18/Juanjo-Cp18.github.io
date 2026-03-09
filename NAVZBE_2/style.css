@@ -637,16 +637,21 @@ button:active {
 .alert-content {
     background: rgba(255, 255, 255, 0.1);
     border: 3px solid #ff1744;
-    padding: 40px;
+    padding: 28px 20px;
     border-radius: 30px;
     text-align: center;
-    max-width: 90%;
-    width: 500px;
+    /* Ancho fluido y limitado para móviles y escritorio */
+    width: min(500px, 92vw);
+    max-width: 92vw;
     box-shadow: 0 0 50px rgba(255, 23, 68, 0.4);
     animation: pulse-alert 2s infinite;
     max-height: 90vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 @keyframes pulse-alert {
@@ -667,14 +672,14 @@ button:active {
 }
 
 #alert-icon {
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
     margin: 0 auto 25px;
 }
 
 #alert-title {
     color: #ff1744;
-    font-size: 32px;
+    font-size: 28px;
     margin-bottom: 15px;
     font-weight: 900;
     text-transform: uppercase;
@@ -683,7 +688,7 @@ button:active {
 
 #alert-message {
     color: white;
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1.5;
     margin-bottom: 30px;
     font-weight: 500;
@@ -693,9 +698,9 @@ button:active {
     background: #ff1744;
     color: white;
     border: none;
-    padding: 15px 40px;
-    font-size: 18px;
-    border-radius: 50px;
+    padding: 14px 32px;
+    font-size: 16px;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: bold;
     text-transform: uppercase;
@@ -740,6 +745,67 @@ button:active {
     font-family: Arial, sans-serif;
     font-weight: bold;
     color: white;
+}
+
+/* Ajustes responsivos específicos para el cartel de alerta */
+@media (max-width: 600px) {
+    .alert-content {
+        border-radius: 22px;
+        padding: 18px 14px;
+        width: 94vw;
+        max-width: 94vw;
+        max-height: 92vh;
+    }
+
+    #alert-icon {
+        width: 110px;
+        height: 110px;
+        margin-bottom: 16px;
+    }
+
+    #alert-title {
+        font-size: 20px;
+        line-height: 1.3;
+        letter-spacing: 1px;
+    }
+
+    #alert-message {
+        font-size: 14px;
+        max-height: 48vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #wrong-way-alert button {
+        width: 100%;
+        max-width: 320px;
+        font-size: 14px;
+        padding: 12px 18px;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    #wrong-way-alert {
+        align-items: flex-start;
+        padding-top: 8px;
+    }
+
+    .alert-content {
+        margin: 8px auto;
+        max-height: calc(100vh - 16px);
+    }
+
+    #alert-icon {
+        width: 90px;
+        height: 90px;
+        margin-bottom: 10px;
+    }
+
+    #alert-message {
+        max-height: 40vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 /* Response to Portrait/Narrow overlap - Versión 1.29 */
