@@ -791,40 +791,45 @@ button:active {
 
 @media (orientation: landscape) and (max-height: 500px) {
     #wrong-way-alert {
-        align-items: flex-start;
-        padding: 10px;
+        display: block; /* Disable flex centering bugs */
+        overflow-y: auto;
+        padding: 16px;
     }
 
     .alert-content {
-        margin: auto;
+        margin: 0 auto;
         width: 100%;
-        max-width: 100%;
+        max-width: 600px;
         height: auto;
-        max-height: calc(100vh - 20px);
+        max-height: none;
+        display: block;
     }
 
     #alert-icon {
         width: 60px;
         height: 60px;
-        margin-bottom: 10px;
-        flex-shrink: 0;
+        margin: 0 auto 10px auto;
     }
 
     #alert-title {
         font-size: 24px;
         margin-bottom: 10px;
-        flex-shrink: 0;
     }
 
     #alert-message {
         font-size: 16px;
         margin-bottom: 14px;
+        overflow-y: visible;
+        max-height: none;
     }
 
     #wrong-way-alert button {
-        padding: 10px 20px;
+        padding: 12px 20px;
         font-size: 14px;
-        flex-shrink: 0;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+        display: block;
     }
 }
 
