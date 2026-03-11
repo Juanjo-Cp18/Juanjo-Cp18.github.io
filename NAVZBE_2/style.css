@@ -666,6 +666,10 @@ button:active {
     border-radius: 50%; /* Perfect circle */
     width: 32px;
     height: 32px;
+    min-width: 32px; /* Force minimum width to prevent flex issues */
+    min-height: 32px; /* Force minimum height */
+    flex-shrink: 0; /* Prevent squishing by flex containers */
+    aspect-ratio: 1 / 1; /* Hardware-level aspect ratio constraint */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -677,11 +681,15 @@ button:active {
     z-index: 10;
     box-sizing: border-box; /* Crucial for circle shape across browsers */
     -webkit-tap-highlight-color: transparent; /* Remove touch highlight on mobile */
+    -webkit-appearance: none; /* Prevent iOS overriding shapes on buttons */
+    appearance: none;
 }
 
 .top-close-alert-btn svg {
     width: 16px;
     height: 16px;
+    min-width: 16px;
+    min-height: 16px;
     stroke-width: 2.5;
 }
 
