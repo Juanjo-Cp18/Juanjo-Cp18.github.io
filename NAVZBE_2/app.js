@@ -1915,6 +1915,17 @@ function showInitialCautionPrompt() {
 function closeCautionPrompt() {
     const prompt = document.getElementById('initial-caution-prompt');
     if (prompt) prompt.classList.add('hidden');
+
+    // Attempt to request full screen on user interaction (Android / Chrome)
+    try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(err => {
+                console.log(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        }
+    } catch (e) {
+        console.log("Fullscreen API not supported or error: " + e);
+    }
 }
 
 // Help Modal Logic (v1.26)

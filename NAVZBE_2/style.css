@@ -436,7 +436,7 @@ button:active {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    padding: 30px;
+    padding: 60px 30px 30px 30px;
     border-radius: 28px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     z-index: 16000;
