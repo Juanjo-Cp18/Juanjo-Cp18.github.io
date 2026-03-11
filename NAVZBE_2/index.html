@@ -89,28 +89,36 @@
         <!-- Refresh Rule Button -->
         <div class="control-wrapper">
             <button id="refresh-btn" title="Actualitzar / Actualizar / Refresh / Aktualisieren / Actualiser"
-                onclick="refreshRules()" style="background-color: #4CAF50;">🔄</button>
+                onclick="refreshRules()" style="background-color: #4CAF50; display:flex; align-items:center; justify-content:center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/></svg>
+            </button>
             <span class="control-label">Actualitzar / Actualizar / Refresh / Aktualisieren / Actualiser</span>
         </div>
 
         <!-- Help Button -->
         <div class="control-wrapper">
             <button id="help-btn" title="Ajuda / Ayuda / Help / Hilfe / Aide" onclick="openHelpModal()"
-                style="background-color: #2196F3;">❓</button>
+                style="background-color: #2196F3; display:flex; align-items:center; justify-content:center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </button>
             <span class="control-label">Ajuda / Ayuda / Help / Hilfe / Aide</span>
         </div>
 
         <!-- Map Button -->
         <div class="control-wrapper">
             <button id="map-img-btn" title="Mapa Oficial / Official Map / Offizielle Karte / Carte Officielle"
-                onclick="openMapImage()" style="background-color: #795548;">🗺️</button>
+                onclick="openMapImage()" style="background-color: #795548; display:flex; align-items:center; justify-content:center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 8 2 16 6 23 2 23 18 16 22 8 18 1 22 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+            </button>
             <span class="control-label">Mapa Oficial / Official Map / Offizielle Karte / Carte Officielle</span>
         </div>
 
         <!-- Center Map Button -->
         <div class="control-wrapper">
             <button id="center-btn" title="Centrar / Centrar / Center / Zentrieren / Centrer"
-                onclick="centerMap()">🎯</button>
+                onclick="centerMap()" style="display:flex; align-items:center; justify-content:center;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line></svg>
+            </button>
             <span class="control-label">Centrar / Centrar / Center / Zentrieren / Centrer</span>
         </div>
     </div>
@@ -220,7 +228,7 @@
     </div>
 
 
-    <div id="version-label">Versió: 3.9 | © Juanjo Vivas | 📧 <a href="mailto:juanjo.vivasm@gmail.com"
+    <div id="version-label">Versió: 3.10 | © Juanjo Vivas | 📧 <a href="mailto:juanjo.vivasm@gmail.com"
             style="color: inherit; text-decoration: none;">juanjo.vivasm@gmail.com</a></div>
 
     <!-- Map Attribution -->
