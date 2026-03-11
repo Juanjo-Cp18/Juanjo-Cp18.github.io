@@ -643,6 +643,7 @@ button:active {
     padding: 28px 20px;
     border-radius: 30px;
     text-align: center;
+    position: relative;
     /* Ancho fluido y limitado para móviles y escritorio */
     width: min(500px, 92vw);
     max-width: 92vw;
@@ -654,6 +655,31 @@ button:active {
     flex-direction: column;
     align-items: stretch;
     margin: auto;
+}
+
+.top-close-alert-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    padding: 0;
+    margin: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.top-close-alert-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
 }
 
 @keyframes pulse-alert {
