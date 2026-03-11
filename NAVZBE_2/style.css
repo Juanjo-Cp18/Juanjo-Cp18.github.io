@@ -629,11 +629,12 @@ button:active {
     z-index: 99999;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 8px;
+    align-items: flex-start;
+    padding: 20px;
     box-sizing: border-box;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    overflow-y: auto;
 }
 
 .alert-content {
@@ -647,11 +648,12 @@ button:active {
     max-width: 92vw;
     box-shadow: 0 0 50px rgba(255, 23, 68, 0.4);
     animation: pulse-alert 2s infinite;
-    max-height: 100%;
+    max-height: 95vh;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    margin: auto;
 }
 
 @keyframes pulse-alert {
@@ -675,6 +677,7 @@ button:active {
     width: 140px;
     height: 140px;
     margin: 0 auto 25px;
+    flex-shrink: 0;
 }
 
 #alert-title {
@@ -684,6 +687,7 @@ button:active {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 2px;
+    flex-shrink: 0;
 }
 
 #alert-message {
@@ -692,7 +696,8 @@ button:active {
     line-height: 1.5;
     margin-bottom: 24px;
     font-weight: 500;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     width: 100%;
@@ -786,26 +791,37 @@ button:active {
 
 @media (orientation: landscape) and (max-height: 500px) {
     #wrong-way-alert {
-        align-items: stretch;
-        padding: 6px 6px 8px;
+        align-items: flex-start;
+        padding: 10px;
     }
 
     .alert-content {
-        margin: 0 auto;
+        margin: auto;
         width: 100%;
         max-width: 100%;
-        height: 100%;
-        max-height: 100vh;
+        height: auto;
+        max-height: none;
     }
 
     #alert-icon {
-        width: 90px;
-        height: 90px;
+        width: 60px;
+        height: 60px;
+        margin-bottom: 10px;
+    }
+
+    #alert-title {
+        font-size: 24px;
         margin-bottom: 10px;
     }
 
     #alert-message {
-        max-height: none;
+        font-size: 16px;
+        margin-bottom: 14px;
+    }
+
+    #wrong-way-alert button {
+        padding: 10px 20px;
+        font-size: 14px;
     }
 }
 
