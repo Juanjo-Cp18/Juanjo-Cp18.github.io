@@ -659,36 +659,36 @@ button:active {
 
 .top-close-alert-btn {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(255, 23, 68, 0.15);
-    border: 1px solid rgba(255, 23, 68, 0.3);
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    top: 15px;
+    left: 15px; /* Moved to left as requested */
+    background: rgba(0, 0, 0, 0.2); /* Neutral transparent dark background */
+    border: 2px solid rgba(255, 255, 255, 0.5); /* Clear border for contrast */
+    border-radius: 50%; /* Perfect circle */
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #ff1744;
+    color: white; /* White icon */
     padding: 0;
     margin: 0;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.3s ease;
     z-index: 10;
+    box-sizing: border-box; /* Crucial for circle shape across browsers */
+    -webkit-tap-highlight-color: transparent; /* Remove touch highlight on mobile */
 }
 
 .top-close-alert-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     stroke-width: 2.5;
 }
 
-.top-close-alert-btn:hover {
-    background: #ff1744;
-    color: white;
-    transform: scale(1.15) rotate(90deg);
-    border-color: #ff1744;
-    box-shadow: 0 4px 12px rgba(255, 23, 68, 0.3);
+.top-close-alert-btn:hover, .top-close-alert-btn:active {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+    border-color: white;
 }
 
 @keyframes pulse-alert {
