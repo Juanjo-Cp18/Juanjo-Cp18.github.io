@@ -660,29 +660,40 @@ button:active {
 .top-close-alert-btn {
     position: absolute;
     top: 15px;
-    left: 15px; /* Moved to left as requested */
-    background: rgba(0, 0, 0, 0.2); /* Neutral transparent dark background */
-    border: 2px solid rgba(255, 255, 255, 0.5); /* Clear border for contrast */
-    border-radius: 50%; /* Perfect circle */
-    width: 32px;
-    height: 32px;
-    min-width: 32px; /* Force minimum width to prevent flex issues */
-    min-height: 32px; /* Force minimum height */
-    flex-shrink: 0; /* Prevent squishing by flex containers */
-    aspect-ratio: 1 / 1; /* Hardware-level aspect ratio constraint */
+    left: 15px; 
+    background: rgba(0, 0, 0, 0.2); 
+    border: 2px solid rgba(255, 255, 255, 0.5); 
+    border-radius: 50%;
+    
+    /* Aggressive dimension forcing to prevent flex stretching */
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    flex-basis: 32px !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    
+    /* Prevent parent alignment rules */
+    align-self: flex-start !important;
+    aspect-ratio: 1 / 1 !important;
+    
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: white; /* White icon */
-    padding: 0;
-    margin: 0;
+    color: white; 
+    padding: 0 !important;
+    margin: 0 !important;
     transition: all 0.3s ease;
     z-index: 10;
-    box-sizing: border-box; /* Crucial for circle shape across browsers */
-    -webkit-tap-highlight-color: transparent; /* Remove touch highlight on mobile */
-    -webkit-appearance: none; /* Prevent iOS overriding shapes on buttons */
+    box-sizing: border-box !important;
+    -webkit-tap-highlight-color: transparent; 
+    -webkit-appearance: none; 
     appearance: none;
+    overflow: hidden; /* Ensure nothing breaks the circle bounds */
 }
 
 .top-close-alert-btn svg {
