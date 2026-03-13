@@ -313,6 +313,44 @@ button:active {
     transition: all 0.3s ease;
 }
 
+/* ===== Speedometer ===== */
+#speedometer {
+    position: fixed;
+    top: 140px; /* Below city crest (90px + ~42px height + margin) */
+    left: 12px;
+    width: 42px;
+    height: 42px;
+    z-index: 3100;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+#speed-value {
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+#speed-unit {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 8px;
+    font-weight: 600;
+    line-height: 1;
+    margin-top: 1px;
+}
+
 
 /* Adjustments for Admin Mode */
 .admin-mode #zbe-soller-banner {
@@ -323,6 +361,10 @@ button:active {
 .admin-mode #city-crest {
     top: 110px;
     /* Clear the admin header + zoom */
+}
+
+.admin-mode #speedometer {
+    top: 160px;
 }
 
 .admin-toggle-label {

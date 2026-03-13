@@ -278,7 +278,8 @@ async function startGPSTracking() {
                     onLocationFound({
                         latlng: L.latLng(position.coords.latitude, position.coords.longitude),
                         heading: position.coords.heading || 0,
-                        accuracy: position.coords.accuracy
+                        accuracy: position.coords.accuracy,
+                        speed: position.coords.speed || 0
                     });
                 }
             });
@@ -295,7 +296,8 @@ async function startGPSTracking() {
             onLocationFound({
                 latlng: L.latLng(position.coords.latitude, position.coords.longitude),
                 heading: position.coords.heading || 0,
-                accuracy: position.coords.accuracy
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed || 0
             });
         }, (err) => {
             gpsHeartbeat = Date.now();
@@ -582,6 +584,11 @@ function toggleUI() {
 
     if (cityCrest) {
         cityCrest.style.display = isUIVisible ? '' : 'none';
+    }
+
+    const speedometer = document.getElementById('speedometer');
+    if (speedometer) {
+        speedometer.style.display = isUIVisible && !speedometer.classList.contains('hidden') ? '' : 'none';
     }
 
     if (mapAttribution) {
@@ -1299,6 +1306,17 @@ function onLocationFound(e) {
 
     // Update user marker
     updateUserPosition(currentLatLng, headingToUse, accuracy);
+
+    // Update Speedometer UI
+    const speedometerValue = document.getElementById('speed-value');
+    const speedometerContainer = document.getElementById('speedometer');
+    if (speedometerValue && speedometerContainer && e.speed !== undefined) {
+        if (!isSimulating) {
+            let kmh = Math.round(e.speed * 3.6);
+            speedometerValue.innerText = kmh;
+            speedometerContainer.classList.remove('hidden');
+        }
+    }
 
     // Navigation Zoom 18
     if (isMapCentered) {

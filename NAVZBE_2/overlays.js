@@ -1,5 +1,5 @@
 // Título: Configuración de Capas Visuales (Flechas)
-// Fecha: 4/3/2026, 13:41:15
+// Fecha: 13/3/2026, 14:58:16
 // Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
 const PRELOADED_OVERLAYS = [
@@ -1411,20 +1411,6 @@ const PRELOADED_OVERLAYS = [
         "type": "line"
     },
     {
-        "id": 1772549922243,
-        "lat": 39.76928648100551,
-        "lng": 2.7193812151088275,
-        "angle": 339,
-        "type": "zbe-large"
-    },
-    {
-        "id": 1772549937588,
-        "lat": 39.76653183656506,
-        "lng": 2.712814526276968,
-        "angle": 330,
-        "type": "zbe-large"
-    },
-    {
         "id": 1772550620150,
         "lat": 39.7680873048202,
         "lng": 2.707829475402832,
@@ -1528,5 +1514,61 @@ const PRELOADED_OVERLAYS = [
         "lng": 2.7211037278175354,
         "angle": 70,
         "type": "line"
+    },
+    {
+        "id": 1773409939751,
+        "lat": 39.770465037174475,
+        "lng": 2.7169597148895264,
+        "angle": 177,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773409950058,
+        "lat": 39.77142572756881,
+        "lng": 2.7201569080352788,
+        "angle": 180,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773409973974,
+        "lat": 39.768609588591076,
+        "lng": 2.7230161428451543,
+        "angle": 267,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773409989200,
+        "lat": 39.76707158997194,
+        "lng": 2.7193576097488403,
+        "angle": 333,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773410002625,
+        "lat": 39.766251035098854,
+        "lng": 2.7163374423980713,
+        "angle": 330,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773410012606,
+        "lat": 39.76599950626991,
+        "lng": 2.714454531669617,
+        "angle": 341,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773410049608,
+        "lat": 39.767694215535975,
+        "lng": 2.7118259668350224,
+        "angle": 152,
+        "type": "zbe-large"
+    },
+    {
+        "id": 1773410067489,
+        "lat": 39.768774519379036,
+        "lng": 2.7145671844482426,
+        "angle": 312,
+        "type": "zbe-large"
     }
 ];
