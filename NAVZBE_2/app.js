@@ -1,18 +1,4 @@
-// --- Firebase Configuration ---
-// TO THE USER: Replace this placeholder with your real Firebase config from the Firebase Console.
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
 // --- Global State ---
-let db = null;
-let isSyncInitialized = false;
 let map;
 let userMarker = null;
 let isAdminMode = window.isApplicationAdmin || false;
@@ -144,10 +130,7 @@ async function init() {
     // Load rules immediately (from LocalStorage or rules.js fallback)
     loadRulesFromStorage();
     loadOverlaysFromStorage(); // New
-
-    // Start Firebase Sync (will update rules if cloud data exists)
-    initFirebaseSync();
-    // initOverlaySync() is now called inside initFirebaseSync() to ensure db is ready
+    // (Firebase Sync removed)
 
     // Map Click Listener (Only active in Admin Mode)
     map.on('click', onMapClick);
@@ -775,27 +758,8 @@ function renderOverlays() {
 }
 
 function saveOverlaysToStorage() {
-    // 1. Local storage fallback
+    // Save locally as fallback (Used for downloading/uploading to GitHub)
     localStorage.setItem('map_overlays', JSON.stringify(mapOverlays));
-
-    // 2. Firebase Cloud persistence - PROACTIVE SYNC
-    if (db && window.FirebaseSDK) {
-        const { set, ref } = window.FirebaseSDK;
-        const overlaysRef = ref(db, 'map_overlays');
-
-        // Convert array to object for Firebase saving
-        const overlaysObj = {};
-        mapOverlays.forEach(o => {
-            // Clean ID for Firebase key safety
-            const cleanId = o.id.toString().replace('.', '_');
-            overlaysObj[cleanId] = o;
-        });
-
-        console.log("☁️ Intentando guardar overlays en Firebase...", mapOverlays.length);
-        set(overlaysRef, overlaysObj)
-            .then(() => console.log("✅ Overlays guardados en la nube con éxito"))
-            .catch(err => console.error("❌ Error al guardar overlays en la nube:", err));
-    }
 }
 
 function loadOverlaysFromStorage() {
@@ -806,64 +770,6 @@ function loadOverlaysFromStorage() {
         mapOverlays = [...PRELOADED_OVERLAYS];
     }
     renderOverlays();
-}
-
-function downloadOverlaysConfig() {
-    if (!isAdminMode) return;
-
-    const content = `// Título: Configuración de Capas Visuales (Flechas)
-// Fecha: ${new Date().toLocaleString()}
-// Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
-
-const PRELOADED_OVERLAYS = ${JSON.stringify(mapOverlays, null, 4)};
-`;
-
-    const blob = new Blob([content], { type: 'text/javascript' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'overlays.js';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    alert("Capes Visuals descarregades. \n\nMou 'overlays.js' a la carpeta del projecte per sincronitzar.");
-}
-
-function resetOverlaysFromFile() {
-    if (!isAdminMode) return;
-
-    if (confirm("⚠️ ¿Carregar fletxes des d'arxiu?\n\nAixò reemplaçarà les teves fletxes actuals per les que hi ha a 'overlays.js'.")) {
-        localStorage.removeItem('map_overlays');
-        if (typeof PRELOADED_OVERLAYS !== 'undefined') {
-            mapOverlays = [...PRELOADED_OVERLAYS];
-            renderOverlays();
-            document.getElementById('status-pill').innerText = "🔄 Capas visuales cargadas desde archivo.";
-        }
-    }
-}
-
-function initOverlaySync() {
-    if (!window.FirebaseSDK || !db) return;
-
-    const { ref, onValue } = window.FirebaseSDK;
-    const overlaysRef = ref(db, 'map_overlays');
-
-    console.log("🎨 Escuchando capa de flechas (overlays)...");
-    onValue(overlaysRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            mapOverlays = Object.values(data);
-            console.log("✅ Capa visual cargada desde red:", mapOverlays.length, "flechas.");
-            renderOverlays();
-        } else {
-            console.warn("⚠️ Capa visual vacía en red. Usando datos locales.");
-            loadOverlaysFromStorage();
-        }
-    }, (error) => {
-        console.error("❌ ERROR de red en capa visual:", error.message);
-    });
 }
 
 function editRule(id) {
@@ -1058,80 +964,47 @@ function getDistance(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-// --- Firebase Sync Logic ---
-function initFirebaseSync() {
-    if (isSyncInitialized) {
-        console.log("ℹ️ Sincronización ya activa.");
-        return;
-    }
+// --- Persistence Helpers ---
+function downloadOverlaysConfig() {
+    if (!isAdminMode) return;
 
-    if (!window.FirebaseSDK) {
-        console.warn("⚠️ Firebase SDK no detectado aún.");
-        window.onFirebaseSDKLoaded = () => {
-            initFirebaseSync();
-        };
-        return;
-    }
+    const content = `// Título: Configuración de Capas Visuales (Flechas)
+// Fecha: ${new Date().toLocaleString()}
+// Descarga este archivo al directorio de tu proyecto (reemplazando el anterior) para guardar los cambios.
 
-    isSyncInitialized = true;
+const PRELOADED_OVERLAYS = ${JSON.stringify(mapOverlays, null, 4)};
+`;
 
-    const { initializeApp, getApps, getDatabase, ref, onValue } = window.FirebaseSDK;
+    const blob = new Blob([content], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'overlays.js';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-    try {
-        if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-            console.log("ℹ️ Firebase no configurado. Operando en Modo Local.");
-            loadRulesFromStorage();
-            loadOverlaysFromStorage();
-            return;
+    alert("Capes Visuals descarregades. \n\nMou 'overlays.js' a la carpeta del projecte per sincronitzar.");
+}
+
+function resetOverlaysFromFile() {
+    if (!isAdminMode) return;
+
+    if (confirm("⚠️ ¿Carregar fletxes des d'arxiu?\n\nAixò reemplaçarà les teves fletxes actuals per les que hi ha a 'overlays.js'.")) {
+        localStorage.removeItem('map_overlays');
+        if (typeof PRELOADED_OVERLAYS !== 'undefined') {
+            mapOverlays = [...PRELOADED_OVERLAYS];
+            renderOverlays();
+            document.getElementById('status-pill').innerText = "🔄 Capas visuales cargadas desde archivo.";
         }
-
-        // Prevent "app already exists" error
-        const existingApps = getApps();
-        const app = existingApps.length > 0 ? existingApps[0] : initializeApp(firebaseConfig);
-
-        db = getDatabase(app);
-        const rulesRef = ref(db, 'traffic_rules');
-
-        console.log("📡 Iniciando escucha en tiempo real de reglas...");
-        onValue(rulesRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                trafficRules = Object.values(data);
-                console.log("🔄 Reglas sincronizadas:", trafficRules.length);
-                renderRules();
-            } else {
-                console.log("ℹ️ Cargando reglas locales (nube vacía)...");
-                loadRulesFromStorage();
-            }
-        });
-
-        // Independent call for overlays to ensure they sync even if rules are empty
-        initOverlaySync();
-    } catch (err) {
-        console.error("❌ Error Crítico Firebase:", err);
-        loadRulesFromStorage();
-        loadOverlaysFromStorage();
     }
 }
 
 // --- Data Storage ---
 function saveRulesToStorage() {
-    // 1. Save locally as fallback
+    // Save locally (used for downloading 'rules.js')
     localStorage.setItem('traffic_rules', JSON.stringify(trafficRules));
-
-    // 2. Save to Cloud if in Admin Mode
-    if (isAdminMode && db && window.FirebaseSDK) {
-        const { set, ref } = window.FirebaseSDK;
-        const rulesRef = ref(db, 'traffic_rules');
-
-        // Convert array to object for Firebase (indexed by ID)
-        const rulesObject = {};
-        trafficRules.forEach(r => { rulesObject[r.id.toString().replace('.', '_')] = r; });
-
-        set(rulesRef, rulesObject)
-            .then(() => console.log("☁️ Cambios guardados en la nube"))
-            .catch(err => console.error("❌ Error al guardar en la nube:", err));
-    }
 }
 
 function loadRulesFromStorage() {

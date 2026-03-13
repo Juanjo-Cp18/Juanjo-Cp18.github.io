@@ -242,7 +242,7 @@
     </div>
 
 
-    <div id="version-label">Versió: 3.17 | © Juanjo Vivas | 📧 <a href="mailto:juanjo.vivasm@gmail.com"
+    <div id="version-label">Versió: 3.18 | © Juanjo Vivas | 📧 <a href="mailto:juanjo.vivasm@gmail.com"
             style="color: inherit; text-decoration: none;">juanjo.vivasm@gmail.com</a></div>
 
     <!-- Map Attribution -->
@@ -258,18 +258,6 @@
     <!-- Global Configuration -->
     <script>
         window.isApplicationAdmin = false;
-    </script>
-
-    <!-- Firebase SDK (Lite via CDN) -->
-    <script type="module">
-        import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        // Driver only needs to read, but adding set for script compatibility
-        window.FirebaseSDK = { initializeApp, getApps, getDatabase, ref, set, onValue };
-
-        // Signal Firebase readiness if app.js is already waiting
-        if (window.onFirebaseSDKLoaded) window.onFirebaseSDKLoaded();
     </script>
 
     <script>
