@@ -316,10 +316,10 @@ button:active {
 /* ===== Speedometer ===== */
 #speedometer {
     position: fixed;
-    top: 140px; /* Below city crest (90px + ~42px height + margin) */
+    top: 155px; /* Increased from 140px to ensure gap from crest (90px + ~42px height + padding) */
     left: 12px;
-    width: 42px;
-    height: 42px;
+    width: 63px; /* 42px * 1.5 */
+    height: 63px; /* 42px * 1.5 */
     z-index: 3100;
     background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(6px);
@@ -337,7 +337,7 @@ button:active {
 
 #speed-value {
     color: white;
-    font-size: 16px;
+    font-size: 24px; /* 16px * 1.5 */
     font-weight: 800;
     line-height: 1;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
@@ -345,10 +345,10 @@ button:active {
 
 #speed-unit {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 8px;
+    font-size: 12px; /* 8px * 1.5 */
     font-weight: 600;
     line-height: 1;
-    margin-top: 1px;
+    margin-top: 2px;
 }
 
 
@@ -364,7 +364,7 @@ button:active {
 }
 
 .admin-mode #speedometer {
-    top: 160px;
+    top: 175px; /* Increased from 160px */
 }
 
 .admin-toggle-label {
