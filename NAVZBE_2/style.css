@@ -960,6 +960,11 @@ button:active {
         top: 80px;
         left: 12px;
     }
+    
+    #speedometer {
+        top: 75px; /* Aligned horizontally with crest (80px) */
+        left: 66px;
+    }
 
     .admin-mode #zbe-soller-banner {
         top: 84px;
@@ -969,6 +974,11 @@ button:active {
     .admin-mode #city-crest {
         top: 120px;
         /* Even lower in admin mode */
+    }
+
+    .admin-mode #speedometer {
+        top: 115px; /* Aligned horizontally with crest in admin mode (120px) */
+        left: 66px;
     }
 
     .admin-mode #top-right-controls {
