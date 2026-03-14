@@ -316,8 +316,8 @@ button:active {
 /* ===== Speedometer ===== */
 #speedometer {
     position: fixed;
-    top: 155px; /* Increased from 140px to ensure gap from crest (90px + ~42px height + padding) */
-    left: 12px;
+    top: 85px; /* Aligned vertically with city crest (90px) considering its 63px height */
+    left: 66px; /* 12px gap + 42px crest width + 12px margin */
     width: 63px; /* 42px * 1.5 */
     height: 63px; /* 42px * 1.5 */
     z-index: 3100;
@@ -364,7 +364,8 @@ button:active {
 }
 
 .admin-mode #speedometer {
-    top: 175px; /* Increased from 160px */
+    top: 105px; /* Aligned vertically with city crest in admin mode (110px) */
+    left: 66px;
 }
 
 .admin-toggle-label {
