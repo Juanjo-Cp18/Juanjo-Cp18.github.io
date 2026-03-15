@@ -124,7 +124,7 @@ async function init() {
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
     // Load rules immediately (from LocalStorage or rules.js fallback)
@@ -1807,16 +1807,11 @@ function closeCautionPrompt() {
     const prompt = document.getElementById('initial-caution-prompt');
     if (prompt) prompt.classList.add('hidden');
 
-    // Attempt to request full screen on user interaction (Android / Chrome)
-    try {
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(err => {
-                console.log(`Error attempting to enable fullscreen: ${err.message}`);
-            });
-        }
-    } catch (e) {
-        console.log("Fullscreen API not supported or error: " + e);
-    }
+    // Fullscreen request removed as per user request (v3.28)
+
+    // STARTING NAV: Only initialize map and GPS after user reads and accepts terms (v3.31)
+    console.log("🚀 Iniciando sistema tras consentimiento del usuario...");
+    init();
 }
 
 // Help Modal Logic (v1.26)
@@ -1848,11 +1843,9 @@ window.addEventListener('beforeinstallprompt', (e) => {
     // e.preventDefault(); // Uncomment if you want to show a custom button instead of browser default
 });
 
-// Call Caution check on init
-showInitialCautionPrompt();
-
 // Start
-init();
+// init(); // DEACTIVATED AUTO-START (v3.31): Wait for closeCautionPrompt()
+showInitialCautionPrompt();
 
 // ===== Simulation Mode (v1.19) =====
 function toggleSimulation() {

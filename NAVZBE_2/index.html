@@ -23,12 +23,10 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '3.26';
+            const v = new URLSearchParams(window.location.search).get('v') || '3.33';
             document.write('<link rel="stylesheet" href="./style.css?v=' + v + '">');
         })();
-    </script>
 </head>
 
 <body>
@@ -83,6 +81,25 @@
                     <strong>FRANÇAIS:</strong> Prototype de navigation. Carte incluant les <b>ZBE (Zones à Faibles
                         Émissions)</b>, réservées aux véhicules autorisés ou zéro émission. Roulez avec prudence.
                 </p>
+
+                <div style="margin-top: 25px; padding: 15px; background: rgba(33, 150, 243, 0.1); border-radius: 15px; border: 1px dashed #2196F3;">
+                    <h4 style="margin: 0 0 10px 0; color: #1565C0; font-size: 14px;">🛰️ GPS REQUERIT / REQUERIDO / REQUIRED / REQUIS / ERFORDERLICH</h4>
+                    <p style="font-size: 12px; margin-bottom: 8px; color: #2c3e50;">
+                        <strong>ES:</strong> Permita la ubicación a <span style="font-size: 0.9em; opacity: 0.8;">https://juanjo-cp18.github.io/NAVZBE_2/index.html</span>. En Android, use <b>"Precisión alta"</b>.
+                    </p>
+                    <p style="font-size: 12px; margin-bottom: 8px; color: #2c3e50;">
+                        <strong>CAT:</strong> Permeti la ubicació a <span style="font-size: 0.9em; opacity: 0.8;">https://juanjo-cp18.github.io/NAVZBE_2/index.html</span>. A Android, useu <b>"Precisió alta"</b>.
+                    </p>
+                    <p style="font-size: 12px; margin-bottom: 8px; color: #2c3e50;">
+                        <strong>EN:</strong> Allow location for <span style="font-size: 0.9em; opacity: 0.8;">https://juanjo-cp18.github.io/NAVZBE_2/index.html</span>. On Android, use <b>"High accuracy"</b> mode.
+                    </p>
+                    <p style="font-size: 12px; margin-bottom: 8px; color: #2c3e50;">
+                        <strong>FR:</strong> Autorisez la localisation pour <span style="font-size: 0.9em; opacity: 0.8;">https://juanjo-cp18.github.io/NAVZBE_2/index.html</span>. Sur Android, utilisez <b>"Haute précision"</b>.
+                    </p>
+                    <p style="font-size: 12px; margin-bottom: 0; color: #2c3e50;">
+                        <strong>DE:</strong> Standortfreigabe für <span style="font-size: 0.9em; opacity: 0.8;">https://juanjo-cp18.github.io/NAVZBE_2/index.html</span> erlauben. Auf Android, nutzen Sie <b>"Hohe Genauigkeit"</b>.
+                    </p>
+                </div>
             </div>
             <button onclick="closeCautionPrompt()" class="close-btn">
                 Entès / Entendido / Understood / Verstanden / Compris
@@ -239,12 +256,12 @@
     </div>
 
 
-    <div id="version-label">Versió: 3.26 | © Juanjo Vivas | 📧 <a href="mailto:juanjo.vivasm@gmail.com"
+    <div id="version-label">Versió: 3.33 | © Juanjo Vivas | 📧 <a href="mailto:juanjo.vivasm@gmail.com"
             style="color: inherit; text-decoration: none;">juanjo.vivasm@gmail.com</a></div>
 
     <!-- Map Attribution -->
     <div id="map-attribution">
-        &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
+        &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors
     </div>
 
 
@@ -259,7 +276,7 @@
 
     <script>
         (function () {
-            const v = new URLSearchParams(window.location.search).get('v') || '3.26';
+            const v = new URLSearchParams(window.location.search).get('v') || '3.33';
             const scripts = ['./rules.js', './overlays.js', './app.js'];
             scripts.forEach(src => {
                 document.write('<script src="' + src + '?v=' + v + '"><\/script>');

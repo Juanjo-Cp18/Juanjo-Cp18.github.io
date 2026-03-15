@@ -3,7 +3,7 @@
     "short_name": "NavProto",
     "description": "Navegador de coche inteligente con alertas de dirección.",
     "start_url": "index.html",
-    "display": "fullscreen",
+    "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#2196F3",
     "icons": [
