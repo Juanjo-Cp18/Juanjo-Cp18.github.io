@@ -1,7 +1,7 @@
 {
-    "name": "Portal d'Aplicacions Sóller",
-    "short_name": "Apps Sóller",
-    "description": "Accés ràpid al navegador ZBE i la biblioteca de jocs.",
+    "name": "ASTRO-MATES",
+    "short_name": "ASTRO-MATES",
+    "description": "Joc de matemàtiques espacial per a nins i nines.",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#020617",
