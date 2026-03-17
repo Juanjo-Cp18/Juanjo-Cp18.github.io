@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; display:flex; flex-direction:column; height:100vh; }
+    #header { padding:10px 20px; background:rgba(30,41,59,0.8); display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); box-sizing:border-box; }
+    #main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    #panell { display:grid; grid-template-columns:1fr 1fr; gap:20px; padding:20px; }
+    .botó { width:100px; height:100px; border-radius:15px; cursor:pointer; opacity:0.6; transition:0.2s; border:3px solid transparent; }
+    .botó.active { opacity:1; transform:scale(1.05); border-color:white; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #8: REPETEIX LA SEQÜÈNCIA!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="main"><div id="panell"><div class="botó" id="0" style="background:#ef4444;box-shadow:0 0 15px #ef4444"></div><div class="botó" id="1" style="background:#22c55e;box-shadow:0 0 15px #22c55e"></div><div class="botó" id="2" style="background:#3b82f6;box-shadow:0 0 15px #3b82f6"></div><div class="botó" id="3" style="background:#eab308;box-shadow:0 0 15px #eab308"></div></div></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let seq=[0,1,2,3].sort(()=>Math.random()-0.5).slice(0,3), idx=0, tl=120, freq=[300,400,500,600];
+    async function show(){ await new Promise(r=>setTimeout(r,1000)); for(let id of seq){ const b=document.getElementById(id); if(b){ playSound(freq[id]); b.classList.add('active'); await new Promise(r=>setTimeout(r,600)); b.classList.remove('active'); await new Promise(r=>setTimeout(r,300)); } } }
+    document.querySelectorAll('.botó').forEach(b=>{ b.onclick=()=>{ if(parseInt(b.id)===seq[idx]){ playSound(freq[b.id]); idx++; if(idx===seq.length){ playSound(800); setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"),600); } }else{ playSound(100); idx=0; } } });
+    show(); setInterval(()=>{
+        const m=Math.floor(tl/60), s=tl%60; const tEl=document.getElementById('t');
+        if(tEl) tEl.innerText=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        if(tl--<=0) window.parent.postMessage("joc_finalitzat","*");
+    },1000);
+    </script>
+</body></html>

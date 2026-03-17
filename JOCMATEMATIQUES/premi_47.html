@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #47: SÍMBOLS IGUALS</title>
+    <style>
+        :root { --primary: #fb7185; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; box-sizing: border-box; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #4c0519 0%, #020617 100%); }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; width: 90%; max-width: 500px; perspective: 1000px; }
+        .card { height: 120px; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card.matched { visibility: visible; cursor: default; }
+        .card.matched .back { border-color: #10b981; box-shadow: 0 0 15px #10b981; }
+
+        .front, .back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 3rem; border: 2px solid rgba(255,255,255,0.1); }
+        .front { background: var(--surface); color: var(--primary); }
+        .front::after { content: '?'; }
+        .back { background: #0f172a; transform: rotateY(180deg); }
+
+        #instruction { margin-bottom: 20px; font-size: 1.2rem; color: var(--primary); font-weight: bold; text-align: center; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        button.reset:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title" style="font-weight: bold;">#47: SÍMBOLS IGUALS</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="instruction">TROBA LES 4 PARELLES DE SÍMBOLS!</div>
+        <div class="grid" id="grid"></div>
+        <div id="stats" style="margin-top: 20px; font-size: 1.2rem; font-weight: bold; color: var(--accent);">Encerts: 0 / 4</div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--accent)">MEMÒRIA EXCEL·LENT!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--primary); margin: 0;">47</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const icons = ['🍎', '🚀', '⭐', '🎈'];
+        let cards = [...icons, ...icons].sort(() => Math.random() - 0.5);
+        let flipped = [], matches = 0, canFlip = true, gameActive = true, timeLeft = 120;
+
+        const gridEl = document.getElementById('grid');
+        const statsEl = document.getElementById('stats');
+        const overlay = document.getElementById('overlay');
+
+        function createBoard() {
+            cards.forEach((icon, i) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="front"></div>
+                    <div class="back">${icon}</div>
+                `;
+                card.onclick = () => flipCard(card, i);
+                gridEl.appendChild(card);
+            });
+        }
+
+        function flipCard(card, i) {
+            if(!canFlip || card.classList.contains('flipped') || !gameActive) return;
+            
+            card.classList.add('flipped');
+            flipped.push({ card, i });
+            playSfx(400, "sine", 0.05);
+
+            if(flipped.length === 2) {
+                canFlip = false;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [c1, c2] = flipped;
+            if(cards[c1.i] === cards[c2.i]) {
+                matches++;
+                statsEl.innerText = `Encerts: ${matches} / 4`;
+                c1.card.classList.add('matched');
+                c2.card.classList.add('matched');
+                playSfx(600, "sine", 0.2);
+                flipped = [];
+                canFlip = true;
+                if(matches === 4) win();
+            } else {
+                setTimeout(() => {
+                    c1.card.classList.remove('flipped');
+                    c2.card.classList.remove('flipped');
+                    flipped = [];
+                    canFlip = true;
+                    playSfx(150, "sawtooth", 0.1);
+                }, 1000);
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        createBoard();
+    </script>
+</body>
+</html>

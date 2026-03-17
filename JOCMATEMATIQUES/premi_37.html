@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #37: SIMETRIA PERFECTA</title>
+    <style>
+        :root { --primary: #fbbf24; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        .title { font-weight: bold; color: var(--primary); }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #2d1b4b 0%, #020617 100%); }
+        .grid-container { display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; position: relative; border: 1px solid rgba(255,255,255,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(4, 60px); grid-template-rows: repeat(4, 60px); gap: 6px; }
+        .cell { width: 60px; height: 60px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); transition: all 0.2s; }
+        .left-cell { cursor: default; }
+        .right-cell { cursor: pointer; }
+        .cell.active { background: var(--accent); box-shadow: 0 0 20px var(--accent); border-color: white; }
+        .divider { width: 6px; background: linear-gradient(to bottom, transparent, var(--primary), transparent); margin: 0 15px; border-radius: 3px; box-shadow: 0 0 10px var(--primary); }
+        #instruction { margin-bottom: 20px; font-size: 1.4rem; font-weight: bold; color: var(--primary); text-align: center; line-height: 1.4; }
+        #feedback { height: 30px; margin-bottom: 10px; font-weight: bold; color: #10b981; font-size: 1.2rem; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#37: SIMETRIA PERFECTA</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="instruction">DIBUIXA EL MIRALLA DEL COSTAT DRET!<br><span style="font-size: 0.9rem; color: #94a3b8; font-weight: normal;">(Ha de ser una imatge especular exacta)</span></div>
+        <div id="feedback"></div>
+        <div class="grid-container" id="board-container">
+            <div class="grid" id="left-grid"></div>
+            <div class="divider"></div>
+            <div class="grid" id="right-grid"></div>
+        </div>
+        <div id="level-display" style="margin-top: 25px; font-weight: bold; color: var(--accent);">Nivell: 1 / 5</div>
+    </div>
+    <div id="overlay">
+        <h2>MIRALL COMPLET!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">37</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let level = 1, timeLeft = 120, gameActive = true;
+        let pattern = [];
+        const leftGrid = document.getElementById('left-grid');
+        const rightGrid = document.getElementById('right-grid');
+        const overlay = document.getElementById('overlay');
+        const levelDisplay = document.getElementById('level-display');
+        const feedback = document.getElementById('feedback');
+
+        function generateLevel() {
+            pattern = Array(16).fill(false);
+            const numCells = 2 + Math.floor(level / 2); // Simpler start
+            for(let i=0; i<numCells + level; i++) {
+                let idx = Math.floor(Math.random() * 16);
+                pattern[idx] = true;
+            }
+            renderGrids();
+            feedback.innerText = "";
+        }
+
+        function renderGrids() {
+            leftGrid.innerHTML = '';
+            rightGrid.innerHTML = '';
+            levelDisplay.innerText = `Nivell: ${level} / 5`;
+
+            for(let i=0; i<16; i++) {
+                const lCell = document.createElement('div');
+                lCell.className = 'cell left-cell' + (pattern[i] ? ' active' : '');
+                leftGrid.appendChild(lCell);
+
+                const rCell = document.createElement('div');
+                rCell.className = 'cell right-cell';
+                rCell.dataset.idx = i;
+                rCell.onclick = () => toggleCell(rCell, i);
+                rightGrid.appendChild(rCell);
+            }
+        }
+
+        function toggleCell(el, idx) {
+            if(!gameActive) return;
+            el.classList.toggle('active');
+            playSfx(400 + idx * 20, "sine", 0.05);
+            checkWin();
+        }
+
+        function checkWin() {
+            const rCells = rightGrid.querySelectorAll('.right-cell');
+            let correct = true;
+            rCells.forEach(cell => {
+                const idx = parseInt(cell.dataset.idx);
+                const row = Math.floor(idx / 4);
+                const col = idx % 4;
+                const mirrorIdx = row * 4 + (3 - col); // Horizontal Mirror
+                
+                const isActive = cell.classList.contains('active');
+                if(isActive !== pattern[mirrorIdx]) {
+                    correct = false;
+                }
+            });
+
+            if(correct) {
+                feedback.innerText = "EXCEL·LENT! +1";
+                playSfx(600, "sine", 0.2);
+                gameActive = false; // Pause while transition
+                setTimeout(() => {
+                    level++;
+                    if(level > 5) {
+                        win();
+                    } else {
+                        gameActive = true;
+                        generateLevel();
+                    }
+                }, 800);
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive && level <= 5) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateLevel();
+    </script>
+</body>
+</html>
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateLevel();
+    </script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #36: PLUJA D'ICONES</title>
+    <style>
+        :root { --primary: #3b82f6; --bg: #020617; --surface: #1e293b; --accent: #f472b6; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; background: radial-gradient(circle, #0f172a 0%, #020617 100%); }
+        .icon { position: absolute; font-size: 3rem; cursor: pointer; transition: transform 0.1s; }
+        .icon:active { transform: scale(0.8); }
+        #target-info { position: absolute; top: 80px; width: 100%; text-align: center; z-index: 10; }
+        #target-icon-display { font-size: 4rem; display: block; filter: drop-shadow(0 0 10px var(--primary)); }
+        #score-display { position: absolute; top: 180px; width: 100%; text-align: center; font-size: 1.5rem; color: var(--primary); }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#36: PLUJA D'ICONES</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="target-info">
+            <span>BUSCA I CLICA:</span>
+            <span id="target-icon-display">⭐</span>
+        </div>
+        <div id="score-display">Punts: 0 / 15</div>
+    </div>
+    <div id="overlay">
+        <h2>OBJECTIU TROBAT!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">36</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const icons = ['⭐', '🍎', '🚀', '🌈', '💎', '🎮', '🛸', '🍔', '🍦', '🎈'];
+        let targetIcon = '⭐', score = 0, timeLeft = 120, gameActive = true;
+        const gameEl = document.getElementById('game');
+        const scoreEl = document.getElementById('score-display');
+        const targetDisplay = document.getElementById('target-icon-display');
+        const overlay = document.getElementById('overlay');
+
+        function setTarget() {
+            targetIcon = icons[Math.floor(Math.random() * icons.length)];
+            targetDisplay.innerText = targetIcon;
+        }
+
+        function spawnIcon() {
+            if(!gameActive) return;
+            const icon = document.createElement('div');
+            const type = icons[Math.floor(Math.random() * icons.length)];
+            icon.className = 'icon';
+            icon.innerText = type;
+            icon.style.left = Math.random() * (window.innerWidth - 60) + 'px';
+            icon.style.top = '-60px';
+            
+            let pos = -60;
+            const speed = 2 + Math.random() * 3 + (score / 5);
+            
+            const drop = setInterval(() => {
+                if(!gameActive) { clearInterval(drop); return; }
+                pos += speed;
+                icon.style.top = pos + 'px';
+                if(pos > window.innerHeight) {
+                    clearInterval(drop);
+                    if(gameEl.contains(icon)) gameEl.removeChild(icon);
+                }
+            }, 16);
+
+            icon.onclick = () => {
+                if(type === targetIcon) {
+                    score++;
+                    scoreEl.innerText = `Punts: ${score} / 15`;
+                    playSfx(600, "sine", 0.1);
+                    if(score >= 15) win();
+                    else setTarget();
+                } else {
+                    playSfx(150, "sawtooth", 0.1);
+                }
+                clearInterval(drop);
+                if(gameEl.contains(icon)) gameEl.removeChild(icon);
+            };
+
+            gameEl.appendChild(icon);
+            setTimeout(spawnIcon, 800 - (score * 20));
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        setTarget();
+        spawnIcon();
+    </script>
+</body>
+</html>

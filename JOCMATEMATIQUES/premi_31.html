@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #31: EQUILIBRI ZEN</title>
+    <style>
+        :root {
+            --primary: #5eead4;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --accent: #f472b6;
+        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        .title { font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; }
+        .timer { font-family: monospace; font-size: 1.2rem; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; }
+        button { background: var(--primary); color: var(--bg); border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, #1e1b4b 0%, #020617 100%); }
+        #platform { position: absolute; width: 200px; height: 20px; background: var(--primary); border-radius: 10px; box-shadow: 0 0 20px rgba(94, 234, 212, 0.4); transform-origin: center; }
+        #ball { position: absolute; width:30px; height:30px; background: white; border-radius: 50%; box-shadow: 0 0 15px white; }
+        #instruction { position: absolute; bottom: 100px; width: 100%; text-align: center; color: var(--primary); font-size: 1.2rem; opacity: 0.8; }
+        #progress { position: absolute; top: 80px; width: 80%; max-width: 400px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+        #bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.1s linear; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#31: EQUILIBRI ZEN</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div class="timer" id="timer">02:00</div>
+            <button onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="progress"><div id="bar"></div></div>
+        <div id="instruction">Manté la pilota centrada movent el ratolí/dit</div>
+        <div id="platform"></div>
+        <div id="ball"></div>
+    </div>
+    <div id="overlay">
+        <h2>OBJECTIU ACONSEGUIT!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">31</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button onclick="location.reload()">Tornar a jugar</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let ballX=0, ballV=0, platR=0, progress=0, gameActive=true, timeLeft=120;
+        const ball = document.getElementById('ball');
+        const platform = document.getElementById('platform');
+        const bar = document.getElementById('bar');
+        const overlay = document.getElementById('overlay');
+
+        window.addEventListener('mousemove', (e) => {
+            if(!gameActive) return;
+            const mid = window.innerWidth / 2;
+            platR = (e.clientX - mid) / mid * 30; // Max 30 deg
+            platform.style.transform = `rotate(${platR}deg)`;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if(!gameActive) return;
+            const mid = window.innerWidth / 2;
+            platR = (e.touches[0].clientX - mid) / mid * 30;
+            platform.style.transform = `rotate(${platR}deg)`;
+        }, {passive: false});
+
+        function loop() {
+            if(!gameActive) return;
+            
+            // Physics
+            const gravity = Math.sin(platR * Math.PI / 180) * 0.5;
+            ballV += gravity;
+            ballV *= 0.98; // Friction
+            ballX += ballV;
+
+            // Visual update
+            ball.style.transform = `translate(${ballX}px, -25px)`;
+
+            // Logic
+            if(Math.abs(ballX) < 80) {
+                progress += 0.2;
+                if(progress > 100) progress = 100;
+            } else {
+                progress -= 0.5;
+                if(progress < 0) progress = 0;
+            }
+            bar.style.width = progress + '%';
+
+            if(Math.abs(ballX) > 120) {
+                playSfx(100, "sawtooth", 0.2);
+                location.reload();
+            }
+
+            if(progress >= 100) win();
+
+            requestAnimationFrame(loop);
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(600, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>

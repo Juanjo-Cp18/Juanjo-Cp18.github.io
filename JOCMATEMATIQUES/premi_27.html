@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #maze { display:grid; grid-template-columns:repeat(5, 60px); grid-template-rows:repeat(5, 60px); gap:5px; justify-content:center; margin-top:20px; }
+    .cell { width:60px; height:60px; background:#1e293b; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:30px; }
+    .wall { background:#0f172a; opacity:0.3; }
+    .player { background:var(--nc); }
+    .goal { background:var(--np); }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #27: EL LABERINT!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="maze"></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    const m=[0,0,1,0,0, 1,0,1,0,1, 0,0,0,0,0, 0,1,1,1,0, 0,0,0,1,2];
+    let px=0, py=0, tl=120;
+    function draw(){
+        const container=document.getElementById('maze'); container.innerHTML='';
+        m.forEach((v,i)=>{
+            const d=document.createElement('div'); d.className='cell';
+            const curX=i%5, curY=Math.floor(i/5);
+            if(v===1) d.classList.add('wall');
+            if(v===2) { d.classList.add('goal'); d.innerHTML='🏁'; }
+            if(curX===px && curY===py) { d.classList.add('player'); d.innerHTML='🚀'; }
+            d.onclick=()=>{
+                if(Math.abs(curX-px)+Math.abs(curY-py)===1 && v!==1){
+                    px=curX; py=curY; playSound(400); draw();
+                    if(v===2){ playSound(800); setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"),500); }
+                }
+            };
+            container.appendChild(d);
+        });
+    }
+    draw(); setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

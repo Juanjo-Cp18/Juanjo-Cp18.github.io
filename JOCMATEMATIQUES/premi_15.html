@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); z-index:100; position:relative; }
+    #rocket-container { position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); text-align:center; }
+    #rocket { font-size:120px; transition:0.5s; filter:grayscale(100%); }
+    #rocket.ready { filter:grayscale(0%); transform:translate(-50%, -200%) scale(1.2); }
+    #fuel-bar { width:200px; height:20px; border:2px solid white; margin-top:20px; border-radius:10px; overflow:hidden; background:rgba(255,255,255,0.1); }
+    #fuel-fill { width:0%; height:100%; background:var(--nc); transition:0.3s; }
+    .tank { position:absolute; font-size:40px; cursor:pointer; z-index:50; animation: bounce 1s infinite alternate; }
+    @keyframes bounce { from { transform:translateY(0); } to { transform:translateY(-10px); } }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #15: OMPLE EL COET!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    
+    <div id="rocket-container">
+        <div id="rocket">🚀</div>
+        <div id="fuel-bar"><div id="fuel-fill"></div></div>
+        <div style="margin-top:5px; font-size:14px; color:var(--np)">Clica la gasolina!</div>
+    </div>
+
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120, cnt=0;
+    const ff=document.getElementById('fuel-fill'), rkt=document.getElementById('rocket');
+
+    function spawn(){
+        if(cnt>=5) return;
+        const d=document.createElement('div'); d.className='tank'; d.innerHTML='⛽'; 
+        d.style.left=(10+Math.random()*70)+'vw'; d.style.top=(20+Math.random()*60)+'vh';
+        d.onclick=()=>{
+            playSound(500); d.remove(); cnt++;
+            ff.style.width=(cnt*20)+'%';
+            if(cnt>=5){
+                playSound(800); rkt.classList.add('ready');
+                setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"), 1500);
+            }
+        };
+        document.body.appendChild(d); 
+        setTimeout(()=>{if(d.parentNode) d.remove();}, 1500);
+    }
+
+    setInterval(spawn, 1000);
+    setInterval(()=>{ 
+        const m=Math.floor(tl/60),s=tl%60; 
+        const tEl=document.getElementById('t'); 
+        if(tEl) tEl.innerText=`${m}:${s.toString().padStart(2,'0')}`; 
+        if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); 
+    },1000);
+    </script>
+</body></html>

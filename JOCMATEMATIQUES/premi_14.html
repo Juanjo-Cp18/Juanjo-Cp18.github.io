@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #game { display:flex; align-items:center; justify-content:center; height:300px; gap:20px; }
+    .b { border:2px solid var(--nc); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #14: ORDENA PER MIDA!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="game"></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120, next=1; const szs=[30,50,70,90], ord=[1,2,3,4].sort(()=>Math.random()-0.5);
+    ord.forEach(o=>{
+        const b=document.createElement('div'); b.className='b'; const s=szs[o-1]; b.style.width=s+'px'; b.style.height=s+'px';
+        b.onclick=()=>{if(o===next){playSound(400+o*50); b.style.background='var(--nc)'; next++; if(next>4){playSound(800); window.parent.postMessage("joc_finalitzat","*");}}else{playSound(100);}};
+        document.getElementById('game').appendChild(b);
+    });
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; const tEl=document.getElementById('t'); if(tEl) tEl.innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

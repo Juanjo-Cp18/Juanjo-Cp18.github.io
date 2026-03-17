@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #45: CODIFICACIÓ DE SÍMBOLS</title>
+    <style>
+        :root { --primary: #f472b6; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #2d1b4b 0%, #020617 100%); }
+        .key { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; max-width: 90%; }
+        .key-item { display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; }
+        .key-sym { font-size: 1.5rem; color: var(--accent); }
+        .key-val { font-size: 1rem; color: var(--primary); font-weight: bold; }
+        .target-word { font-size: 4rem; display: flex; gap: 20px; margin-bottom: 40px; }
+        .slot { width: 80px; height: 80px; border-bottom: 4px solid var(--primary); display: flex; justify-content: center; align-items: center; }
+        .input-area { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .letter-btn { background: var(--surface); border: 2px solid var(--primary); width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border-radius: 8px; font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .letter-btn:hover { background: var(--primary); color: #000; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#45: CODIFICACIÓ DE SÍMBOLS</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div class="key" id="key"></div>
+        <div id="instruction" style="margin-bottom: 15px; color: var(--accent);">DESXIFRA LA PARAULA USANT LA CLAU:</div>
+        <div class="target-word" id="target"></div>
+        <div class="input-area" id="inputs"></div>
+    </div>
+    <div id="overlay">
+        <h2>PARAULA DESXIFRADA!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">45</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Jugar de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const symbols = ['Σ', 'Φ', 'Ω', 'Ψ', 'Δ', 'Γ', 'Θ', 'Ξ', 'Π', 'Λ'];
+        const alphabet = 'ABCDEFGHIJ'.split(''); 
+        const mapping = {};
+        symbols.forEach((s, i) => mapping[s] = alphabet[i]);
+
+        const words = ['ACE', 'BAG', 'DEAF', 'CAGE', 'BEAD', 'FACE', 'HEAD', 'DECA']; // Simplified words using A-J
+        let targetWord = '', currentIdx = 0, timeLeft = 120, gameActive = true;
+
+        const keyEl = document.getElementById('key');
+        const targetEl = document.getElementById('target');
+        const inputEl = document.getElementById('inputs');
+        const overlay = document.getElementById('overlay');
+
+        function generateLevel() {
+            keyEl.innerHTML = '';
+            targetEl.innerHTML = '';
+            inputEl.innerHTML = '';
+            currentIdx = 0;
+
+            // Render Key
+            symbols.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'key-item';
+                item.innerHTML = `<span class="key-sym">${s}</span><span class="key-val">${mapping[s]}</span>`;
+                keyEl.appendChild(item);
+            });
+
+            // Target Word
+            targetWord = words[Math.floor(Math.random() * words.length)];
+            const symsOfWord = targetWord.split('').map(l => {
+                return symbols[alphabet.indexOf(l)];
+            });
+
+            symsOfWord.forEach(s => {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.innerText = s;
+                targetEl.appendChild(slot);
+            });
+
+            // Input buttons
+            alphabet.forEach(l => {
+                const btn = document.createElement('div');
+                btn.className = 'letter-btn';
+                btn.innerText = l;
+                btn.onclick = () => check(l);
+                inputEl.appendChild(btn);
+            });
+        }
+
+        function check(letter) {
+            if(!gameActive) return;
+            if(letter === targetWord[currentIdx]) {
+                const slots = targetEl.querySelectorAll('.slot');
+                slots[currentIdx].innerText = letter;
+                slots[currentIdx].style.color = '#fff';
+                slots[currentIdx].style.borderBottomColor = '#fff';
+                currentIdx++;
+                playSfx(500 + currentIdx * 100, "sine", 0.1);
+                if(currentIdx === targetWord.length) win();
+            } else {
+                playSfx(150, "sawtooth", 0.2);
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateLevel();
+    </script>
+</body>
+</html>

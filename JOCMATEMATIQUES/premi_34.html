@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #34: LABERINT DE LLUM</title>
+    <style>
+        :root { --primary: #eab308; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        .title { font-weight: 800; color: var(--primary); text-transform: uppercase; }
+        #game { position: relative; width: 100%; height: 100%; background: #000; cursor: none; }
+        #canvas { display: block; }
+        #flashlight { position: absolute; width: 250px; height: 250px; border-radius: 50%; box-shadow: 0 0 0 2000px rgba(0,0,0,0.95); pointer-events: none; transform: translate(-50%, -50%); border: 1px solid rgba(234, 179, 8, 0.3); }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; cursor: default; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--primary); margin-bottom: 20px; }
+        button { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#34: LABERINT DE LLUM</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <canvas id="canvas"></canvas>
+        <div id="flashlight"></div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--primary)">LLUM TROBADA!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">34</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button onclick="location.reload()">Torna al Laberint</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const flashlight = document.getElementById('flashlight');
+        const overlay = document.getElementById('overlay');
+
+        let px = 50, py = 150, timeLeft = 120, gameActive = true;
+        const walls = [
+            {x: 0, y: 0, w: 800, h: 20}, {x: 0, y: 580, w: 800, h: 20},
+            {x: 100, y: 0, w: 20, h: 450}, {x: 200, y: 150, w: 20, h: 450},
+            {x: 300, y: 0, w: 20, h: 450}, {x: 400, y: 150, w: 20, h: 450},
+            {x: 500, y: 0, w: 20, h: 450}, {x: 600, y: 150, w: 20, h: 450},
+            {x: 700, y: 0, w: 20, h: 450}
+        ];
+        const goal = {x: 750, y: 300, r: 25};
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Adjust goal and walls scale if needed, but for simplicity let's keep them absolute
+        }
+        window.onresize = resize;
+        resize();
+
+        window.onmousemove = (e) => {
+            if(!gameActive) return;
+            flashlight.style.left = e.clientX + 'px';
+            flashlight.style.top = e.clientY + 'px';
+            px = e.clientX;
+            py = e.clientY;
+            checkCollision();
+        };
+
+        function checkCollision() {
+            // Check walls
+            walls.forEach(w => {
+                if(px > w.x && px < w.x + w.w && py > w.y && py < w.y + w.h) {
+                    playSfx(100, "sawtooth", 0.2);
+                    // Reset to start
+                    px = 50; py = 150;
+                }
+            });
+            // Check Goal
+            const dist = Math.sqrt((px - goal.x)**2 + (py - goal.y)**2);
+            if(dist < goal.r) win();
+        }
+
+        function draw() {
+            if(!gameActive) return;
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = '#1e293b';
+            walls.forEach(w => ctx.fillRect(w.x, w.y, w.w, w.h));
+            
+            // Draw Goal
+            ctx.beginPath();
+            ctx.arc(goal.x, goal.y, goal.r, 0, Math.PI*2);
+            ctx.fillStyle = '#eab308';
+            ctx.fill();
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#eab308';
+            
+            requestAnimationFrame(draw);
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(600, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        draw();
+    </script>
+</body>
+</html>

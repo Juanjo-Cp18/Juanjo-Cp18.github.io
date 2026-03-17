@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #canvas { background:#0f172a; display:block; margin:auto; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #21: TENIS ESPECIAL!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <canvas id="canvas"></canvas>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    const canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
+    canvas.width=window.innerWidth; canvas.height=window.innerHeight-60;
+    let px=canvas.width/2-50, py=canvas.height-20, bx=canvas.width/2, by=canvas.height/2, bvx=4, bvy=4, hits=0, tl=120;
+    function draw(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(bx,by,10,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='var(--nc)'; ctx.fillRect(px,py,100,10);
+        bx+=bvx; by+=bvy;
+        if(bx<10 || bx>canvas.width-10) bvx*=-1;
+        if(by<10) bvy*=-1;
+        if(by>py-10 && bx>px && bx<px+100){ bvy*=-1; hits++; playSound(400+hits*20); if(hits>=5){ playSound(800); window.parent.postMessage("joc_finalitzat","*"); } }
+        if(by>canvas.height){ bx=canvas.width/2; by=canvas.height/2; bvy=4; }
+        requestAnimationFrame(draw);
+    }
+    window.onmousemove=(e)=>px=e.clientX-50;
+    window.ontouchmove=(e)=>px=e.touches[0].clientX-50;
+    draw(); setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

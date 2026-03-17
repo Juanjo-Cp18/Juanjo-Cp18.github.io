@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #25: SALT ESPACIAL!</title>
+    <style>
+        :root {
+            --primary: #22d3ee;
+            --secondary: #a5b4fc;
+            --accent: #f472b6;
+            --bg: #020617;
+            --surface: #1e293b;
+            --neon-glow: 0 0 10px rgba(34, 211, 238, 0.5), 0 0 20px rgba(34, 211, 238, 0.3);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+        }
+
+        #stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: transparent url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSIxIiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuNSIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjYwIiByPSIxLjUiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iODAiIGN5PSIxMjAiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC40Ii8+PGNpcmNsZSBjeD0iMTgwIiBjeT0iMTgwIiByPSIxIiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuNiIvPjwvc3ZnPg==') repeat;
+            animation: moveStars 100s linear infinite;
+        }
+
+        @keyframes moveStars {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
+        }
+
+        #header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 2px solid var(--primary);
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--primary);
+            text-shadow: var(--neon-glow);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .timer, .score {
+            font-family: monospace;
+            font-size: 1.3rem;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 32px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+            transition: transform 0.1s linear;
+        }
+
+        .floor {
+            position: absolute;
+            bottom: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, var(--surface), #0f172a);
+            border-top: 3px solid var(--primary);
+            box-shadow: 0 -5px 15px rgba(34, 211, 238, 0.2);
+        }
+
+        #goal {
+            position: absolute;
+            bottom: 60px;
+            width: 60px;
+            height: 60px;
+            font-size: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        button {
+            background: var(--primary);
+            color: var(--bg);
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: var(--neon-glow);
+        }
+
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            text-align: center;
+        }
+
+        #overlay h2 { font-size: 3rem; margin-bottom: 20px; color: var(--primary); }
+        #overlay p { font-size: 1.5rem; margin-bottom: 30px; }
+
+        .prize-box {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid var(--accent);
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="stars"></div>
+        <div id="header">
+            <div class="title">SALT ESPACIAL!</div>
+            <div class="stats">
+                <div class="score">Punts: <span id="points">0</span></div>
+                <div class="timer" id="timer">02:00</div>
+                <button onclick="location.reload()">Reiniciar</button>
+            </div>
+        </div>
+
+        <div id="player">🚀</div>
+        
+        <!-- Floors will be generated dynamically or kept static with better positioning -->
+        <div class="floor" id="floor1" style="left:0; width:25%;"></div>
+        <div class="floor" id="floor2" style="left:35%; width:20%;"></div>
+        <div class="floor" id="floor3" style="left:65%; width:35%;"></div>
+        
+        <div id="goal">🏁</div>
+    </div>
+
+    <div id="overlay">
+        <h2 id="overlay-title">GUANYAT!</h2>
+        <div class="prize-box">
+            <p>HAS ACONSEGUIT EL PREMI Nº</p>
+            <h1 style="font-size: 4rem; margin: 0; color: var(--accent);">25</h1>
+        </div>
+        <p>+10 PUNTS ACONSEGUITS</p>
+        <button onclick="location.reload()">Jugar de nou</button>
+    </div>
+
+    <script>
+        const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+        function playSound(f, type="sine", duration=0.1) {
+            try {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = type;
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.frequency.setValueAtTime(f, audioCtx.currentTime);
+                g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                o.start();
+                o.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        let px = 50, py = 60;
+        let vy = 0;
+        let isJumping = false;
+        let timeLeft = 120;
+        let points = 0;
+        let gameActive = true;
+
+        const p = document.getElementById('player');
+        const goal = document.getElementById('goal');
+        const timerDisplay = document.getElementById('timer');
+        const pointsDisplay = document.getElementById('points');
+        const overlay = document.getElementById('overlay');
+        const floors = document.querySelectorAll('.floor');
+
+        // Physics constants - Buffed for easier crossing
+        const GRAVITY = 0.5;
+        const JUMP_FORCE = 12;
+        const SPEED = 3.5;
+
+        // Position goal at the end of the last floor
+        const floor3 = document.getElementById('floor3');
+        const goalX = (window.innerWidth * 0.9);
+        goal.style.left = goalX + 'px';
+
+        window.addEventListener('mousedown', jump);
+        window.addEventListener('touchstart', jump);
+        window.addEventListener('keydown', (e) => { if(e.code === 'Space') jump(); });
+
+        function jump() {
+            if (!isJumping && gameActive) {
+                vy = JUMP_FORCE;
+                isJumping = true;
+                p.innerText = '🔥';
+                playSound(400, "square", 0.15);
+            }
+        }
+
+        function checkOnFloor() {
+            const pr = p.getBoundingClientRect();
+            let onAnyFloor = false;
+            
+            floors.forEach(f => {
+                const fr = f.getBoundingClientRect();
+                if (pr.right > fr.left && pr.left < fr.right && py <= 60 && vy <= 0) {
+                    onAnyFloor = true;
+                }
+            });
+            return onAnyFloor;
+        }
+
+        function loop() {
+            if (!gameActive) return;
+
+            // Horizontal Move
+            px += SPEED;
+            
+            // Vertical Physics
+            vy -= GRAVITY;
+            py += vy;
+
+            // Ground Collision
+            const onFloor = checkOnFloor();
+            if (onFloor) {
+                py = 60;
+                vy = 0;
+                isJumping = false;
+                p.innerText = '🚀';
+            }
+
+            // Fall Condition
+            if (py < 0) {
+                gameOver();
+            }
+
+            // Update DOM
+            p.style.left = px + 'px';
+            p.style.bottom = py + 'px';
+            p.style.transform = `rotate(${vy * -2}deg)`;
+
+            // Goal Check
+            if (px > goalX) {
+                win();
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            playSound(100, "sawtooth", 0.3);
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        function win() {
+            gameActive = false;
+            points = 10;
+            pointsDisplay.innerText = points;
+            playSound(800, "triangle", 0.5);
+            setTimeout(() => playSound(1000, "triangle", 0.5), 200);
+            
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        // Timer
+        const timerInterval = setInterval(() => {
+            if (!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            timerDisplay.innerText = `${m}:${s.toString().padStart(2, '0')}`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                win(); // Or lose? Usually these games grant points on timeout if they were close
+            }
+        }, 1000);
+
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
+

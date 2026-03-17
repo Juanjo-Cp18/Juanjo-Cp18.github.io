@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    .laser { position:absolute; width:4px; height:20px; background:var(--nc); }
+    .alien { position:absolute; font-size:30px; }
+    #ship { position:absolute; bottom:20px; left:50%; font-size:40px; transform:translateX(-50%); }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #22: MARCIANITOS!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="ship">🚀</div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120, tx=50, kills=0;
+    const ship=document.getElementById('ship');
+    window.onmousemove=(e)=>{ tx=e.clientX; ship.style.left=tx+'px'; };
+    window.onclick=()=>{ 
+        playSound(200); const l=document.createElement('div'); l.className='laser'; l.style.left=(tx+18)+'px'; l.style.bottom='60px'; document.body.appendChild(l);
+        let ly=60; const iv=setInterval(()=>{ ly+=10; l.style.bottom=ly+'px'; 
+            document.querySelectorAll('.alien').forEach(a=>{
+                const r=a.getBoundingClientRect(); if(tx+18 > r.left && tx+18 < r.right && window.innerHeight-ly > r.top && window.innerHeight-ly < r.bottom){
+                    a.remove(); l.remove(); clearInterval(iv); playSound(600); kills++; if(kills>=5){playSound(800); window.parent.postMessage("joc_finalitzat","*");}
+                }
+            });
+            if(ly>window.innerHeight){ l.remove(); clearInterval(iv); }
+        }, 20);
+    };
+    function spawn(){ const a=document.createElement('div'); a.className='alien'; a.innerHTML='👾'; a.style.left=Math.random()*90+'vw'; a.style.top='80px'; document.body.appendChild(a); }
+    setInterval(spawn, 1500);
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-MATES 6.1 - COMPLET</title>
+
+    <style>
+        :root {
+            --neon-cyan: #22d3ee;
+            --neon-purple: #a5b4fc;
+            --dark-blue: #020617;
+            --success-green: #22c55e;
+            --error-red: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark-blue);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        #universe {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%);
+            z-index: -1;
+        }
+
+        /* PANTALLA INICIAL I PERFILS */
+        #pantalla-usuari {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .perfil-card {
+            position: relative;
+            background: rgba(51, 65, 85, 0.7);
+            padding: 10px;
+            border-radius: 12px;
+            min-width: 85px;
+            text-align: center;
+            border: 2px solid var(--neon-purple);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.2s;
+        }
+
+        .perfil-card:hover {
+            transform: translateY(-3px);
+            background: rgba(71, 85, 105, 0.9);
+        }
+
+        .btn-eliminar-perfil {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--error-red);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            border: 2px solid var(--dark-blue);
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .btn-eliminar-perfil:hover {
+            transform: scale(1.2);
+            background: #ff0000;
+        }
+
+        .ranking-container {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 15px;
+            padding: 15px;
+            width: 90%;
+            max-width: 350px;
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            color: var(--neon-purple);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
+        }
+
+        td {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* JOC MATEMÀTIQUES */
+        #joc {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+            z-index: 20;
+        }
+
+        #area-operacio {
+            padding: 15px 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #operacio {
+            font-family: 'Courier New', monospace;
+            font-size: clamp(1.8rem, 8vw, 2.8rem);
+            line-height: 1.1;
+            white-space: pre;
+            text-align: right;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        #area-interaccio {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            width: 100%;
+            background: rgba(30, 41, 59, 0.5);
+            border-top: 2px solid var(--neon-purple);
+        }
+
+        #columna-info {
+            flex: 0 0 100px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(165, 180, 252, 0.2);
+            font-size: 0.85rem;
+            gap: 10px;
+        }
+
+        #area-central-joc {
+            flex: 1;
+            min-width: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            gap: 15px;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 12px;
+            touch-action: none;
+            max-width: 100%;
+            height: auto;
+            border: 3px solid var(--neon-purple);
+        }
+
+        #columna-accions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 10px;
+            border: none;
+            border-radius: 8px;
+            background: var(--neon-purple);
+            color: #020617;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.8rem;
+            min-width: 80px;
+            transition: 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-comprovar {
+            background: var(--success-green);
+            color: white;
+        }
+
+        .btn-netejar {
+            background: #64748b;
+            color: white;
+        }
+
+        .btn-sortir {
+            background: var(--error-red);
+            color: white;
+            margin-top: auto;
+            padding: 8px;
+        }
+
+        /* FEEDBACK OVERLAY (ACERT/ERROR) */
+        #feedback-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        #feedback-overlay.mostrar {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* MODAL DE PREMI (IFRAME) */
+        #modal-premi {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            z-index: 3000;
+        }
+
+        #premi-header {
+            background: #1e1b4b;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--neon-cyan);
+        }
+
+        #iframe-premi {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        @media (max-width: 500px) {
+            #area-interaccio {
+                flex-direction: column;
+            }
+
+            #columna-info {
+                width: 100%;
+                flex: none;
+                border-right: none;
+                border-bottom: 1px solid rgba(165, 180, 252, 0.2);
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+                height: 60px;
+            }
+        }
+        #footer {
+        margin-top: auto;
+        padding: 20px;
+        font-size: 0.8rem;
+        color: rgba(165, 180, 252, 0.5);
+        text-align: center;
+        width: 100%;
+    }
+</style>
+</head>
+
+<body>
+
+    <div id="universe"></div>
+
+    <div id="modal-premi">
+        <div id="premi-header">
+            <span style="color: var(--neon-cyan); font-weight: bold;">🎁 RECOMPENSA DESBLOQUEJADA!</span>
+            <button onclick="tancarPremi()"
+                style="padding: 5px 10px; background: var(--error-red); color: white; border-radius: 5px;">Tancar
+                Premis</button>
+        </div>
+        <iframe id="iframe-premi" src=""></iframe>
+    </div>
+
+    <div id="feedback-overlay">
+        <div id="feedback-graphic" style="width:100px; height:100px; margin-bottom:15px;">
+            <svg id="svg-correct" viewBox="0 0 100 100" style="display:none;">
+                <circle cx="50" cy="50" r="45" fill="#22c55e" />
+                <path d="M30 50 L45 65 L70 35" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" />
+            </svg>
+            <svg id="svg-incorrect" viewBox="0 0 100 100" style="display:none;">
+                <circle cx="50" cy="50" r="45" fill="#ef4444" />
+                <path d="M35 35 L65 65 M65 35 L35 65" stroke="white" stroke-width="8" fill="none"
+                    stroke-linecap="round" />
+            </svg>
+        </div>
+        <div id="feedback-text" style="font-size: 2rem; font-weight: bold;"></div>
+    </div>
+
+    <div id="pantalla-usuari">
+        <h1 style="text-shadow: 0 0 15px var(--neon-cyan);">🚀 ASTRO-MATES</h1>
+        <div style="margin-bottom: 25px; display: flex; gap: 10px;">
+            <input id="nou-nom" placeholder="NOM..." maxlength="10"
+                style="padding: 10px; border-radius: 8px; border: none; width: 120px;">
+            <button onclick="crearUsuari()">AFEGIR</button>
+        </div>
+
+        <div id="llista-perfils" style="display:flex; flex-wrap:wrap; justify-content:center; gap: 12px;"></div>
+
+        <div class="ranking-container">
+            <h3 style="margin: 0 0 10px 0; color: var(--neon-cyan); font-size: 1.1rem; text-align: center;">🏆 RÀNQUING
+            </h3>
+            <table id="taula-ranking">
+                <thead>
+                    <tr>
+                        <th>PILOT</th>
+                        <th>NIVELL</th>
+                        <th style="text-align:right">⭐</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-body"></tbody>
+            </table>
+        </div>
+
+        <div id="footer">
+            © Juanjo Vivas | Versió: 2.0 | 2026
+        </div>
+    </div>
+
+    <div id="joc">
+        <div id="area-operacio">
+            <div id="operacio"></div>
+        </div>
+        <div id="area-interaccio">
+            <div id="columna-info">
+                <div id="usuari-nom" style="font-weight:bold; color:var(--neon-cyan);"></div>
+                <div>Niv. <span id="nivell-num">1</span></div>
+                <div>⭐ <span id="estrelles-num">0</span></div>
+                <div id="vidas" style="font-size: 1.2rem;"></div>
+                <button class="btn-sortir" onclick="sortir()">SORTIR</button>
+            </div>
+            <div id="area-central-joc">
+                <canvas id="canvas_joc"></canvas>
+                <div id="columna-accions">
+                    <button class="btn-comprovar" onclick="comprovar()">OK</button>
+                    <button class="btn-netejar" onclick="netejar()">BORRAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let usuarios = JSON.parse(localStorage.getItem('astroMates_data')) || {};
+        let usuariActiu = null, nivell = 1, estrelles = 0, resposta = 0, intents = 0;
+        let canvas, ctx, dib = false, traces = [], actual = [];
+        let audioCtx;
+
+        const astronautSVG = `
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:40px; height:40px; margin-bottom:5px;">
+    <path d="M12 2C7.58 2 4 5.58 4 10C4 11.39 4.35 12.7 4.97 13.84C4.36 14.54 4 15.45 4 16.45V18C4 19.1 4.9 20 6 20H7V22H9V20H15V22H17V20H18C19.1 20 20 19.1 20 18V16.45C20 15.45 19.64 14.54 19.03 13.84C19.65 12.7 20 11.39 20 10C20 5.58 16.42 2 12 2ZM12 4C15.31 4 18 6.69 18 10C18 10.4 17.96 10.79 17.88 11.16C16.39 10.43 14.5 10 12.5 10C10.4 10 8.44 10.47 6.94 11.26C6.34 10.87 6 10.22 6 9.5C6 7.57 7.12 5.89 8.76 5.11C9.72 4.41 10.82 4 12 4Z" fill="white"/>
+</svg>`;
+
+        window.onload = () => {
+            canvas = document.getElementById("canvas_joc");
+            ctx = canvas.getContext("2d");
+            setupDrawingEvents();
+            renderPerfils();
+            renderRanking();
+        };
+
+        // ================= GESTIÓ D'ÀUDIO =================
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function parlar(text) {
+            window.speechSynthesis.cancel();
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = 'ca-ES';
+            window.speechSynthesis.speak(ut);
+        }
+
+        function sonar(tipo) {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(tipo === 'correcte' ? 580 : 180, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // ================= GESTIÓ DE RECOMPENSES =================
+        window.addEventListener("message", function (event) {
+            if (event.data === "joc_finalitzat") {
+                tancarPremi();
+            }
+        });
+
+        function obrirPremi(n) {
+            const modal = document.getElementById("modal-premi");
+            const iframe = document.getElementById("iframe-premi");
+            iframe.src = `premi_${n}.html`;
+            modal.style.display = "flex";
+        }
+
+        function tancarPremi() {
+            const modal = document.getElementById("modal-premi");
+            const iframe = document.getElementById("iframe-premi");
+            modal.style.display = "none";
+            iframe.src = "";
+
+            // Sumem 10 estrelles extra per resoldre el joc de premi
+            if (usuariActiu) {
+                estrelles += 10;
+                usuarios[usuariActiu].estrelles = estrelles;
+                localStorage.setItem('astroMates_data', JSON.stringify(usuarios));
+                actualitzarUI();
+                renderRanking();
+            }
+
+            // Recuperem el so al tornar
+            initAudio();
+            sonar('correcte');
+            setTimeout(novaOperacio, 500);
+        }
+
+        // ================= GESTIÓ D'USUARIS I INTERFÍCIE =================
+        function renderRanking() {
+            const body = document.getElementById("ranking-body");
+            body.innerHTML = "";
+            let lista = Object.keys(usuarios).map(nom => ({ nom, ...usuarios[nom] }));
+            lista.sort((a, b) => b.estrelles - a.estrelles);
+            lista.slice(0, 5).forEach(u => {
+                body.innerHTML += `<tr><td>${u.nom}</td><td>${u.nivel}</td><td style="text-align:right">${u.estrelles}</td></tr>`;
+            });
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById("area-central-joc");
+            const actions = document.getElementById("columna-accions");
+            let availableW = container.clientWidth - actions.clientWidth - 30;
+            canvas.width = 500; canvas.height = 300;
+            let visualW = Math.min(availableW, 450);
+            canvas.style.width = visualW + "px";
+            canvas.style.height = (visualW * 0.6) + "px";
+            ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.strokeStyle = "#1e293b";
+        }
+
+        window.onresize = () => { if (usuariActiu) resizeCanvas(); };
+
+        function crearUsuari() {
+            let n = document.getElementById("nou-nom").value.trim().toUpperCase();
+            if (!n) return;
+            if (!usuarios[n]) {
+                usuarios[n] = { nivel: 1, estrelles: 0 };
+                localStorage.setItem('astroMates_data', JSON.stringify(usuarios));
+            }
+            document.getElementById("nou-nom").value = "";
+            renderPerfils();
+            renderRanking();
+        }
+
+        function renderPerfils() {
+            let c = document.getElementById("llista-perfils");
+            c.innerHTML = "";
+            for (let n in usuarios) {
+                let d = document.createElement("div");
+                d.className = "perfil-card";
+                d.innerHTML = astronautSVG + "<span>" + n + "</span>";
+
+                let btnDel = document.createElement("div");
+                btnDel.className = "btn-eliminar-perfil";
+                btnDel.innerHTML = "×";
+                btnDel.onclick = (e) => {
+                    e.stopPropagation();
+                    borrarPerfil(n);
+                };
+
+                d.onclick = () => seleccionar(n);
+                d.appendChild(btnDel);
+                c.appendChild(d);
+            }
+        }
+
+        function borrarPerfil(nom) {
+            const confirmar = confirm(`Estàs segur que vols eliminar el perfil de "${nom}"?`);
+            if (confirmar) {
+                delete usuarios[nom];
+                localStorage.setItem('astroMates_data', JSON.stringify(usuarios));
+                renderPerfils();
+                renderRanking();
+            }
+        }
+
+        function seleccionar(n) {
+            initAudio(); // Forcem que l'àudio es desbloquegi en el clic del perfil
+            parlar("Hola " + n + ", som-hi!");
+            usuariActiu = n;
+            nivell = usuarios[n].nivel;
+            estrelles = usuarios[n].estrelles;
+            document.getElementById("pantalla-usuari").style.display = "none";
+            document.getElementById("joc").style.display = "flex";
+            document.getElementById("usuari-nom").innerText = n;
+            setTimeout(resizeCanvas, 100);
+            actualitzarUI();
+            novaOperacio();
+        }
+
+        // ================= LÒGICA MATEMÀTICA =================
+        function novaOperacio() {
+            let tipus = Math.random() > 0.5 ? "+" : "-";
+            let nEfectiu = (nivell > 5 && Math.random() < 0.2) ? Math.floor(Math.random() * (nivell - 1)) + 1 : nivell;
+            let digits = nEfectiu >= 15 ? 3 : (nEfectiu >= 6 ? 2 : 1);
+            let max = Math.pow(10, digits) - 1, min = digits === 1 ? 0 : Math.pow(10, digits - 1);
+            let a = Math.floor(Math.random() * (max - min + 1)) + min;
+            let b = Math.floor(Math.random() * (max - min + 1)) + min;
+            if (tipus === "-") { if (b > a) [a, b] = [b, a]; resposta = a - b; } else { resposta = a + b; }
+            let opEl = document.getElementById("operacio");
+            if (digits === 1) { opEl.innerText = `${a} ${tipus} ${b} = ?`; }
+            else {
+                let sa = a.toString(), sb = b.toString(), w = Math.max(sa.length, sb.length) + 1;
+                opEl.innerText = sa.padStart(w, " ") + "\n" + tipus + sb.padStart(w - 1, " ") + "\n" + "─".repeat(w) + "\n" + "?";
+            }
+            netejar();
+        }
+
+        async function comprovar() {
+            if (traces.length === 0) return;
+            let sorted = [...traces].sort((a, b) => Math.min(...a.map(p => p[0])) - Math.min(...b.map(p => p[0])));
+            try {
+                let r = await fetch("https://www.google.com.tw/inputtools/request?ime=handwriting&app=autotext&cs=1&oe=UTF-8", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ requests: [{ writing_guide: { writing_area_width: 500, writing_area_height: 300 }, ink: sorted.map(t => [t.map(p => p[0]), t.map(p => p[1])]), language: "ca" }] })
+                });
+                let res = await r.json();
+                let llegit = (res[1] && res[1][0]) ? res[1][0][1][0].replace(/[^0-9]/g, '') : "";
+
+                if (llegit !== "" && parseInt(llegit) === resposta) {
+                    sonar('correcte');
+                    feedback("¡MOLT BÉ!", true);
+                    estrelles++;
+
+                    // Comprovar premi
+                    if (estrelles > 0 && estrelles % 5 === 0) {
+                        nivell++;
+                        setTimeout(() => obrirPremi(nivell), 1500);
+                    } else {
+                        setTimeout(novaOperacio, 1500);
+                    }
+
+                    intents = 0;
+                    usuarios[usuariActiu] = { nivel: nivell, estrelles: estrelles };
+                    localStorage.setItem('astroMates_data', JSON.stringify(usuarios));
+
+                } else {
+                    sonar('error');
+                    feedback("TORNA-HI!", false);
+                    intents++;
+                    if (intents >= 3) { alert("La resposta era " + resposta); intents = 0; novaOperacio(); }
+                }
+                actualitzarUI();
+            } catch (e) { console.error(e); }
+        }
+
+        function feedback(texto, esCorrecto) {
+            const overlay = document.getElementById("feedback-overlay");
+            document.getElementById("feedback-text").innerText = texto;
+            document.getElementById("feedback-text").style.color = esCorrecto ? "var(--success-green)" : "var(--error-red)";
+            document.getElementById("svg-correct").style.display = esCorrecto ? "block" : "none";
+            document.getElementById("svg-incorrect").style.display = esCorrecto ? "none" : "block";
+            overlay.className = "mostrar";
+            parlar(texto);
+            setTimeout(() => { overlay.className = ""; }, 1500);
+        }
+
+        function actualitzarUI() {
+            document.getElementById("nivell-num").innerText = nivell;
+            document.getElementById("estrelles-num").innerText = estrelles;
+            document.getElementById("vidas").innerText = "❤️".repeat(3 - intents);
+        }
+
+        // ================= CANVAS I DIBUIX =================
+        function netejar() { ctx.clearRect(0, 0, canvas.width, canvas.height); traces = []; }
+        function sortir() { location.reload(); }
+
+        function setupDrawingEvents() {
+            const start = (e) => { e.preventDefault(); dib = true; actual = []; let p = pos(e.touches ? e.touches[0] : e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+            const move = (e) => { if (!dib) return; let p = pos(e.touches ? e.touches[0] : e); ctx.lineTo(p.x, p.y); ctx.stroke(); actual.push([Math.round(p.x), Math.round(p.y)]); };
+            const stop = () => { if (dib && actual.length > 0) traces.push(actual); dib = false; };
+            canvas.addEventListener("mousedown", start); canvas.addEventListener("mousemove", move); window.addEventListener("mouseup", stop);
+            canvas.addEventListener("touchstart", start, { passive: false }); canvas.addEventListener("touchmove", move, { passive: false }); window.addEventListener("touchend", stop);
+        }
+
+        function pos(e) {
+            const r = canvas.getBoundingClientRect();
+            return { x: (e.clientX - r.left) * (canvas.width / r.width), y: (e.clientY - r.top) * (canvas.height / r.height) };
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #boss { position:absolute; font-size:80px; cursor:pointer; transition:0.15s; z-index:100; }
+    #hp-bar { position:absolute; top:60px; left:50%; transform:translateX(-50%); width:200px; height:20px; border:2px solid white; background:#ef4444; }
+    #hp { height:100%; background:#22c55e; width:100%; transition:0.3s; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #30: EL GRAN BOSS FINAL!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="hp-bar"><div id="hp"></div></div>
+    <div id="boss">👺</div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    const boss=document.getElementById('boss'); let hp=100, tl=120;
+    function move(){ boss.style.left=Math.random()*70+'vw'; boss.style.top=(20+Math.random()*50)+'vh'; }
+    boss.onclick=()=>{ 
+        hp-=20; document.getElementById('hp').style.width=hp+'%'; playSound(300);
+        if(hp<=0){ playSound(800); boss.innerHTML='💥'; setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"),800); }
+        else move();
+    };
+    setInterval(move, 1000); move();
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

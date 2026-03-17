@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --neon-cyan: #22d3ee; --neon-purple: #a5b4fc; --dark-bg: #020617; }
+        body { margin: 0; background: var(--dark-bg); overflow: hidden; color: white; font-family: sans-serif; }
+        #header { position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(5px); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-cyan); box-sizing: border-box; }
+        #game { width: 100vw; height: 100vh; position: relative; }
+        .estrella { position: absolute; font-size: 50px; cursor: pointer; text-shadow: 0 0 20px #fbbf24; animation: bounce 1s infinite alternate; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.2); } }
+        button { background: var(--neon-purple); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div>Premi #4: ATRAPA 5 ESTRELLES!</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <button onclick="location.reload()">REINICIAR</button>
+            <div id="timer">02:00</div>
+        </div>
+    </div>
+    <div id="game"></div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(f) {
+            try {
+                const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
+        const game = document.getElementById('game');
+        let pts = 0, timeLeft = 120;
+        function updateTimer() {
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            const tEl = document.getElementById('timer');
+            if(tEl) tEl.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft-- <= 0) finalitzar();
+        }
+        function spawn() {
+            const e = document.createElement('div'); e.className = 'estrella'; e.innerHTML = '⭐';
+            e.style.left = Math.random()*85+'vw'; e.style.top = (Math.random()*75+15)+'vh';
+            e.onclick = () => { playSound(600); pts++; e.remove(); if(pts>=5) finalitzar(); };
+            game.appendChild(e);
+            setTimeout(() => { if(e.parentNode) e.remove(); }, 1500);
+        }
+        function finalitzar() { playSound(800); window.parent.postMessage("joc_finalitzat", "*"); }
+        setInterval(spawn, 900); setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>

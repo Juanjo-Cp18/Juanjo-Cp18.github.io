@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joc de Matemàtiques Sóller</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <link rel="apple-touch-icon" href="./icon-512.png">
+    <style>
+        :root { --primary: #3b82f6; --bg: #020617; --surface: #1e293b; --accent: #f472b6; }
+        body, html { margin: 0; padding: 0; min-height: 100%; background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; }
+        .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+        
+        .card { background: var(--surface); padding: 50px 30px; border-radius: 40px; border: 3px solid var(--primary); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(59, 130, 246, 0.3); }
+        .card:hover { transform: scale(1.05); background: #243552; box-shadow: 0 0 60px rgba(59, 130, 246, 0.5); border-color: #60a5fa; }
+        .card .icon { font-size: 6rem; margin-bottom: 25px; filter: drop-shadow(0 0 15px var(--primary)); }
+        .card h2 { margin: 0 0 15px 0; font-size: 2.2rem; background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .card p { margin: 0; color: #94a3b8; font-size: 1.2rem; font-weight: 500; }
+        
+        /* Subtle animation for the icon */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .icon { animation: float 3s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="./JOC_MATEMATIQUES.html" class="card">
+            <div class="icon">🧮</div>
+            <h2>Començar Joc</h2>
+            <p>Prem per jugar!</p>
+        </a>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrat'))
+                    .catch(err => console.log('SW error', err));
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    .star { width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; position:absolute; font-size:35px; border:2px solid transparent; transition:0.2s; }
+    .star.solved { cursor:default; border-color:var(--nc); background:rgba(34,211,238,0.2) !important; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #11: UNEIX COLORS!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120, sel=null, pairs=0, locked=false; const colors=['🔴','🔵','🟢','🔴','🔵','🟢'];
+    colors.sort(()=>Math.random()-0.5).forEach((col, i) => {
+        const s = document.createElement('div'); s.className = 'star'; s.innerHTML = '⭐'; s.style.background = 'rgba(255,255,255,0.1)';
+        s.style.left = (15+(i%3)*30)+'vw'; s.style.top = (25+(i<3?0:40))+'vh';
+        s.onclick = () => { 
+            if(locked || s.classList.contains('solved') || s === sel) return;
+            playSound(400); s.innerHTML = col;
+            if(!sel){ sel = s; }
+            else { 
+                if(sel.innerHTML === s.innerHTML){ 
+                    playSound(600); s.classList.add('solved'); sel.classList.add('solved');
+                    pairs++; sel = null;
+                    if(pairs===3){ playSound(800); setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"), 500); }
+                } else { 
+                    locked = true;
+                    setTimeout(()=>{
+                        playSound(100); s.innerHTML='⭐'; sel.innerHTML='⭐';
+                        sel = null; locked = false;
+                    }, 600);
+                }
+            }
+        };
+        document.body.appendChild(s);
+    });
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; const tEl=document.getElementById('t'); if(tEl) tEl.innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

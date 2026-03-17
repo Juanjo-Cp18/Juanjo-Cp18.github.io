@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --neon-cyan: #22d3ee; --neon-purple: #a5b4fc; --dark-bg: #020617; }
+        body { margin: 0; background: var(--dark-bg); overflow: hidden; color: white; font-family: 'Segoe UI', sans-serif; }
+        #header { position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(5px); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-cyan); z-index: 100; box-sizing: border-box; }
+        #game { width: 100vw; height: 100vh; position: relative; }
+        .bubble { position: absolute; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(34, 211, 238, 0.2)); border: 2px solid var(--neon-cyan); cursor: pointer; box-shadow: 0 0 15px var(--neon-cyan); transition: 0.1s; }
+        button { background: var(--neon-purple); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        #timer { font-weight: bold; color: var(--neon-purple); }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="legend">Premi #2: EXPLOTA 10 BURBULLES!</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <button onclick="location.reload()">REINICIAR</button>
+            <div id="timer">02:00</div>
+        </div>
+    </div>
+    <div id="game"></div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(f) {
+            try {
+                const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        const game = document.getElementById('game');
+        const timerEl = document.getElementById('timer');
+        let tocades = 0, timeLeft = 120;
+
+        function updateTimer() {
+            const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+            timerEl.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if (timeLeft-- <= 0) finalitzar();
+        }
+
+        function createBubble() {
+            const b = document.createElement('div'); b.className = 'bubble';
+            const sz = Math.random() * 60 + 40;
+            b.style.width = sz + 'px'; b.style.height = sz + 'px';
+            b.style.left = Math.random() * 85 + 'vw'; b.style.top = (Math.random() * 75 + 15) + 'vh';
+            b.onclick = () => { playSound(600); b.remove(); tocades++; if(tocades >= 10) finalitzar(); };
+            game.appendChild(b);
+            setTimeout(() => { if(b.parentNode) b.remove(); }, 2500);
+        }
+
+        function finalitzar() { playSound(800); window.parent.postMessage("joc_finalitzat", "*"); }
+        setInterval(createBubble, 800);
+        setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>

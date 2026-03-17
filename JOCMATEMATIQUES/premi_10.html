@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; display:flex; flex-direction:column; height:100vh; }
+    #header { padding:10px 20px; background:rgba(30,41,59,0.8); display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
+    .shapes { display:flex; gap:20px; font-size:60px; }
+    .options { display:flex; gap:15px; }
+    button.opt { padding:15px 30px; font-size:20px; background:var(--np); border:none; border-radius:10px; cursor:pointer; }
+    button.reset { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #10: QUANTS TRIANGLES?</div><div style="display:flex;gap:15px;align-items:center;"><button class="reset" onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="main"><div class="shapes">🔺 🔵 🔺 ⬜ 🔺</div><div class="options"><button class="opt" onclick="check(2)">2</button><button class="opt" onclick="check(3)">3</button><button class="opt" onclick="check(4)">4</button></div></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120; function check(n){ if(n===3){ playSound(800); window.parent.postMessage("joc_finalitzat","*"); }else{ playSound(100); } }
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; const tEl=document.getElementById('t'); if(tEl) tEl.innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

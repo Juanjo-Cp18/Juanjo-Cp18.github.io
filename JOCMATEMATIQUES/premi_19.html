@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #game { padding:30px; text-align:center; }
+    .word { font-size:40px; margin-bottom:20px; letter-spacing:10px; color:var(--np); }
+    .opts { display:flex; justify-content:center; gap:15px; }
+    .opt { padding:10px 20px; background:rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; font-size:24px; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #19: PARAULA AMAGADA!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="game"><div class="word">L_NA</div><div class="opts"><div class="opt" onclick="win()">U</div><div class="opt" onclick="fail()">O</div><div class="opt" onclick="fail()">A</div></div></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120; function win(){ playSound(800); document.querySelector('.word').innerText="LLUNA"; setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"),1000); } function fail(){ playSound(100); }
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; const tEl=document.getElementById('t'); if(tEl) tEl.innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

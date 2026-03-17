@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #50: EL GRAN ENGRANATGE</title>
+    <style>
+        :root { --primary: #fbbf24; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; background: radial-gradient(circle, #451a03 0%, #020617 100%); overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #canvas { display: block; }
+        #instruction { position: absolute; bottom: 40px; width: 100%; text-align: center; color: var(--primary); font-size: 1.5rem; font-weight: bold; pointer-events: none; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#50: EL GRAN ENGRANATGE</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <canvas id="canvas"></canvas>
+        <div id="instruction">CLICA QUAN LES DENTS COINCIDEIXIN!</div>
+    </div>
+    <div id="overlay">
+        <h1 style="color: var(--primary); font-size: 3rem;">EXPANSIÓ COMPLETADA!</h1>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 6rem; color: var(--accent); margin: 0;">50</h1>
+        </div>
+        <p>HAS SUPERAT ELS 20 NOUS REPTES!</p>
+        <button class="reset" onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+
+        let timeLeft = 120, gameActive = true, score = 0, goal = 5;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let angle1 = 0, angle2 = 0;
+        let speed1 = 0.02, speed2 = -0.015;
+
+        function drawGear(x, y, radius, teeth, angle, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+
+            for (let i = 0; i < teeth * 2; i++) {
+                const r = (i % 2 === 0) ? radius : radius * 1.2;
+                const a = (i * Math.PI) / teeth;
+                ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Center hole
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = '#020617';
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        canvas.onclick = () => {
+            if(!gameActive) return;
+            
+            // Check alignment (simplified: teeth should overlap at a certain angle)
+            // Since speed2 is negative, they move opposite.
+            // Alignment is roughly when angle1 and angle2 normalized are close to 0 or PI.
+            const norm1 = angle1 % (Math.PI * 2 / 12); // teeth=12
+            const norm2 = angle2 % (Math.PI * 2 / 12);
+            
+            // For simplicity in a reward game, let's make the player click when they look "aligned".
+            // We'll use a tolerance of 0.2 radians.
+            if(Math.abs(norm1 - norm2) < 0.2 || Math.abs(norm1 - norm2) > (Math.PI * 2 / 12) - 0.2) {
+                score++;
+                playSfx(600, "sine", 0.1);
+                speed1 *= 1.2;
+                speed2 *= 1.2;
+                if(score >= goal) win();
+            } else {
+                playSfx(150, "square", 0.1);
+            }
+        };
+
+        function loop() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            angle1 += speed1;
+            angle2 += speed2;
+
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+
+            drawGear(centerX - 80, centerY, 60, 12, angle1, '#fbbf24');
+            drawGear(centerX + 80, centerY, 60, 12, angle2, '#3b82f6');
+
+            ctx.fillStyle = 'white';
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Sincronitzacions: ${score} / ${goal}`, centerX, centerY + 150);
+
+            requestAnimationFrame(loop);
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(1000, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>

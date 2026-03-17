@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #scene { position:relative; width:100vw; height:80vh; }
+    .obj { position:absolute; font-size:30px; cursor:pointer; }
+    .target-hint { font-size:24px; color:var(--np); text-align:center; margin-top:10px; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #29: OBJECTE AMAGAT!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div class="target-hint">Busca el diamant: 💎</div>
+    <div id="scene"></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    const scene=document.getElementById('scene'), icons=['🪐','🚀','🌔','🛰️','🤖','☄️','🌌','⭐','🛸'];
+    let tl=120;
+    for(let i=0;i<40;i++){
+        const d=document.createElement('div'); d.className='obj'; d.innerHTML=icons[Math.floor(Math.random()*icons.length)];
+        d.style.left=Math.random()*90+'vw'; d.style.top=Math.random()*70+'vh'; d.style.opacity="0.6";
+        d.onclick=()=>playSound(100); scene.appendChild(d);
+    }
+    const target=document.createElement('div'); target.className='obj'; target.innerHTML='💎';
+    target.style.left=Math.random()*90+'vw'; target.style.top=Math.random()*70+'vh';
+    target.onclick=()=>{ playSound(800); target.style.fontSize="60px"; setTimeout(()=>window.parent.postMessage("joc_finalitzat","*"),800); };
+    scene.appendChild(target);
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

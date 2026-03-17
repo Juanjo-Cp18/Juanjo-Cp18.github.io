@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #44: EQUILIBRI ENERGÈTIC</title>
+    <style>
+        :root { --primary: #fbbf24; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #451a03 0%, #020617 100%); }
+        .target-display { font-size: 3rem; font-weight: 800; color: var(--primary); margin-bottom: 30px; text-shadow: 0 0 15px rgba(251, 191, 36, 0.4); }
+        .blocks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 90%; max-width: 400px; }
+        .block { background: var(--surface); border: 2px solid var(--primary); padding: 20px; font-size: 1.8rem; font-weight: bold; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: center; }
+        .block.selected { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
+        #current-sum { font-size: 2rem; margin-top: 30px; color: var(--accent); }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#44: EQUILIBRI ENERGÈTIC</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="instruction" style="margin-bottom: 10px; color: var(--primary); font-weight: bold;">COMBINA ELS BLOCS PER ARRIBAR A:</div>
+        <div class="target-display" id="target">50</div>
+        <div class="blocks" id="blocks"></div>
+        <div id="current-sum">TOTAL ACTUAL: 0</div>
+        <div id="stats" style="margin-top: 20px; color: var(--accent);">Encerts: 0 / 5</div>
+    </div>
+    <div id="overlay">
+        <h2>RECARREGA COMPLETADA!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">44</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let score = 0, timeLeft = 120, gameActive = true, target = 0, currentSum = 0;
+        const targetEl = document.getElementById('target');
+        const blocksEl = document.getElementById('blocks');
+        const sumEl = document.getElementById('current-sum');
+        const statsEl = document.getElementById('stats');
+        const overlay = document.getElementById('overlay');
+
+        function generateLevel() {
+            blocksEl.innerHTML = '';
+            currentSum = 0;
+            sumEl.innerText = `TOTAL ACTUAL: ${currentSum}`;
+            
+            const numBlocks = 6;
+            const values = Array.from({length: numBlocks}, () => Math.floor(Math.random() * 15) + 5);
+            
+            // Choose 2-3 blocks as solution
+            const solIndices = Array.from({length: 3}, () => Math.floor(Math.random() * numBlocks));
+            target = [...new Set(solIndices)].reduce((acc, idx) => acc + values[idx], 0);
+            targetEl.innerText = target;
+
+            values.forEach((v, i) => {
+                const block = document.createElement('div');
+                block.className = 'block';
+                block.innerText = v;
+                block.onclick = () => toggle(v, block);
+                blocksEl.appendChild(block);
+            });
+        }
+
+        function toggle(val, el) {
+            if(!gameActive) return;
+            if(el.classList.contains('selected')) {
+                el.classList.remove('selected');
+                currentSum -= val;
+            } else {
+                el.classList.add('selected');
+                currentSum += val;
+            }
+            sumEl.innerText = `TOTAL ACTUAL: ${currentSum}`;
+            playSfx(400 + val * 5, "sine", 0.05);
+
+            if(currentSum === target) {
+                score++;
+                playSfx(600, "sine", 0.1);
+                statsEl.innerText = `Encerts: ${score} / 5`;
+                if(score >= 5) win();
+                else setTimeout(generateLevel, 500);
+            } else if(currentSum > target) {
+                // Flash red or just don't win
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateLevel();
+    </script>
+</body>
+</html>

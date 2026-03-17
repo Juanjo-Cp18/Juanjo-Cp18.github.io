@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --neon-cyan: #22d3ee; --neon-purple: #a5b4fc; --dark-bg: #020617; }
+        body { margin: 0; background: var(--dark-bg); color: white; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+        #header { padding: 10px 20px; background: rgba(30, 41, 59, 0.8); display: flex; justify-content: space-between; border-bottom: 2px solid var(--neon-cyan); box-sizing: border-box; }
+        #main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #graella { display: grid; grid-template-columns: repeat(4, 70px); gap: 15px; }
+        .carta { width: 70px; height: 70px; background: #1e293b; border: 2px solid var(--neon-purple); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 35px; cursor: pointer; transition: 0.3s; }
+        .carta.girada { background: rgba(165, 180, 252, 0.2); border-color: var(--neon-cyan); transform: rotateY(180deg); }
+        button { background: var(--neon-purple); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div>Premi #3: TROBA LES 4 PARELLES!</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <button onclick="location.reload()">REINICIAR</button>
+            <div id="timer">02:00</div>
+        </div>
+    </div>
+    <div id="main"><div id="graella"></div></div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(f) {
+            try {
+                const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        const icons = ['🚀','🪐','👽','⭐','🚀','🪐','👽','⭐'].sort(()=>Math.random()-0.5);
+        const timerEl = document.getElementById('timer');
+        let sel = [], pairs = 0, timeLeft = 120;
+
+        function updateTimer() {
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            timerEl.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft-- <= 0) finalitzar();
+        }
+
+        function finalitzar() { playSound(800); window.parent.postMessage("joc_finalitzat", "*"); }
+
+        icons.forEach(ic => {
+            const c = document.createElement('div'); c.className = 'carta'; c.dataset.icon = ic;
+            c.onclick = () => {
+                if(sel.length < 2 && !c.classList.contains('girada')) {
+                    playSound(400); c.classList.add('girada'); c.innerText = ic; sel.push(c);
+                    if(sel.length === 2) {
+                        setTimeout(() => {
+                            if(sel[0].dataset.icon === sel[1].dataset.icon) { playSound(600); pairs++; if(pairs===4) finalitzar(); }
+                            else { sel.forEach(x => { x.classList.remove('girada'); x.innerText = ''; }); }
+                            sel = [];
+                        }, 600);
+                    }
+                }
+            };
+            document.getElementById('graella').appendChild(c);
+        });
+        setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>

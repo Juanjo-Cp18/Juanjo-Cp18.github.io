@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #43: SUMA DE CONSTEL·LACIONS</title>
+    <style>
+        :root { --primary: #fbbf24; --bg: #020617; --surface: #1e293b; --accent: #8b5cf6; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; box-sizing: border-box; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #1e1b4b 0%, #020617 100%); }
+        .grid { display: grid; grid-template-columns: repeat(5, 60px); gap: 10px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .num-box { width: 60px; height: 60px; background: var(--surface); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; font-weight: bold; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); transition: all 0.2s; }
+        .num-box:hover { transform: scale(1.05); border-color: var(--primary); }
+        .num-box.selected { background: var(--primary); color: var(--bg); border-color: white; box-shadow: 0 0 15px var(--primary); }
+        
+        #instruction { margin-bottom: 5px; font-size: 1.1rem; color: #94a3b8; }
+        #target-sum { font-size: 3rem; font-weight: bold; color: var(--primary); margin-bottom: 25px; text-shadow: 0 0 15px rgba(251, 191, 36, 0.4); }
+        #stats { margin-top: 20px; font-size: 1.2rem; color: var(--accent); font-weight: bold; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--primary); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: var(--bg); border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        button.reset:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title" style="font-weight: bold;">#43: SUMA DE CONSTEL·LACIONS</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="instruction">SELECCIONA NÚMEROS QUE SUMIN:</div>
+        <div id="target-sum">15</div>
+        <div class="grid" id="grid"></div>
+        <div id="stats">Punts: 0 / 5</div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--primary)">ESTRATÈGIA BRILLANT!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">43</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let score = 0, target = 0, currentSum = 0, timeLeft = 120, gameActive = true;
+        let selectedIndices = [];
+        const gridEl = document.getElementById('grid');
+        const targetEl = document.getElementById('target-sum');
+        const statsEl = document.getElementById('stats');
+        const overlay = document.getElementById('overlay');
+
+        function generateBoard() {
+            gridEl.innerHTML = '';
+            selectedIndices = [];
+            currentSum = 0;
+            
+            // Random target between 10 and 25
+            target = 10 + Math.floor(Math.random() * 16);
+            targetEl.innerText = target;
+
+            for(let i=0; i<25; i++) {
+                const val = 1 + Math.floor(Math.random() * 9);
+                const box = document.createElement('div');
+                box.className = 'num-box';
+                box.innerText = val;
+                box.onclick = () => selectNum(i, val, box);
+                gridEl.appendChild(box);
+            }
+        }
+
+        function selectNum(idx, val, el) {
+            if(!gameActive) return;
+            
+            if(selectedIndices.includes(idx)) {
+                // Deselect
+                selectedIndices = selectedIndices.filter(i => i !== idx);
+                currentSum -= val;
+                el.classList.remove('selected');
+                playSfx(200, "sine", 0.05);
+            } else {
+                // Select
+                selectedIndices.push(idx);
+                currentSum += val;
+                el.classList.add('selected');
+                playSfx(400 + currentSum * 10, "sine", 0.05);
+            }
+
+            if(currentSum === target) {
+                score++;
+                statsEl.innerText = `Punts: ${score} / 5`;
+                playSfx(800, "sine", 0.2);
+                if(score >= 5) win();
+                else {
+                    // Flash success and generate new
+                    document.body.style.background = "#064e3b";
+                    setTimeout(() => {
+                        document.body.style.background = "";
+                        generateBoard();
+                    }, 500);
+                }
+            } else if(currentSum > target) {
+                // Fail
+                playSfx(100, "sawtooth", 0.3);
+                document.body.style.background = "#450a0a";
+                setTimeout(() => {
+                    document.body.style.background = "";
+                    const boxes = document.querySelectorAll('.num-box');
+                    selectedIndices.forEach(i => boxes[i].classList.remove('selected'));
+                    selectedIndices = [];
+                    currentSum = 0;
+                }, 500);
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(1000, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateBoard();
+    </script>
+</body>
+</html>

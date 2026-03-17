@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #32: CODI BINARI</title>
+    <style>
+        :root { --primary: #22d3ee; --bg: #020617; --surface: #1e293b; --accent: #f472b6; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Courier New', Courier, monospace; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        .title { font-weight: 800; color: var(--primary); font-family: sans-serif; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #0f172a 0%, #020617 100%); }
+        #sequence { display: flex; gap: 15px; margin-bottom: 40px; height: 80px; align-items: center; }
+        .bit { font-size: 3rem; font-weight: bold; color: rgba(255,255,255,0.2); transition: all 0.2s; }
+        .bit.active { color: var(--primary); text-shadow: 0 0 20px var(--primary); transform: scale(1.2); }
+        .bit.done { color: var(--accent); opacity: 0.5; transform: scale(0.8); }
+        .controls { display: flex; gap: 40px; }
+        .btn { width: 120px; height: 120px; border-radius: 20px; border: 3px solid var(--primary); display: flex; justify-content: center; align-items: center; font-size: 4rem; color: var(--primary); cursor: pointer; transition: all 0.1s; background: rgba(34, 211, 238, 0.1); }
+        .btn:hover { background: rgba(34, 211, 238, 0.2); transform: translateY(-5px); }
+        .btn:active { transform: scale(0.95); }
+        #instruction { margin-bottom: 20px; font-family: sans-serif; color: var(--primary); font-size: 1.2rem; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; font-family: sans-serif; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: var(--bg); border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title">#32: CODI BINARI</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="instruction">COPIA LA SEQÜÈNCIA DE NÚMEROS!</div>
+        <div id="level-indicator" style="margin-bottom: 10px; color: var(--accent);">NIVELL 1 / 5</div>
+        <div id="sequence"></div>
+        <div class="controls">
+            <div class="btn" onclick="tap(0)">0</div>
+            <div class="btn" onclick="tap(1)">1</div>
+        </div>
+    </div>
+    <div id="overlay">
+        <h2>SISTEMA DESBLOQUEJAT!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">32</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Jugar de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let currentSeq = [], currentIndex = 0, level = 1, timeLeft = 120, gameActive = true;
+        const seqEl = document.getElementById('sequence');
+        const overlay = document.getElementById('overlay');
+        const levelEl = document.getElementById('level-indicator');
+
+        function generateSeq() {
+            currentSeq = [];
+            currentIndex = 0;
+            seqEl.innerHTML = '';
+            levelEl.innerText = `NIVELL ${level} / 5`;
+            const len = level + 2;
+            for(let i=0; i<len; i++) {
+                const bit = Math.round(Math.random());
+                currentSeq.push(bit);
+                const el = document.createElement('div');
+                el.className = 'bit';
+                el.innerText = bit;
+                seqEl.appendChild(el);
+            }
+            updateSeq();
+        }
+
+        function updateSeq() {
+            const bits = document.querySelectorAll('.bit');
+            bits.forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if(i < currentIndex) el.classList.add('done');
+                if(i === currentIndex) el.classList.add('active');
+            });
+        }
+
+        function tap(val) {
+            if(!gameActive) return;
+            if(val === currentSeq[currentIndex]) {
+                currentIndex++;
+                playSfx(400 + currentIndex * 50, "sine", 0.1);
+                if(currentIndex >= currentSeq.length) {
+                    level++;
+                    if(level > 5) win();
+                    else {
+                        seqEl.style.background = 'rgba(34, 211, 238, 0.2)';
+                        setTimeout(() => {
+                            seqEl.style.background = 'transparent';
+                            generateSeq();
+                        }, 300);
+                    }
+                } else {
+                    updateSeq();
+                }
+            } else {
+                playSfx(100, "square", 0.2);
+                currentIndex = 0;
+                seqEl.style.animation = 'shake 0.3s ease-in-out';
+                setTimeout(() => seqEl.style.animation = '', 300);
+                updateSeq();
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateSeq();
+    </script>
+</body>
+</html>

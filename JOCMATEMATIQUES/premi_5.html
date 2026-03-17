@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root { --neon-cyan: #22d3ee; --neon-purple: #a5b4fc; --dark-bg: #020617; }
+        body { margin: 0; background: var(--dark-bg); overflow: hidden; color: white; font-family: sans-serif; }
+        #header { position: fixed; top: 0; left: 0; width: 100%; padding: 10px 20px; background: rgba(30, 41, 59, 0.8); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--neon-cyan); box-sizing: border-box; }
+        #game { width: 100vw; height: 100vh; position: relative; }
+        .meteorit { position: absolute; font-size: 40px; cursor: pointer; filter: drop-shadow(0 0 10px #f97316); transition: 0.2s; }
+        button { background: var(--neon-purple); border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div>Premi #5: DESTRUEIX 8 METEORITS!</div>
+        <div style="display:flex; gap:15px; align-items:center;">
+            <button onclick="location.reload()">REINICIAR</button>
+            <div id="timer">02:00</div>
+        </div>
+    </div>
+    <div id="game"></div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(f) {
+            try {
+                const osc = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
+        let pts = 0, timeLeft = 120;
+        function updateTimer() {
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            const tEl = document.getElementById('timer');
+            if(tEl) tEl.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft-- <= 0) finalitzar();
+        }
+        function spawn() {
+            const m = document.createElement('div'); m.className = 'meteorit'; m.innerHTML = '☄️';
+            m.style.left = Math.random()*85+'vw'; m.style.top = (Math.random()*75+15)+'vh';
+            m.onclick = () => { playSound(200); m.innerHTML = '💥'; pts++; m.style.transform = "scale(1.5)"; setTimeout(()=>m.remove(),300); if(pts>=8) finalitzar(); };
+            document.getElementById('game').appendChild(m);
+            setTimeout(()=>{ if(m.parentNode) m.remove(); }, 1800);
+        }
+        function finalitzar() { playSound(800); window.parent.postMessage("joc_finalitzat", "*"); }
+        setInterval(spawn, 700); setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>

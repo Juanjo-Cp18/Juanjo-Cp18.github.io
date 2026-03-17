@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #40: ESCANEIG DE DADES</title>
+    <style>
+        :root { --primary: #0ea5e9; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; --success: #10b981; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; box-sizing: border-box; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #0c4a6e 0%, #020617 100%); }
+        .scanner-container { position: relative; width: 90%; max-width: 600px; height: 320px; border: 2px solid rgba(255,255,255,0.1); border-radius: 15px; background: rgba(0,0,0,0.4); overflow: hidden; display: flex; flex-direction: column; justify-content: center; gap: 20px; cursor: pointer; }
+        .row { width: 100%; height: 100px; display: flex; align-items: center; position: relative; overflow: hidden; background: rgba(255,255,255,0.03); }
+        .track { display: flex; position: absolute; white-space: nowrap; font-family: 'Courier New', Courier, monospace; font-size: 3.5rem; font-weight: bold; color: rgba(255,255,255,0.15); }
+        .track span { width: 180px; text-align: center; display: inline-block; transition: color 0.2s, transform 0.2s; }
+        .track span.potential-match { color: var(--accent); text-shadow: 0 0 15px var(--accent); transform: scale(1.1); }
+        
+        .target-box { position: absolute; left: 50%; transform: translateX(-50%); width: 180px; height: 100%; border: 4px solid var(--primary); box-shadow: 0 0 30px rgba(14, 165, 233, 0.4); z-index: 5; pointer-events: none; background: rgba(14, 165, 233, 0.05); transition: border-color 0.2s, background 0.2s; }
+        .target-box.match-ready { border-color: var(--success); background: rgba(16, 185, 129, 0.15); box-shadow: 0 0 40px rgba(16, 185, 129, 0.6); }
+
+        #instruction { margin-bottom: 20px; font-size: 1.4rem; font-weight: bold; color: var(--primary); text-align: center; text-shadow: 0 0 10px rgba(14, 165, 233, 0.5); }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        button:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title" style="font-weight: bold;">#40: ESCANEIG DE DADES</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="instruction">CLICA QUAN ELS NÚMEROS SIGUIN IGUALS AL CENTRE!</div>
+        <div id="score-display" style="margin-bottom: 20px; font-size: 1.5rem; font-weight: bold; color: var(--accent);">Encerts: 0 / 5</div>
+        <div class="scanner-container" onclick="checkMatch()">
+            <div id="target-box" class="target-box"></div>
+            <div class="row"><div class="track" id="track1"></div></div>
+            <div class="row"><div class="track" id="track2"></div></div>
+        </div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--accent)">SINCRONITZACIÓ COMPLETADA!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--primary); margin: 0;">40</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let score = 0, timeLeft = 120, gameActive = true;
+        let pos1 = 0, pos2 = 0, speed1 = 2, speed2 = -2.5; // Reduced initial speed
+        let data1 = [], data2 = [];
+        const SPACING = 180;
+
+        const track1 = document.getElementById('track1');
+        const track2 = document.getElementById('track2');
+        const scoreEl = document.getElementById('score-display');
+        const targetBox = document.getElementById('target-box');
+        const overlay = document.getElementById('overlay');
+
+        function generateData() {
+            // Simplified numbers to make them easier to read (0-9)
+            data1 = Array.from({length: 15}, () => Math.floor(Math.random() * 10));
+            data2 = [...data1].sort(() => Math.random() - 0.5);
+            
+            track1.innerHTML = data1.map(n => `<span>${n}</span>`).join('') + data1.map(n => `<span>${n}</span>`).join('');
+            track2.innerHTML = data2.map(n => `<span>${n}</span>`).join('') + data2.map(n => `<span>${n}</span>`).join('');
+        }
+
+        function loop() {
+            if(!gameActive) return;
+            pos1 += speed1;
+            pos2 += speed2;
+
+            const totalWidth = SPACING * 15;
+            if(pos1 > totalWidth) pos1 -= totalWidth;
+            if(pos1 < 0) pos1 += totalWidth;
+            if(pos2 > totalWidth) pos2 -= totalWidth;
+            if(pos2 < 0) pos2 += totalWidth;
+
+            track1.style.transform = `translateX(${-pos1}px)`;
+            track2.style.transform = `translateX(${-pos2}px)`;
+
+            // Visual hint: check if they match near center
+            const containerWidth = document.querySelector('.scanner-container').offsetWidth;
+            const offset = pos1 + (containerWidth / 2);
+            const idx1 = Math.floor(offset / SPACING) % 15;
+            
+            const offset2 = pos2 + (containerWidth / 2);
+            const idx2 = Math.floor(offset2 / SPACING) % 15;
+
+            const spans1 = track1.querySelectorAll('span');
+            const spans2 = track2.querySelectorAll('span');
+            
+            // Clean up old hints
+            spans1.forEach(s => s.classList.remove('potential-match'));
+            spans2.forEach(s => s.classList.remove('potential-match'));
+
+            if(data1[idx1] === data2[idx2]) {
+                targetBox.classList.add('match-ready');
+                // Highlight the specific spans
+                spans1[idx1].classList.add('potential-match');
+                spans1[idx1 + 15].classList.add('potential-match');
+                spans2[idx2].classList.add('potential-match');
+                spans2[idx2 + 15].classList.add('potential-match');
+            } else {
+                targetBox.classList.remove('match-ready');
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        function checkMatch() {
+            if(!gameActive) return;
+            
+            const containerWidth = document.querySelector('.scanner-container').offsetWidth;
+            const idx1 = Math.floor((pos1 + (containerWidth / 2)) / SPACING) % 15;
+            const idx2 = Math.floor((pos2 + (containerWidth / 2)) / SPACING) % 15;
+            
+            if(data1[idx1] === data2[idx2]) {
+                score++;
+                scoreEl.innerText = `Encerts: ${score} / 5`;
+                playSfx(600, "sine", 0.1);
+                
+                // Flash effect
+                document.body.style.background = "#064e3b";
+                setTimeout(() => document.body.style.background = "", 100);
+
+                speed1 *= 1.15; // Slower speed increase
+                speed2 *= 1.15;
+                if(score >= 5) win();
+            } else {
+                playSfx(150, "sawtooth", 0.2);
+                // Shake effect
+                document.querySelector('.scanner-container').style.transform = "translateX(10px)";
+                setTimeout(() => document.querySelector('.scanner-container').style.transform = "translateX(-10px)", 50);
+                setTimeout(() => document.querySelector('.scanner-container').style.transform = "translateX(0)", 100);
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        generateData();
+        loop();
+    </script>
+</body>
+</html>

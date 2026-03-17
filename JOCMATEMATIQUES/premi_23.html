@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; overflow:hidden; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #ship { position:absolute; left:50px; font-size:40px; transition:0.1s; }
+    .ast { position:absolute; font-size:30px; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #23: ESQUIVA ASTEROIDES! (10 seg)</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="ship">🚀</div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let tl=120, sy=window.innerHeight/2, survive=0; const ship=document.getElementById('ship');
+    window.onmousemove=(e)=>{ sy=e.clientY-20; ship.style.top=sy+'px'; };
+    function spawn(){
+        const a=document.createElement('div'); a.className='ast'; a.innerHTML='☄️'; a.style.right='0px'; a.style.top=Math.random()*90+'vh'; document.body.appendChild(a);
+        let ax=0; const iv=setInterval(()=>{ ax+=5; a.style.right=ax+'px';
+            const r=a.getBoundingClientRect(), sr=ship.getBoundingClientRect();
+            if(r.left < sr.right && r.right > sr.left && r.top < sr.bottom && r.bottom > sr.top){ playSound(100); location.reload(); }
+            if(ax>window.innerWidth){ a.remove(); clearInterval(iv); }
+        }, 20);
+    }
+    const spIv = setInterval(spawn, 600);
+    const survIv = setInterval(()=>{ survive++; if(survive>=10){ playSound(800); clearInterval(spIv); clearInterval(survIv); window.parent.postMessage("joc_finalitzat","*"); } },1000);
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

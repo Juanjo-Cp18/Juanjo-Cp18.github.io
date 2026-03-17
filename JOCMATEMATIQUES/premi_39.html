@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #39: REACCIÓ EN CADENA</title>
+    <style>
+        :root { --primary: #f43f5e; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #canvas { display: block; }
+        #instruction { position: absolute; top: 100px; width: 100%; text-align: center; color: var(--primary); font-size: 1.5rem; font-weight: bold; pointer-events: none; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
+        #score-indicator { position: absolute; bottom: 40px; width: 100%; text-align: center; color: white; font-size: 2rem; font-weight: bold; pointer-events: none; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--primary); margin-bottom: 20px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        button:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title" style="font-weight: bold;">#39: REACCIÓ EN CADENA</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <canvas id="canvas"></canvas>
+        <div id="instruction">CLICA UNA VEGADA PER COMENÇAR LA REACCIÓ!</div>
+        <div id="score-indicator">0 / 25</div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--primary)">REACCIÓ TOTAL!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">39</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const scoreEl = document.getElementById('score-indicator');
+
+        let particles = [], explosions = [], timeLeft = 120, gameActive = true, hasClicked = false;
+        let score = 0, goal = 25; 
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.onresize = resize;
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 3;
+                this.vy = (Math.random() - 0.5) * 3;
+                this.radius = 6;
+                this.color = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                this.active = true;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if(this.x < 10 || this.x > canvas.width - 10) this.vx *= -1;
+                if(this.y < 80 || this.y > canvas.height - 10) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.strokeStyle = "rgba(255,255,255,0.3)";
+                ctx.stroke();
+            }
+        }
+
+        class Explosion {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 2;
+                this.maxRadius = 70;
+                this.speed = 1.8;
+                this.growing = true;
+                this.alpha = 1;
+            }
+            update() {
+                if(this.growing) {
+                    this.radius += this.speed;
+                    if(this.radius >= this.maxRadius) this.growing = false;
+                } else {
+                    this.alpha -= 0.015;
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(244, 63, 94, ${this.alpha * 0.4})`;
+                ctx.strokeStyle = `rgba(34, 211, 238, ${this.alpha})`;
+                ctx.lineWidth = 3;
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        // Increased particle count for better chain probability
+        for(let i=0; i<60; i++) particles.push(new Particle());
+
+        canvas.onclick = (e) => {
+            if(hasClicked || !gameActive) return;
+            hasClicked = true;
+            explosions.push(new Explosion(e.clientX, e.clientY));
+            playSfx(400, "square", 0.1);
+            document.getElementById('instruction').style.display = 'none';
+        };
+
+        function loop() {
+            if(!gameActive) return;
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                if(!p.active) return;
+                p.update();
+                p.draw();
+                
+                explosions.forEach(e => {
+                    const dx = p.x - e.x;
+                    const dy = p.y - e.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < p.radius + e.radius) {
+                        p.active = false;
+                        score++;
+                        scoreEl.innerText = `${score} / ${goal}`;
+                        explosions.push(new Explosion(p.x, p.y));
+                        playSfx(300 + score * 15, "sine", 0.08);
+                        if(score >= goal) win();
+                    }
+                });
+            });
+
+            particles = particles.filter(p => p.active);
+            explosions.forEach(e => {
+                e.update();
+                e.draw();
+            });
+            const prevExpLen = explosions.length;
+            explosions = explosions.filter(e => e.alpha > 0);
+
+            // If no more explosions and didn't reach goal
+            if(hasClicked && explosions.length === 0 && score < goal) {
+                ctx.fillStyle = "rgba(244, 63, 94, 0.8)";
+                ctx.font = "bold 30px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText("INTENTA-HO DE NOU!", canvas.width/2, canvas.height/2);
+                setTimeout(() => location.reload(), 1500);
+                gameActive = false;
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>

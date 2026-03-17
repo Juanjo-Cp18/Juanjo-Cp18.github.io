@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; display:flex; flex-direction:column; height:100vh; }
+    #header { padding:10px 20px; background:rgba(30,41,59,0.8); display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); box-sizing:border-box; }
+    #main { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    #joc { display:flex; justify-content:center; gap:15px; flex-wrap:wrap; padding:20px; }
+    .num-btn { width:60px; height:60px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; background:#1e293b; border:2px solid var(--np); border-radius:50%; cursor:pointer; transition:0.3s; box-shadow: 0 0 10px rgba(165,180,252,0.3); }
+    .num-btn.correct { background:#22c55e; border-color:white; transform:scale(0.9); }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #7: CLICA ELS NÚMEROS EN ORDRE!</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="main"><div id="joc"></div></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    const c=document.getElementById('joc'); let ns=[1,2,3,4,5,6].sort(()=>Math.random()-0.5), act=1, tl=120;
+    ns.forEach(n=>{
+        const b=document.createElement('div'); b.className='num-btn'; b.innerText=n;
+        b.onclick=()=>{ if(n===act){playSound(400+n*50); b.classList.add('correct'); act++; if(act>6) setTimeout(()=>{playSound(800);window.parent.postMessage("joc_finalitzat","*")},600); }else{playSound(100); b.style.borderColor="red"; setTimeout(()=>b.style.borderColor="var(--np)", 300); } };
+        c.appendChild(b);
+    });
+    setInterval(()=>{
+        const m=Math.floor(tl/60), s=tl%60; const tEl=document.getElementById('t');
+        if(tEl) tEl.innerText=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        if(tl--<=0) window.parent.postMessage("joc_finalitzat","*");
+    }, 1000);
+    </script>
+</body></html>

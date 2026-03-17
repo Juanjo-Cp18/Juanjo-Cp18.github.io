@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #49: ATRAPA-ESTRELLES</title>
+    <style>
+        :root { --primary: #fbbf24; --bg: #020617; --surface: #1e293b; --accent: #f472b6; --danger: #ef4444; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; box-sizing: border-box; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); z-index: 100; }
+        #game { position: relative; width: 100%; height: 100%; background: radial-gradient(circle at center, #1e1b4b 0%, #020617 100%); overflow: hidden; }
+        #canvas { display: block; cursor: crosshair; }
+        
+        #instruction { position: absolute; bottom: 40px; width: 100%; text-align: center; color: var(--primary); font-size: 1.5rem; font-weight: bold; pointer-events: none; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button.reset { background: var(--primary); color: #000; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        button.reset:hover { transform: scale(1.1); }
+        #score-display { position: absolute; top: 80px; left: 25px; font-size: 2rem; font-weight: bold; color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div class="title" style="font-weight: bold;">#49: ATRAPA-ESTRELLES</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button class="reset" onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <canvas id="canvas"></canvas>
+        <div id="score-display">Punts: 0 / 10</div>
+        <div id="instruction">CLICA LES ESTRELLES DAURADES! ✨</div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--primary)">CAÇADOR D'ESTRELLES!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">49</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button class="reset" onclick="location.reload()">Juga de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('overlay');
+        const scoreEl = document.getElementById('score-display');
+
+        let timeLeft = 120, gameActive = true, score = 0, goal = 10;
+        let objects = [], lastSpawn = 0;
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class FallingObject {
+            constructor(isStar) {
+                this.isStar = isStar;
+                this.radius = isStar ? 25 : 30;
+                this.x = Math.random() * (canvas.width - this.radius * 2) + this.radius;
+                this.y = -50;
+                this.speed = 2 + Math.random() * 3 + (score * 0.2);
+                this.rotation = 0;
+                this.rotSpeed = (Math.random() - 0.5) * 0.1;
+                this.color = isStar ? '#fbbf24' : '#64748b';
+            }
+
+            update() {
+                this.y += this.speed;
+                this.rotation += this.rotSpeed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                if(this.isStar) {
+                    // Star shape
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    for(let i=0; i<5; i++) {
+                        ctx.lineTo(Math.cos((18+72*i)*Math.PI/180)*this.radius, Math.sin((18+72*i)*Math.PI/180)*this.radius);
+                        ctx.lineTo(Math.cos((54+72*i)*Math.PI/180)*this.radius*0.4, Math.sin((54+72*i)*Math.PI/180)*this.radius*0.4);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    // Glow
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                } else {
+                    // Rock shape
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    for(let i=0; i<6; i++) {
+                        const r = this.radius * (0.8 + Math.random() * 0.2);
+                        ctx.lineTo(Math.cos(i*Math.PI/3)*r, Math.sin(i*Math.PI/3)*r);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        canvas.onmousedown = (e) => {
+            if(!gameActive) return;
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            checkClick(mouseX, mouseY);
+        };
+
+        canvas.ontouchstart = (e) => {
+            if(!gameActive) return;
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            checkClick(touchX, touchY);
+        };
+
+        function checkClick(x, y) {
+            for(let i = objects.length - 1; i >= 0; i--) {
+                const o = objects[i];
+                const dist = Math.sqrt((x - o.x)**2 + (y - o.y)**2);
+                if(dist < o.radius + 10) {
+                    if(o.isStar) {
+                        score++;
+                        playSfx(600 + score * 50, "sine", 0.1);
+                        scoreEl.innerText = `Punts: ${score} / ${goal}`;
+                        if(score >= goal) win();
+                    } else {
+                        score = Math.max(0, score - 2);
+                        playSfx(100, "square", 0.3);
+                        scoreEl.innerText = `Punts: ${score} / ${goal}`;
+                        // Flash background red
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    objects.splice(i, 1);
+                    return;
+                }
+            }
+        }
+
+        function loop() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if(Date.now() - lastSpawn > 800 - (score * 20)) {
+                objects.push(new FallingObject(Math.random() > 0.3));
+                lastSpawn = Date.now();
+            }
+
+            objects.forEach((o, i) => {
+                o.update();
+                o.draw();
+                if(o.y > canvas.height + 100) objects.splice(i, 1);
+            });
+
+            requestAnimationFrame(loop);
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>

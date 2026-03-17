@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premi #33: PULSACIONS RÍTMIQUES</title>
+    <style>
+        :root { --primary: #f472b6; --bg: #020617; --surface: #1e293b; --accent: #22d3ee; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        #header { position: absolute; top:0; left:0; width:100%; padding: 15px 25px; display: flex; justify-content: space-between; align-items:center; background: rgba(15,23,42,0.8); backdrop-filter: blur(10px); border-bottom: 2px solid var(--primary); box-sizing: border-box; z-index: 100; }
+        .title { font-weight: 800; color: var(--primary); text-transform: uppercase; }
+        #game { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, #2d1b4b 0%, #020617 100%); }
+        .circle-container { position: relative; width: 320px; height: 320px; }
+        .circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; transition: border-color 0.1s; }
+        #target-circle { width: 100px; height: 100px; border: 4px solid var(--primary); box-shadow: 0 0 20px var(--primary); z-index: 5; }
+        #target-circle.highlight { border-color: white; box-shadow: 0 0 40px white; }
+        #pulse-circle { width: 300px; height: 300px; border: 3px solid rgba(255,255,255,0.6); z-index: 10; pointer-events: none; }
+        #score-display { position: absolute; top: 100px; font-size: 2rem; font-weight: bold; color: var(--primary); }
+        #instruction { position: absolute; bottom: 80px; color: var(--accent); font-size: 1.2rem; text-align: center; width: 90%; }
+        #overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(2,6,23,0.95); display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; text-align:center; }
+        .prize-box { background: var(--surface); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); margin-bottom: 20px; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body onclick="checkPress()">
+    <div id="header">
+        <div class="title">#33: PULSACIONS RÍTMIQUES</div>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <div id="timer" style="font-family: monospace; font-size: 1.2rem;">02:00</div>
+            <button onclick="event.stopPropagation(); location.reload()">Reiniciar</button>
+        </div>
+    </div>
+    <div id="game">
+        <div id="score-display">0 / 10</div>
+        <div class="circle-container">
+            <div id="target-circle" class="circle"></div>
+            <div id="pulse-circle" class="circle"></div>
+        </div>
+        <div id="instruction">CLICA QUAN EL CERCLE BLANC<br>TOQUI EL CERCLE ROSA!</div>
+    </div>
+    <div id="overlay">
+        <h2 style="color: var(--primary)">RITME PERFECTE!</h2>
+        <div class="prize-box">
+            <p>PREMI Nº</p>
+            <h1 style="font-size: 5rem; color: var(--accent); margin: 0;">33</h1>
+        </div>
+        <p>+10 PUNTS</p>
+        <button onclick="location.reload()">Jugar de nou</button>
+    </div>
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(f, type="sine", dur=0.1) {
+            try { const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.05, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur); o.start(); o.stop(audioCtx.currentTime+dur); } catch(e){}
+        }
+
+        let hits = 0, size = 300, speed = 3.5, gameActive = true, timeLeft = 120;
+        const pulse = document.getElementById('pulse-circle');
+        const target = document.getElementById('target-circle');
+        const scoreEl = document.getElementById('score-display');
+        const overlay = document.getElementById('overlay');
+
+        function loop() {
+            if(!gameActive) return;
+            size -= speed;
+            
+            // Visual cue when in range
+            if (size >= 80 && size <= 120) {
+                target.classList.add('highlight');
+            } else {
+                target.classList.remove('highlight');
+            }
+
+            if(size < 0) {
+                size = 300;
+                playSfx(100, "square", 0.1); // Missed
+            }
+            pulse.style.width = size + 'px';
+            pulse.style.height = size + 'px';
+            requestAnimationFrame(loop);
+        }
+
+        function checkPress() {
+            if(!gameActive) return;
+            // Target is 100px. Allow 80-120 range (generous)
+            if(size >= 75 && size <= 125) {
+                hits++;
+                scoreEl.innerText = `${hits} / 10`;
+                playSfx(500 + hits*50, "sine", 0.1);
+                
+                // Blast effect
+                target.style.transform = 'translate(-50%, -50%) scale(1.3)';
+                setTimeout(() => target.style.transform = 'translate(-50%, -50%) scale(1)', 100);
+                
+                size = 300; 
+                speed += 0.4;
+                if(hits >= 10) win();
+            } else {
+                playSfx(150, "sawtooth", 0.1);
+                size = 300;
+                // Minor shake
+                document.getElementById('game').style.transform = 'translateX(5px)';
+                setTimeout(() => document.getElementById('game').style.transform = '', 50);
+            }
+        }
+
+        function win() {
+            gameActive = false;
+            playSfx(800, "sine", 0.5);
+            overlay.style.display = 'flex';
+            window.parent.postMessage("joc_finalitzat", "*");
+        }
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>
+
+        const timer = setInterval(() => {
+            if(!gameActive) return;
+            timeLeft--;
+            const m = Math.floor(timeLeft/60), s = timeLeft%60;
+            document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+            if(timeLeft <= 0) { clearInterval(timer); win(); }
+        }, 1000);
+
+        loop();
+    </script>
+</body>
+</html>

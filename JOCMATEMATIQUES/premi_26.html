@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8"><style>
+    :root { --nc:#22d3ee; --np:#a5b4fc; --db:#020617; }
+    body { margin:0; background:var(--db); color:white; font-family:sans-serif; }
+    #header { padding:10px; display:flex; justify-content:space-between; border-bottom:2px solid var(--nc); }
+    #main { padding:40px; text-align:center; }
+    #q { font-size:60px; margin-bottom:20px; color:var(--nc); }
+    #ans { font-size:40px; width:150px; background:none; border:2px solid var(--np); color:white; text-align:center; }
+    button { background:var(--np); border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold; }
+    </style></head>
+<body>
+    <div id="header"><div>Premi #26: SPRINT MATEMÀTIC! (3/3)</div><div style="display:flex;gap:15px;align-items:center;"><button onclick="location.reload()">REINICIAR</button><div id="t">02:00</div></div></div>
+    <div id="main"><div id="step">Problema 1/3</div><div id="q">5 + 7</div><input type="number" id="ans" autofocus oninput="check()"><div id="msg"></div></div>
+    <script>
+    const audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    function playSound(f){ try{const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(f,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.1); o.start(); o.stop(audioCtx.currentTime+0.1);}catch(e){} }
+    let step=1, tl=120;
+    const qs=[{a:5,b:7,r:12},{a:8,b:4,r:12},{a:9,b:6,r:15}];
+    function check(){
+        const v = parseInt(document.getElementById('ans').value);
+        if(v === qs[step-1].r){
+            playSound(600); step++;
+            if(step>3){ playSound(800); window.parent.postMessage("joc_finalitzat","*"); }
+            else { 
+                document.getElementById('step').innerText="Problema "+step+"/3";
+                document.getElementById('q').innerText=qs[step-1].a+" + "+qs[step-1].b;
+                document.getElementById('ans').value="";
+            }
+        }
+    }
+    setInterval(()=>{ const m=Math.floor(tl/60),s=tl%60; document.getElementById('t').innerText=`${m}:${s.toString().padStart(2,'0')}`; if(tl--<=0) window.parent.postMessage("joc_finalitzat","*"); },1000);
+    </script>
+</body></html>

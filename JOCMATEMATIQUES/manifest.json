@@ -1,0 +1,21 @@
+{
+    "name": "Portal d'Aplicacions Sóller",
+    "short_name": "Apps Sóller",
+    "description": "Accés ràpid al navegador ZBE i la biblioteca de jocs.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#020617",
+    "theme_color": "#2196F3",
+    "icons": [
+        {
+            "src": "icon-512.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
