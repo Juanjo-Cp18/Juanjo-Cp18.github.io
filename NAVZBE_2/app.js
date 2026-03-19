@@ -1844,8 +1844,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 // Start
-// init(); // DEACTIVATED AUTO-START (v3.31): Wait for closeCautionPrompt()
-showInitialCautionPrompt();
+if (isAdminMode || !document.getElementById('initial-caution-prompt')) {
+    console.log("🚀 Iniciando sistema automáticamente (Admin o sin Prompt)...");
+    init();
+} else {
+    showInitialCautionPrompt();
+}
 
 // ===== Simulation Mode (v1.19) =====
 function toggleSimulation() {
