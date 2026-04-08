@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sóller 1561: L'Invasió - GPS Interactiu</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Navegador GPS histórico e interactivo de la Invasión Corsaria a Sóller en 1561. Conoce las batallas del Firó de primera mano.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css?v=1.5">
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Header Overlay -->
+        <header class="glass-header">
+            <h1 data-i18n="titleMain">Sóller 1561</h1>
+            <p><span data-i18n="subtitle">Caminant per "Es Firó"</span> <span class="version-tag">v3.3 &copy; juanjo vivas | 2026</span></p>
+            <div id="gps-status" class="status-indicator">
+                <span class="dot pulse"></span> <span data-i18n="searching" id="gps-status-text">Cercant senyal...</span>
+            </div>
+        </header>
+
+
+        <!-- Map Wrapper for Stable Rotation -->
+        <div id="map-wrapper">
+            <div id="map"></div>
+        </div>
+
+        <!-- Fixed Navigation Cursor (Google Maps style) - INSIDE app-container for correct layering -->
+        <div id="nav-cursor" class="user-nav-container hidden">
+            <div class="nav-arrow-bg">
+                <svg viewBox="0 0 24 24" class="nav-arrow-svg">
+                    <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
+                </svg>
+            </div>
+        </div>
+
+
+        <!-- Controls -->
+        <div class="map-controls">
+            <button id="btn-walking" class="glass-btn walk-icon-anim" title="En Ruta" style="pointer-events: none; border-color: rgba(212, 175, 55, 0.4);">
+                <!-- Animated Walking Stickman SVG -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="4" r="1.5"></circle> <!-- Cabeza -->
+                    <line x1="12" y1="5.5" x2="12" y2="13"></line> <!-- Torso -->
+                    
+                    <line class="arm-back" x1="12" y1="7" x2="12" y2="13"></line> <!-- Brazo Oscilante A -->
+                    <line class="leg-back" x1="12" y1="13" x2="12" y2="21"></line> <!-- Pierna Oscilante A -->
+                    
+                    <line class="arm-front" x1="12" y1="7" x2="12" y2="13"></line> <!-- Brazo Oscilante B -->
+                    <line class="leg-front" x1="12" y1="13" x2="12" y2="21"></line> <!-- Pierna Oscilante B -->
+                </svg>
+            </button>
+            <button id="btn-home" class="glass-btn" title="Inici" data-i18n-title="btnHome">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </button>
+            <button id="btn-zoom-in" class="glass-btn" title="Apropar mapa" data-i18n-title="zoomIn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="btn-zoom-out" class="glass-btn" title="Allunyar mapa" data-i18n-title="zoomOut">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="btn-center" class="glass-btn" title="Centrar en la meva ubicació" data-i18n-title="centerUser">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+            <button id="btn-simulate" class="glass-btn" title="Simular Ruta (Demostració)" data-i18n-title="simulateMatch">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </button>
+            <button id="btn-archive" class="glass-btn" title="Arxiu Històric" data-i18n-title="btnArchive">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </button>
+            <button id="btn-poi-list" class="glass-btn" title="Llista de Punts Històrics" data-i18n-title="btnList">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="3" cy="6" r="1" fill="currentColor"></circle><circle cx="3" cy="12" r="1" fill="currentColor"></circle><circle cx="3" cy="18" r="1" fill="currentColor"></circle></svg>
+            </button>
+        </div>
+
+        <!-- Botón Central Inteligente para Recentrar -->
+        <button id="btn-recenter" class="recenter-btn hidden" data-i18n="btnRecenter">📍 Centrar la meva ubicació</button>
+
+        <!-- History Archive Panel (Hidden by default) -->
+        <div id="archive-panel" class="modal-overlay hidden">
+            <div class="modal-content glass-panel archive-content">
+                <button id="close-archive" class="close-btn">&times;</button>
+                <h2 class="fancy-title" data-i18n="titleArchive">Arxiu Històric</h2>
+                
+                <div class="archive-sections">
+                    <section>
+                        <h3 data-i18n="govTitle">🛡️ Govern</h3>
+                        <p data-i18n="govDesc">Sóller s'administrava mitjançant la 'Universitat', una forma orgànica de govern local on els Jurats vetllaven per la seguretat i l'abastiment.</p>
+                    </section>
+                    <section>
+                        <h3 data-i18n="ecoTitle">🍊 Economia</h3>
+                        <p data-i18n="ecoDesc">L'agricultura de cítrics (taronges i llimones) i l'oli d'oliva eren els pilars. El comerç amb França per mar era vital per a la prosperitat de la vall.</p>
+                    </section>
+                    <section>
+                        <h3 data-i18n="vestTitle">🧵 Vestimenta</h3>
+                        <p data-i18n="vestDesc">Llana per a l'hivern i lli per a l'estiu. Les 'Valentes Dones' vestien ropatges típics de la Serra, preparats per al dur treball agrícola i, en el seu cas, l'heroica defensa.</p>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fullscreen POI Modal (Hidden by default) -->
+        <div id="poi-modal" class="modal-overlay hidden">
+            <div class="modal-content glass-panel">
+                <button id="close-modal" class="close-btn">&times;</button>
+                
+                <h2 id="modal-title" class="fancy-title">Títol POI</h2>
+                <div class="modal-date">11 de Maig, 1561</div>
+                
+                <div class="media-container">
+                    <!-- YouTube / Image injected here via JS -->
+                    <div id="modal-media"></div>
+                </div>
+
+                <div class="text-content">
+                    <div class="info-tabs">
+                        <button id="tab-history" class="tab-btn active" data-i18n="tabHistory">📜 Història</button>
+                        <button id="tab-recreation" class="tab-btn" data-i18n="tabRecreation">🎭 Recreació</button>
+                    </div>
+                    
+                    <div id="content-history" class="pane active">
+                        <p id="modal-desc-history">Descripció històrica detallada.</p>
+                    </div>
+                    
+                    <div id="content-recreation" class="pane">
+                        <p id="modal-desc-recreation">Detalls de la recreació d'Es Firó.</p>
+                    </div>
+                </div>
+                
+                <div class="modal-actions" style="flex-direction: column;">
+                    <button id="btn-navigate" class="action-btn" style="background: linear-gradient(135deg, #007aff, #004ba0); color: white; margin-top: 0;" data-i18n="btnNavigate">📍 Guiarme fins aquí</button>
+                    <button id="btn-continue" class="action-btn" data-i18n="btnContinue" style="margin-top: 0;">Continuar Viatge ›</button>
+                    <button id="btn-finalitzar" class="action-btn action-btn-danger hidden" data-i18n="btnFinish" style="margin-top: 0;">■ Finalitzar Tour</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- POI List Bottom Sheet Panel -->
+        <div id="poi-list-panel" class="modal-overlay hidden">
+            <div class="poi-list-sheet glass-panel">
+                <div class="poi-list-header">
+                    <h3 class="poi-list-heading" data-i18n="listHeading">📍 Punts Històrics</h3>
+                    <button id="close-poi-list" class="close-btn" style="position:static;font-size:1.5rem;padding:0 4px;">&#x2715;</button>
+                </div>
+                <div id="poi-list-items" class="poi-list-items"></div>
+            </div>
+        </div>
+
+        <div id="welcome-screen" class="modal-overlay">
+            <div class="modal-content glass-panel text-center welcome-reveal">
+                
+                <!-- Language Selector (Onboarding) -->
+                <div class="lang-selector-welcome">
+                    <button class="lang-btn active" data-lang="cat" title="Català"><img src="flags/cat.svg" alt="Català"></button>
+                    <button class="lang-btn" data-lang="es" title="Español"><img src="flags/es.svg" alt="Español"></button>
+                    <button class="lang-btn" data-lang="en" title="English"><img src="flags/en.svg" alt="English"></button>
+                    <button class="lang-btn" data-lang="de" title="Deutsch"><img src="flags/de.svg" alt="Deutsch"></button>
+                    <button class="lang-btn" data-lang="fr" title="Français"><img src="flags/fr.svg" alt="Français"></button>
+                </div>
+
+                <div class="emblem-container">
+                    <img src="assets/images/firo_emblem.png" alt="Emblema Es Firó" class="firo-emblem">
+                </div>
+                <h1 class="fancy-title hero-title" data-i18n="welcomeTitle">Sóller 1561<br>GPS Històric</h1>
+                
+                <p data-i18n="welcomeDesc1">Reviu l'èpica defensa dels "Sollerics" davant l'invasió corsària.</p>
+                
+                <p class="small-text" data-i18n="welcomeDesc2" style="margin-top: 1rem;">Explora la ruta històrica amb el GPS. El mapa rotarà automàticament segons la teva marxa.</p>
+                <button id="btn-start" class="action-btn mt-4" data-i18n="btnStart">INICIAR EL RECORREGUT</button>
+            </div>
+
+            <!-- Panel Banderas Independiente a la izquierda -->
+            <div class="historic-side-panel left-panel">
+                <img src="BanderesColectius/soller_crest.svg" alt="Escut de Sóller" style="width: 65px; filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.5));">
+                <h3 class="collage-title" style="margin-top: 5px;">Colectius</h3>
+                <div class="historic-collage-vertical">
+                    <img src="BanderesColectius/PAGESOS.jpg" alt="Pagesos" class="historic-photo-vertical" style="margin-top: 0;">
+                    <img src="BanderesColectius/PAGESES.jpg" alt="Pageses" class="historic-photo-vertical" style="object-fit: contain; object-position: center;">
+                    <img src="BanderesColectius/MORO.jpg" alt="Moros" class="historic-photo-vertical">
+                </div>
+            </div>
+
+            <!-- Panel Fotográfico Independiente a la derecha -->
+            <div class="historic-side-panel right-panel">
+                <h3 class="collage-title">1920</h3>
+                <div class="historic-collage-vertical">
+                    <img src="FotosHistoriques/Barques_al_port_de_Sóller_simulant_una_batalla_amb_la_costa_al_fons_(cropped).jpeg" alt="Barques 1920" class="historic-photo-vertical" style="margin-top: 0;">
+                    <img src="FotosHistoriques/Pagès_amb_roba_de_batalla_voltat_de_gent_al_Sóller_(cropped).jpeg" alt="Pagesos 1920" class="historic-photo-vertical">
+                    <img src="FotosHistoriques/Retrat_d'un_grup_de_persones,_algunes_amb_roba_tradicional,_davant_de_l'ajuntament_de_Sóller_durant_les_festes_de_Santa_Victòria_(cropped).jpeg" alt="Festa 1920" class="historic-photo-vertical">
+                    <img src="FotosHistoriques/Retrat_de_tres_infants_amb_vestits_d'època_i_altra_gent_mirant_a_Sóller_(cropped).jpeg" alt="Infants 1920" class="historic-photo-vertical">
+                    <img src="FotosHistoriques/Un_home_a_cavall_i_altres_armats_i_amb_indumentària_tradicional_en_la_comitiva_de_la_festa_de_Santa_Victòria_a_Sóller_(cropped).jpeg" alt="Cavall 1920" class="historic-photo-vertical">
+                </div>
+            </div>
+        </div>
+
+        <div id="tutorial-screen" class="modal-overlay hidden">
+            <div class="modal-content glass-panel">
+                <h2 class="fancy-title text-center" data-i18n="tutTitle">Com funciona?</h2>
+                <ul class="tutorial-list">
+                    <li data-i18n="tutPoint1">🗺️ <b>Ubicació GPS</b>: El mapa rotarà automàticament segons caminis.</li>
+                    <li data-i18n="tutPoint2">📍 <b>Zones històriques</b>: Acosta't a les zones marcades per descobrir el seu passat.</li>
+                    <li data-i18n="tutPoint3" class="highlight-tut">🧭 <b>Navegació Dinàmica</b>: Tria qualsevol punt i prem 'Guiarme'. Dibuixarem la ruta pas a pas des de la teva ubicació fins allà.</li>
+                    <li data-i18n="tutPoint4">⚙️ <b>Botons</b>: Utilitza els controls laterals per apropar, allunyar o centrar el mapa, així com veure l'Arxiu i el llistat sencer de punts.</li>
+                </ul>
+                <button id="btn-start-tutorial" class="action-btn mt-4" data-i18n="btnStartMap" style="background: linear-gradient(135deg, #34c759, #248a3d); color: white;">Entès, Som-hi!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <!-- Custom Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
