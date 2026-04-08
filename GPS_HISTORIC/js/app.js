@@ -194,10 +194,13 @@ function initMap() {
         inertiaDeceleration: 1500, // Ajustamos la sensación de "deslizamiento"
     }).setView([39.775, 2.705], 13);
 
-    map.on('dragstart', () => {
+    const showRecenter = () => {
         autoCenterEnabled = false;
-        document.getElementById('btn-recenter').classList.remove('hidden');
-    });
+        const btn = document.getElementById('btn-recenter');
+        if (btn) btn.classList.remove('hidden');
+    };
+    map.on('dragstart', showRecenter);
+    map.on('touchstart', showRecenter);
 
     const mapPane = map.getPanes().mapPane;
     // Eliminado el filtro global del mapPane
@@ -406,9 +409,9 @@ function triggerPOI(poi) {
     
     modalMedia.innerHTML = '';
     if (poi.type === 'video') {
-        modalMedia.innerHTML = `<div class="video-wrapper"><iframe src="${poi.mediaUrl}" allowfullscreen></iframe></div>`;
+        modalMedia.innerHTML = `<div class="video-wrapper"><iframe src="${poi.mediaUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%; height:100%; border:0;"></iframe></div>`;
     } else if (poi.type === 'image') {
-        modalMedia.innerHTML = `<img src="${poi.mediaUrl}" class="media-img" alt="${poi.title[currentLang]}">`;
+        modalMedia.innerHTML = `<img src="${poi.mediaUrl}" class="media-img" alt="${poi.title[currentLang]}" loading="lazy" style="width:100%; display:block; height:auto; min-height: 150px; background-color: #111;">`;
     }
 
     const btnContinue = document.getElementById('btn-continue');
