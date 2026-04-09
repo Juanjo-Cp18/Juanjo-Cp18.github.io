@@ -245,6 +245,27 @@ body, html {
     vertical-align: middle;
 }
 
+.version-footer {
+    position: absolute;
+    bottom: 5px;
+    left: 8px; /* Esquina inferior izquierda */
+    font-size: 0.65rem;
+    color: #ffe680; /* Brillo dorado para legibilidad inmediata */
+    font-weight: 600;
+    text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
+    z-index: 500; /* Encima del mapa (1, 400), pero debajo de botones y controles (1000+) */
+    pointer-events: none; /* Que no interrumpa clics subyacentes en el mapa */
+    font-family: var(--font-body);
+}
+
+@media (max-width: 600px) {
+    .version-footer {
+        font-size: 0.55rem;
+        left: 5px;
+        bottom: 5px;
+    }
+}
+
 .status-indicator {
     position: absolute;
     top: 1.5rem;
