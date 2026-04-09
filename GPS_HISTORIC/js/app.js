@@ -90,7 +90,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('welcome-screen').classList.remove('hidden');
     });
 
-    document.getElementById('close-modal').addEventListener('click', closeModal);
+    document.getElementById('close-modal').addEventListener('click', () => {
+        const btnF = document.getElementById('btn-finalitzar');
+        if (btnF && !btnF.classList.contains('hidden')) {
+            stopSimulation();
+        } else {
+            closeModal();
+        }
+    });
     document.getElementById('btn-continue').addEventListener('click', closeModal);
     document.getElementById('btn-navigate').addEventListener('click', startNavigation);
     document.getElementById('btn-finalitzar').addEventListener('click', stopSimulation);
@@ -519,8 +526,8 @@ function toggleSimulation() {
 }
 
 function stopSimulation() {
+    closeModal(); 
     if (isSimulating) {
-        closeModal(); 
         toggleSimulation(); 
         setTimeout(centerOnUser, 600);
     }

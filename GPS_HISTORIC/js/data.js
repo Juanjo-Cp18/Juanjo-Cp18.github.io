@@ -68,7 +68,7 @@ const historicalPOIs = [
         coords: [39.778439, 2.704353],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b8/Ajuntament_de_S%C3%B3ller.jpg",
+        mediaUrl: "assets/images/ajuntament_actual.png",
         visited: false
     },
     {
@@ -96,8 +96,8 @@ const historicalPOIs = [
         },
         coords: [39.783361, 2.705675],
         radiusMeters: 25,
-        type: "video",
-        mediaUrl: "https://www.youtube.com/embed/g2JzY7mH9xY?autoplay=1",
+        type: "image",
+        mediaUrl: "assets/images/can_tamany_actual.png",
         visited: false
     },
     {
@@ -126,7 +126,7 @@ const historicalPOIs = [
         coords: [39.765622, 2.718736],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/4/4b/Pagesos_mallorquins.jpg",
+        mediaUrl: "assets/images/estiradors_actual.png",
         visited: false
     },
     {
@@ -154,8 +154,8 @@ const historicalPOIs = [
         },
         coords: [39.766408, 2.715378],
         radiusMeters: 25,
-        type: "video",
-        mediaUrl: "https://www.youtube.com/embed/Z-P_M8cZ_X9?autoplay=1",
+        type: "image",
+        mediaUrl: "assets/images/ajuntament_actual.png",
         visited: false
     },
     {
@@ -184,7 +184,7 @@ const historicalPOIs = [
         coords: [39.798183, 2.696533],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Port_de_Soller.jpg",
+        mediaUrl: "assets/images/port_soller_actual.png",
         visited: false
     },
     {
@@ -212,8 +212,8 @@ const historicalPOIs = [
         },
         coords: [39.796508, 2.695822],
         radiusMeters: 25,
-        type: "video",
-        mediaUrl: "https://www.youtube.com/embed/c-Z-M8cZJow?autoplay=1",
+        type: "image",
+        mediaUrl: "assets/images/port_soller_actual.png",
         visited: false
     },
     {
@@ -241,8 +241,8 @@ const historicalPOIs = [
         },
         coords: [39.790583, 2.691444],
         radiusMeters: 25,
-        type: "video",
-        mediaUrl: "https://www.youtube.com/embed/F6v5Z1kXZ9A?autoplay=1",
+        type: "image",
+        mediaUrl: "assets/images/port_soller_actual.png",
         visited: false
     },
     {
@@ -271,7 +271,7 @@ const historicalPOIs = [
         coords: [39.789689, 2.694403],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Port_de_Soller.jpg",
+        mediaUrl: "assets/images/port_soller_actual.png",
         visited: false
     },
     {
@@ -300,7 +300,7 @@ const historicalPOIs = [
         coords: [39.772706, 2.707947],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Port_de_Soller.jpg",
+        mediaUrl: "assets/images/pont_barona_actual.png",
         visited: false
     },
     {
@@ -328,8 +328,8 @@ const historicalPOIs = [
         },
         coords: [39.766381, 2.715061],
         radiusMeters: 25,
-        type: "video",
-        mediaUrl: "https://www.youtube.com/embed/Z-P_M8cZ_X9?autoplay=1",
+        type: "image",
+        mediaUrl: "assets/images/ajuntament_actual.png",
         visited: false
     },
     {
@@ -358,7 +358,7 @@ const historicalPOIs = [
         coords: [39.806431, 2.697467],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/e/ee/Port_de_Soller.jpg",
+        mediaUrl: "assets/images/torre_picada_actual.png",
         visited: false
     }
 ];

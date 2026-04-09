@@ -359,6 +359,22 @@ body, html {
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
+    max-height: calc(100vh - 120px);
+    max-height: calc(100dvh - 120px);
+    overflow-y: auto;
+    padding-right: 5px;
+    pointer-events: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.map-controls::-webkit-scrollbar {
+    display: none;
+}
+
+.map-controls > * {
+    pointer-events: auto;
+    flex-shrink: 0;
 }
 
 #btn-compass {
@@ -489,6 +505,16 @@ body, html {
         height: auto;
         max-height: calc(100vh - 120px);
         max-height: calc(100dvh - 120px);
+    }
+}
+
+@media (max-height: 500px) {
+    #poi-modal .modal-content {
+        margin: 10px auto 0 !important;
+        width: 95vw;
+        height: auto;
+        max-height: calc(100vh - 20px) !important;
+        max-height: calc(100dvh - 20px) !important;
     }
 }
 
@@ -1071,7 +1097,7 @@ body, html {
     transform: translateX(-50%) scale(0.95);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
     .recenter-btn {
         top: 6rem;
         bottom: auto;
