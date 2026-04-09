@@ -7,6 +7,7 @@ let watchId = null;
 let simulationInterval = null;
 let routingControl = null;
 let wakeLock = null;
+let smoothedRotation = null; // Para evitar saltos y vibraciones del GPS
 
 async function requestWakeLock() {
     try {
@@ -353,7 +354,28 @@ function updateUserLocation(lat, lng, accuracy, heading) {
 
     const navCursor = document.getElementById('nav-cursor');
 
-    const mapRotation = -rotation;
+    // --- FILTRO DE ROTACIÓN (ANTI-JITTER) ---
+    const rawRotation = rotation;
+    if (smoothedRotation === null) {
+        smoothedRotation = rawRotation;
+    } else {
+        // Calcular la diferencia circular más corta
+        let diff = rawRotation - smoothedRotation;
+        while (diff < -180) diff += 360;
+        while (diff > 180) diff -= 360;
+
+        // Solo rotar si el cambio es significativo (evita vibración en parado)
+        // o si nos estamos moviendo (distancia recorrida)
+        const threshold = 3; // Grados mínimos para reaccionar
+        if (Math.abs(diff) > threshold) {
+            // Aplicamos un suavizado (EMA)
+            smoothedRotation += diff * 0.15; 
+            // Normalizar a 0-360
+            smoothedRotation = (smoothedRotation + 360) % 360;
+        }
+    }
+
+    const mapRotation = -smoothedRotation;
     document.documentElement.style.setProperty('--map-rotation', `${mapRotation}deg`);
     
     if (navCursor) {
