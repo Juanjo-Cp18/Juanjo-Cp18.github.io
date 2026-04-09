@@ -28,7 +28,8 @@ body, html {
 #app-container {
     position: relative;
     width: 100vw;
-    height: 100vh;
+    height: 100%; /* Fallback */
+    height: 100dvh;
     overflow: hidden; /* This is the mask for the rotated map */
     background: #000;
 }
@@ -1047,7 +1048,7 @@ body, html {
         flex-direction: column;
         justify-content: flex-start;
         overflow-y: auto;
-        padding: 40px 10px;
+        padding: 40px 10px 80px 10px; /* padding-bottom 80px for Safari bottom bar */
     }
     #welcome-screen .glass-panel {
         max-height: none !important;
