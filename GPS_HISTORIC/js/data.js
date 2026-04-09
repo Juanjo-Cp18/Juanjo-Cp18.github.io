@@ -271,7 +271,7 @@ const historicalPOIs = [
         coords: [39.789689, 2.694403],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/port_soller_actual.png",
+        mediaUrl: "FotosFiro/CanMiro.jpg",
         visited: false
     },
     {

@@ -368,22 +368,6 @@ body, html {
     -ms-overflow-style: none;
 }
 
-/* Add media query for landscape mode button navigation */
-@media (max-height: 500px) and (orientation: landscape) {
-    .map-controls {
-        flex-direction: row;
-        bottom: 1rem;
-        right: 1rem;
-        max-width: calc(100vw - 120px);
-        max-height: 70px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding-right: 0;
-        padding-bottom: 5px;
-        gap: 0.5rem;
-    }
-}
-
 .map-controls::-webkit-scrollbar {
     display: none;
 }
