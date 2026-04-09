@@ -380,6 +380,23 @@ body, html {
     flex-shrink: 0;
 }
 
+@media (max-height: 500px) and (orientation: landscape) {
+    .map-controls {
+        top: 15px !important;
+        bottom: 15px !important;
+        gap: 0.4rem;
+        padding-right: 2px;
+    }
+    .glass-btn {
+        width: 42px;
+        height: 42px;
+    }
+    .glass-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+}
+
 #btn-compass {
     position: relative;
 }
@@ -1031,8 +1048,8 @@ body, html {
         padding: 40px 10px;
     }
     #welcome-screen .glass-panel {
-        max-height: none;
-        overflow-y: visible;
+        max-height: none !important;
+        overflow-y: visible !important;
         margin-top: 0;
         margin-bottom: 10px;
     }
