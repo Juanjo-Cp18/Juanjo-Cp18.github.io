@@ -266,6 +266,30 @@ body, html {
     }
 }
 
+/* Explicit style for Leaflet attribution pulled out of the scaled map */
+#app-container > .leaflet-control-attribution {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    z-index: 500;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ccc;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    pointer-events: auto;
+    font-family: var(--font-body);
+}
+
+#app-container > .leaflet-control-attribution a {
+    color: #ffe680;
+    text-decoration: none;
+}
+
+#app-container > .leaflet-control-attribution a:hover {
+    text-decoration: underline;
+}
+
 .status-indicator {
     position: absolute;
     top: 1.5rem;

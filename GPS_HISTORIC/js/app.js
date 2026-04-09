@@ -6,6 +6,27 @@ let userCircle;
 let watchId = null;
 let simulationInterval = null;
 let routingControl = null;
+let wakeLock = null;
+
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => {
+                console.log('Screen Wake Lock released');
+            });
+            console.log('Screen Wake Lock acquired');
+        }
+    } catch (err) {
+        console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+    }
+});
 
 // UI Elements
 const modal = document.getElementById('poi-modal');
@@ -79,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-start-tutorial').addEventListener('click', () => {
         document.getElementById('tutorial-screen').classList.add('hidden');
+        requestWakeLock(); // Solicitar Wake Lock tras la interacción del usuario
         if (!map) {
             initMap();
             startGPS();
@@ -201,6 +223,10 @@ function initMap() {
         inertiaDeceleration: 1500, // Ajustamos la sensación de "deslizamiento"
     }).setView([39.775, 2.705], 13);
 
+    // MOVE ATTRIBUTION OUTSIDE ROTATED MAP
+    const attrContainer = map.attributionControl.getContainer();
+    document.getElementById('app-container').appendChild(attrContainer);
+
     const showRecenter = () => {
         autoCenterEnabled = false;
         const btn = document.getElementById('btn-recenter');
@@ -215,7 +241,7 @@ function initMap() {
     // Capa 1: Satélite (Tu mapa original)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         className: 'satellite-layer',
-        attribution: 'Tiles &copy; Esri',
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
         maxZoom: 19
     }).addTo(map);
 
@@ -228,7 +254,7 @@ function initMap() {
     // Capa 2: Textos de Calles Transparentes encima del satélite y las rutas
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_only_labels/{z}/{x}/{y}{r}.png', {
         className: 'street-labels-layer',
-        attribution: '&copy; CARTO (OpenStreetMap)',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 19,
         pane: 'labels'
