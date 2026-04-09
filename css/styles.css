@@ -384,6 +384,8 @@ body, html {
     .map-controls {
         top: 15px !important;
         bottom: 15px !important;
+        height: calc(100dvh - 30px) !important;
+        max-height: calc(100vh - 30px) !important;
         gap: 0.4rem;
         padding-right: 2px;
     }
@@ -1049,7 +1051,8 @@ body, html {
     }
     #welcome-screen .glass-panel {
         max-height: none !important;
-        overflow-y: visible !important;
+        height: auto !important;
+        overflow: visible !important;
         margin-top: 0;
         margin-bottom: 10px;
     }
