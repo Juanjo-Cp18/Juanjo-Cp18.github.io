@@ -320,11 +320,11 @@ const historicalPOIs = [
             fr: "Le décor final où les habitants ont vaincu définitivement l'ennemi au cœur de la ville de Sóller."
         },
         recreacio: {
-            cat: "A les 20:30 h: entrada a la vila pel Camp de s’Oca. Saqueig. A les 21:30 h: El Capità Angelats proclama la victòria. Cant de la Balanguera.",
-            es: "A las 20:30 h: entrada a la villa por el Camp de s’Oca. A las 21:30 h: El Capitán Angelats proclama la victoria. Canto de la Balanguera.",
-            en: "At 20:30: Entry to the town. Plunder. At 21:30: Captain Angelats proclaims victory. Singing of the Balanguera.",
-            de: "Um 20:30 Uhr: Einmarsch in die Stadt. Um 21:30 Uhr: Kapitän Angelats erklärt den Sieg. Gesang von La Balanguera.",
-            fr: "À 20h30 : entrée dans la ville. Pillage. À 21h30 : Le Capitaine Angelats proclame la victoire. Chant de la Balanguera."
+            cat: "A les 20:30 h: entrada a la vila pel Camp de s’Oca. Saqueig. A les 21:30 h: El Capità Angelats proclama la victòria. Cant de la Balanguera.<br><br>⚠️ <b>Avís Important:</b> L'accés a la Plaça està limitat, únicament podran accedir aquelles persones que hagin estat autoritzades prèviament.",
+            es: "A las 20:30 h: entrada a la villa por el Camp de s’Oca. A las 21:30 h: El Capitán Angelats proclama la victoria. Canto de la Balanguera.<br><br>⚠️ <b>Aviso Importante:</b> El acceso a la Plaza está limitado, únicamente podrán acceder aquellas personas que hayan sido autorizadas previamente.",
+            en: "At 20:30: Entry to the town. Plunder. At 21:30: Captain Angelats proclaims victory. Singing of the Balanguera.<br><br>⚠️ <b>Important Notice:</b> Access to the Square is limited, only those who have been previously authorized will be allowed to enter.",
+            de: "Um 20:30 Uhr: Einmarsch in die Stadt. Um 21:30 Uhr: Kapitän Angelats erklärt den Sieg. Gesang von La Balanguera.<br><br>⚠️ <b>Wichtiger Hinweis:</b> Der Zugang zum Platz ist beschränkt, nur zuvor autorisierte Personen haben Zutritt.",
+            fr: "À 20h30 : entrée dans la ville. Pillage. À 21h30 : Le Capitaine Angelats proclame la victoire. Chant de la Balanguera.<br><br>⚠️ <b>Avis Important:</b> L'accès à la Place est limité, seules les personnes préalablement autorisées pourront y accéder."
         },
         coords: [39.766381, 2.715061],
         radiusMeters: 25,

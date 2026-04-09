@@ -457,9 +457,9 @@ function checkProximity(lat, lng) {
 function triggerPOI(poi) {
     activePoi = poi;
     poi.visited = true;
-    modalTitle.innerText = poi.title[currentLang];
-    modalDescHistory.innerText = poi.historia[currentLang];
-    modalDescRecreation.innerText = poi.recreacio[currentLang];
+    modalTitle.innerHTML = poi.title[currentLang];
+    modalDescHistory.innerHTML = poi.historia[currentLang];
+    modalDescRecreation.innerHTML = poi.recreacio[currentLang];
     
     const historyTab = document.getElementById('tab-history');
     if (historyTab) historyTab.click();
