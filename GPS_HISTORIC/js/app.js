@@ -337,10 +337,12 @@ function startGPS() {
 function updateUserLocation(lat, lng, accuracy, heading) {
     const currLatLng = new L.LatLng(lat, lng);
     
-    let rotation = 0;
+    let rotation = smoothedRotation !== null ? smoothedRotation : 0;
+    let distanceMoved = lastLatLng ? getDistanceInMeters(lastLatLng.lat, lastLatLng.lng, lat, lng) : 999;
+    
     if (heading !== null && heading !== undefined) {
         rotation = heading;
-    } else if (lastLatLng) {
+    } else if (lastLatLng && distanceMoved > 1.5) {
         rotation = getBearing(lastLatLng.lat, lastLatLng.lng, lat, lng);
     }
 
@@ -364,12 +366,12 @@ function updateUserLocation(lat, lng, accuracy, heading) {
         while (diff < -180) diff += 360;
         while (diff > 180) diff -= 360;
 
-        // Solo rotar si el cambio es significativo (evita vibración en parado)
-        // o si nos estamos moviendo (distancia recorrida)
-        const threshold = 3; // Grados mínimos para reaccionar
+        // Solo rotar si el cambio es muy significativo o firme
+        // Subimos el listón a 8 grados para evitar los típicos "nerviosismos" del GPS
+        const threshold = 8; 
         if (Math.abs(diff) > threshold) {
-            // Aplicamos un suavizado (EMA)
-            smoothedRotation += diff * 0.15; 
+            // Aplicamos un suavizado lento para absorber pequeños saltos en ráfaga
+            smoothedRotation += diff * 0.10; 
             // Normalizar a 0-360
             smoothedRotation = (smoothedRotation + 360) % 360;
         }

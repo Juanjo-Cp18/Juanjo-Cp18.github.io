@@ -251,12 +251,13 @@ body, html {
 
 .version-footer {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    font-size: 0.6rem;
-    color: var(--gold-accent);
-    opacity: 0.4; /* Muy discreto */
-    font-weight: 400;
+    top: 15px;
+    left: 15px;
+    font-size: 0.65rem;
+    color: #ffe680;
+    opacity: 0.85; /* Más visible según petición */
+    font-weight: 600;
+    text-shadow: 0 1px 4px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.8);
     z-index: 11000; /* Por encima de los paneles de bienvenida */
     pointer-events: none;
     font-family: var(--font-body);
