@@ -68,7 +68,7 @@ const historicalPOIs = [
         coords: [39.778439, 2.704353],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/ajuntament_actual.png",
+        mediaUrl: "FotosFiro/OfrenaMonument.jpg",
         visited: false
     },
     {
@@ -97,7 +97,7 @@ const historicalPOIs = [
         coords: [39.783361, 2.705675],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/can_tamany_actual.png",
+        mediaUrl: "FotosFiro/CanTamany.jpg",
         visited: false
     },
     {
@@ -126,7 +126,7 @@ const historicalPOIs = [
         coords: [39.765622, 2.718736],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/estiradors_actual.png",
+        mediaUrl: "FotosFiro/PEstiradors.jpg",
         visited: false
     },
     {
@@ -155,7 +155,7 @@ const historicalPOIs = [
         coords: [39.766408, 2.715378],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/ajuntament_actual.png",
+        mediaUrl: "FotosFiro/Arenga.jpg",
         visited: false
     },
     {
@@ -184,7 +184,7 @@ const historicalPOIs = [
         coords: [39.798183, 2.696533],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/port_soller_actual.png",
+        mediaUrl: "FotosFiro/ConcentracioMoros.jpg",
         visited: false
     },
     {
@@ -213,7 +213,7 @@ const historicalPOIs = [
         coords: [39.796508, 2.695822],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/port_soller_actual.png",
+        mediaUrl: "FotosFiro/CanGenero.jpg",
         visited: false
     },
     {
@@ -242,7 +242,7 @@ const historicalPOIs = [
         coords: [39.790583, 2.691444],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/port_soller_actual.png",
+        mediaUrl: "FotosFiro/CanRepic.jpg",
         visited: false
     },
     {
@@ -300,7 +300,7 @@ const historicalPOIs = [
         coords: [39.772706, 2.707947],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/pont_barona_actual.png",
+        mediaUrl: "FotosFiro/PontDenBarona.jpg",
         visited: false
     },
     {
@@ -329,7 +329,7 @@ const historicalPOIs = [
         coords: [39.766381, 2.715061],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/ajuntament_actual.png",
+        mediaUrl: "FotosFiro/BatallaFinal.jpg",
         visited: false
     },
     {
@@ -358,7 +358,7 @@ const historicalPOIs = [
         coords: [39.806431, 2.697467],
         radiusMeters: 25,
         type: "image",
-        mediaUrl: "assets/images/torre_picada_actual.png",
+        mediaUrl: "FotosFiro/TorrePicada.jpg",
         visited: false
     }
 ];
