@@ -353,19 +353,22 @@ body, html {
 /* Map Controls */
 .map-controls {
     position: absolute;
+    top: 90px;
     bottom: 2rem;
     right: 1.5rem;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
-    max-height: calc(100vh - 120px);
-    max-height: calc(100dvh - 120px);
     overflow-y: auto;
     padding-right: 5px;
     pointer-events: auto; /* Permite desplazamiento manual al superarla la pantalla */
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+.map-controls > *:first-child {
+    margin-top: auto;
 }
 
 .map-controls::-webkit-scrollbar {
@@ -375,6 +378,25 @@ body, html {
 .map-controls > * {
     pointer-events: auto;
     flex-shrink: 0;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .map-controls {
+        top: 15px !important;
+        bottom: 15px !important;
+        height: calc(100dvh - 30px) !important;
+        max-height: calc(100vh - 30px) !important;
+        gap: 0.4rem;
+        padding-right: 2px;
+    }
+    .glass-btn {
+        width: 42px;
+        height: 42px;
+    }
+    .glass-btn svg {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 #btn-compass {
@@ -1025,10 +1047,18 @@ body, html {
         flex-direction: column;
         justify-content: flex-start;
         overflow-y: auto;
+        padding: 40px 10px;
+    }
+    #welcome-screen .glass-panel {
+        max-height: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin-top: 0;
+        margin-bottom: 10px;
     }
     .welcome-reveal {
         flex-shrink: 0;
-        margin-top: 20px;
+        margin-top: 0;
     }
     .historic-side-panel {
         position: relative;
